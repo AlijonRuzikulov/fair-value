@@ -1,0 +1,20 @@
+{
+    // GitHub Codespaces: "Code → Codespaces → Create codespace" opens the
+    // site with demo data in the browser, nothing to install locally.
+    "name": "Fair Value",
+    "image": "mcr.microsoft.com/devcontainers/php:3-8.3-bookworm",
+    "forwardPorts": [8000],
+    "portsAttributes": {
+        "8000": {
+            "label": "Fair Value",
+            "onAutoForward": "openBrowser"
+        }
+    },
+    "postCreateCommand": "bash .devcontainer/setup.sh",
+    "postStartCommand": "bash .devcontainer/serve.sh",
+    "customizations": {
+        "codespaces": {
+            "openFiles": ["README.md"]
+        }
+    }
+}

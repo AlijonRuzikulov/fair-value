@@ -42,6 +42,12 @@
             "@php artisan key:generate",
             "@php artisan migrate --force --seed"
         ],
+        "demo": [
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
+            "@php artisan key:generate",
+            "@php -r \"touch('database/database.sqlite');\"",
+            "@php artisan migrate:fresh --seed --seeder=DemoSeeder --force"
+        ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
             "@php artisan dev"
@@ -84,5 +90,8 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "scripts-descriptions": {
+        "demo": "Create a local SQLite database filled with demo data (wipes the database)."
+    }
 }

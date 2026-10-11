@@ -58,32 +58,51 @@ shaxsiy ma’lumotlari bu sahifada **hech qachon** ko‘rsatilmaydi.
 
 ---
 
-## Kompyuterda ishga tushirish
+## Hozir sinab ko‘rish
+
+### 1-usul: brauzerda, hech narsa o‘rnatmasdan (GitHub Codespaces)
+
+1. GitHub’da repozitoriyni oching va **`claude/amazing-bohr-4qrtrr`** branchini tanlang.
+2. Yashil **Code** tugmasi → **Codespaces** → **Create codespace on claude/amazing-bohr-4qrtrr**.
+3. 3–5 daqiqa kuting: PHP, kutubxonalar va namuna ma’lumotlar avtomatik o‘rnatiladi.
+4. Pastdagi **Ports** bo‘limida **8000** portining yonidagi globus belgisini bosing — sayt yangi oynada ochiladi.
+5. Admin panel: manzil oxiriga `/admin` qo‘shing, kirish — `demo@fairvalue.uz` / `demo12345`.
+
+Shaxsiy GitHub hisobida Codespaces oyiga ~60 soat bepul. Ishlatmaganda
+*Codespaces → Stop codespace* qiling.
+
+### 2-usul: o‘z kompyuteringizda (Windows, macOS)
+
+1. [Laravel Herd](https://herd.laravel.com) ni o‘rnating — PHP va Composer u bilan birga keladi
+   (yoki PHP 8.3+ va [Composer](https://getcomposer.org) ni alohida o‘rnating).
+2. Loyihani yuklab oling: GitHub’da branchni tanlab **Code → Download ZIP**, yoki
+   `git clone -b claude/amazing-bohr-4qrtrr https://github.com/AlijonRuzikulov/fair-value.git`.
+3. Loyiha papkasida terminal (PowerShell) oching va bajaring:
 
 ```bash
-git clone https://github.com/AlijonRuzikulov/fair-value.git
-cd fair-value
 composer install
-cp .env.example .env
-php artisan key:generate
-
-touch database/database.sqlite          # yoki .env da MySQL sozlang
-php artisan migrate --seed               # hududlar va birinchi administrator
+composer demo          # .env, kalit va namuna ma’lumotlar bilan SQLite baza
 php artisan serve
 ```
 
-Sayt: <http://localhost:8000>, admin panel: <http://localhost:8000/admin>.
-`db:seed` administratorning e-mail va parolini ekranga chiqaradi
-(`.env` dagi `ADMIN_EMAIL` / `ADMIN_PASSWORD` orqali o‘zingiz belgilashingiz mumkin).
+4. Brauzerda <http://localhost:8000> — sayt, <http://localhost:8000/admin> — admin panel
+   (`demo@fairvalue.uz` / `demo12345`).
 
-### Namuna ma’lumotlar bilan sinab ko‘rish
+`composer demo` bazani tozalab, qaytadan namuna ma’lumotlar bilan to‘ldiradi —
+**ishlab turgan saytda ishlatmang**. Katalogdagi narxlar ham faqat namuna.
+
+### Haqiqiy ish uchun (namuna ma’lumotlarsiz)
 
 ```bash
-php artisan migrate:fresh --seed --seeder=DemoSeeder
+composer install
+cp .env.example .env
+php artisan key:generate
+touch database/database.sqlite          # yoki .env da MySQL sozlang
+php artisan migrate --seed               # hududlar va birinchi administrator
 ```
 
-Kirish: `demo@fairvalue.uz` / `demo12345`. Bu buyruq bazani tozalaydi —
-**ishlab turgan saytda ishlatmang**. Katalogdagi narxlar ham faqat namuna.
+`db:seed` administratorning e-mail va parolini ekranga chiqaradi
+(`.env` dagi `ADMIN_EMAIL` / `ADMIN_PASSWORD` orqali o‘zingiz belgilashingiz mumkin).
 
 ---
 
@@ -131,6 +150,18 @@ Valyuta kurslari har 3 soatda yangilanishi uchun cron qo‘shing:
 3. Terminal (yoki “Setup PHP / Cron” bo‘limi) orqali `composer install --no-dev`,
    `php artisan migrate --force --seed` buyruqlarini bajaring.
 4. Cron: `php /home/USER/fair-value/artisan schedule:run` — har daqiqa.
+
+### Cloudflare orqali
+
+Saytni oddiy hosting yoki VPS’ga joylab, domenni Cloudflare’ga ulash mumkin
+(bepul SSL, keshlash, hujumlardan himoya). Bunda `.env` ga qo‘shing:
+
+```env
+TRUSTED_PROXIES=*
+```
+
+Shunda sayt mijozlarning haqiqiy IP manzilini va `https` ni to‘g‘ri aniqlaydi.
+Laravel PHP’da yozilgani uchun uni Cloudflare Workers / Pages’ning o‘zida yurgizib bo‘lmaydi.
 
 ### Telegram’ga ariza xabarlari
 
