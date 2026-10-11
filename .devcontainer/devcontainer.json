@@ -10,8 +10,11 @@
             "onAutoForward": "openBrowser"
         }
     },
+    // Installs dependencies and creates the demo database (once).
     "postCreateCommand": "bash .devcontainer/setup.sh",
-    "postStartCommand": "bash .devcontainer/serve.sh",
+    // Runs the web server in a terminal of the editor, so it keeps running
+    // and its log is visible.
+    "postAttachCommand": "bash .devcontainer/serve.sh",
     "customizations": {
         "codespaces": {
             "openFiles": ["README.md"]

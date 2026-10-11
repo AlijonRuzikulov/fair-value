@@ -71,6 +71,17 @@ shaxsiy ma’lumotlari bu sahifada **hech qachon** ko‘rsatilmaydi.
 Shaxsiy GitHub hisobida Codespaces oyiga ~60 soat bepul. Ishlatmaganda
 *Codespaces → Stop codespace* qiling.
 
+**“HTTP ERROR 502” chiqsa** — server hali ishga tushmagan. Codespace oynasida
+terminalni oching (`Ctrl + \``) va bajaring:
+
+```bash
+git pull
+bash .devcontainer/setup.sh
+bash .devcontainer/serve.sh
+```
+
+Terminalda `Server running on [http://0.0.0.0:8000]` yozuvi chiqqach, sayt sahifasini yangilang.
+
 ### 2-usul: o‘z kompyuteringizda (Windows, macOS)
 
 1. [Laravel Herd](https://herd.laravel.com) ni o‘rnating — PHP va Composer u bilan birga keladi
