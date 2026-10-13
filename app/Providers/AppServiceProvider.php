@@ -21,6 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -52,6 +53,11 @@ class AppServiceProvider extends ServiceProvider
         ]);
 
         Model::preventLazyLoading(! $this->app->isProduction());
+
+        // Behind an https proxy (Cloudflare, a hosting panel, Codespaces) links stay https.
+        if (str_starts_with((string) config('app.url'), 'https://')) {
+            URL::forceScheme('https');
+        }
 
         Paginator::defaultView('components.pagination');
 

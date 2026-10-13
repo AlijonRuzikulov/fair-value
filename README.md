@@ -73,6 +73,12 @@ faqat viloyat/tumanlar ro‘yxati va bitta administrator. Hammasini o‘zingiz k
    (kirish sahifasida ham ko‘rsatib turiladi). Kirgach, o‘ng yuqoridagi ism → **Mening profilim** da
    parolni almashtiring — shundan keyin bu yozuv kirish sahifasidan yo‘qoladi.
 
+**Linkni boshqa odamga yuborish:** standart holatda Codespaces linki faqat sizga ochiladi
+(boshqalardan GitHub’ga kirishni so‘raydi). `serve.sh` uni avtomatik ochiq qiladi va terminalga
+`Link for other people: ...` deb yozadi. Agar bunday yozuv chiqmasa: pastdagi **Ports** bo‘limida
+8000 portini o‘ng tugma bilan bosing → **Port Visibility → Public**. Bu link faqat codespace
+ishlab turganda ochiladi — doimiy link uchun pastdagi “Serverga joylash” bo‘limiga qarang.
+
 Shaxsiy GitHub hisobida Codespaces oyiga ~60 soat bepul. Ishlatmaganda
 *Codespaces → Stop codespace* qiling. Kiritilgan ma’lumotlar codespace o‘chirilmaguncha saqlanadi.
 
@@ -140,25 +146,48 @@ kiritiladi; bo‘sh qoldirilsa saytda ko‘rinmaydi.
 
 ---
 
-## Serverga joylash
+## Serverga joylash — o‘z domeningizda (masalan, fairvalue.uz)
 
-### VPS (Ubuntu, nginx, PHP-FPM, MySQL)
+Mijozga oddiy link (`https://fairvalue.uz`) yuborish uchun sayt doimiy ishlaydigan serverda turishi kerak.
+Odamlarning shaxsiy ma’lumotlari saqlangani uchun server **O‘zbekistonda** bo‘lsin
+(“Shaxsga doir ma’lumotlar to‘g‘risida”gi qonun, 27-1-modda).
+
+**Kerak bo‘ladi:**
+
+1. **Domen** — masalan `fairvalue.uz` (.uz domenlarini O‘zbekistondagi registratorlar sotadi, yiliga bir marta to‘lanadi).
+2. **Hosting** — O‘zbekistondagi hosting yoki VPS. Tarifda bular bo‘lishini so‘rang:
+   PHP 8.3 yoki yangiroq, MySQL, **SSH kirish**, Composer, bepul SSL (https),
+   domen papkasini (Document Root) o‘zgartirish imkoniyati.
+
+**O‘rnatish** (hostingning SSH terminalida):
 
 ```bash
-cd /var/www/fair-value
-composer install --no-dev --optimize-autoloader
-cp .env.example .env && php artisan key:generate
-# .env: APP_ENV=production, APP_DEBUG=false, APP_URL=https://fairvalue.uz, DB_* sozlamalari
-php artisan migrate --force --seed
-php artisan config:cache && php artisan route:cache && php artisan view:cache
-chown -R www-data:www-data storage bootstrap/cache
+git clone -b claude/amazing-bohr-4qrtrr https://github.com/AlijonRuzikulov/fair-value.git
+cd fair-value
+bash deploy.sh          # 1-marta: .env faylini yaratadi
+nano .env               # APP_URL=https://fairvalue.uz, DB_* (baza), ADMIN_EMAIL, ADMIN_PASSWORD
+bash deploy.sh          # kutubxonalar, baza, administrator — tayyor
 ```
 
+So‘ng hosting panelida domen papkasini (Document Root) **`fair-value/public`** ga yo‘naltiring
+va SSL (https) ni yoqing. **Muhim:** butun loyihani `public_html` ga tashlamang — shunda `.env`
+(parollar) brauzerdan ochilib qoladi; brauzerga faqat `public` papkasi ko‘rinishi kerak.
+
+Yangilash: `git pull && bash deploy.sh` (sayt bir necha soniya “texnik ishlar” rejimida bo‘ladi).
+`.env` o‘zgartirilgandan keyin ham `bash deploy.sh` ni qayta ishga tushiring.
+
+`deploy.sh` `.env` da `APP_ENV=production`, `APP_DEBUG=false`, `DEMO_MODE=false`,
+`SESSION_SECURE_COOKIE=true` ni o‘zi qo‘yadi. Sayt faqat `APP_URL` dagi domen (va uning `www.`)
+orqali ochiladi.
+
+### VPS (Ubuntu, nginx, PHP-FPM)
+
+Yuqoridagi buyruqlar `/var/www/fair-value` da, keyin `chown -R www-data:www-data storage bootstrap/cache`.
 nginx’da sayt ildizi — **`public`** papkasi:
 
 ```nginx
 server {
-    server_name fairvalue.uz;
+    server_name fairvalue.uz www.fairvalue.uz;
     root /var/www/fair-value/public;
     index index.php;
     client_max_body_size 25m;
@@ -171,19 +200,15 @@ server {
 }
 ```
 
-Valyuta kurslari har 3 soatda yangilanishi uchun cron qo‘shing:
+SSL: `sudo certbot --nginx -d fairvalue.uz -d www.fairvalue.uz`.
+
+### Cron (valyuta kurslari)
+
+Kurslar har 3 soatda yangilanishi uchun cron qo‘shing (hosting panelidagi “Cron” bo‘limi):
 
 ```cron
-* * * * * cd /var/www/fair-value && php artisan schedule:run >> /dev/null 2>&1
+* * * * * cd /home/USER/fair-value && php artisan schedule:run >> /dev/null 2>&1
 ```
-
-### Oddiy hosting (cPanel)
-
-1. Fayllarni yuklang, domen ildizini (Document Root) **`public`** papkasiga yo‘naltiring.
-2. cPanel’da MySQL baza yarating va `.env` ga yozing.
-3. Terminal (yoki “Setup PHP / Cron” bo‘limi) orqali `composer install --no-dev`,
-   `php artisan migrate --force --seed` buyruqlarini bajaring.
-4. Cron: `php /home/USER/fair-value/artisan schedule:run` — har daqiqa.
 
 ### Cloudflare orqali
 
