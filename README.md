@@ -101,6 +101,8 @@ php artisan serve
 
 `composer demo` bazani tozalab, qaytadan namuna ma’lumotlar bilan to‘ldiradi —
 **ishlab turgan saytda ishlatmang**. Katalogdagi narxlar ham faqat namuna.
+U `.env` ga `DEMO_MODE=true` yozadi — kirish sahifasida demo login va
+“To‘ldirish” tugmasi chiqadi. Haqiqiy saytda `DEMO_MODE=false` bo‘lsin.
 
 ### Haqiqiy ish uchun (namuna ma’lumotlarsiz)
 

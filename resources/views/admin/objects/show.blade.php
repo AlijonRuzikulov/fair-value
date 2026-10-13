@@ -39,7 +39,7 @@
                     <ul class="mini-list">
                         @foreach ($item->clients as $client)
                             <li>
-                                <span class="mini-icon"><x-icon :name="$client->isLegal() ? 'building-2' : 'user'" :size="18" /></span>
+                                <span class="mini-icon" style="--c: var({{ $client->isLegal() ? '--c-violet' : '--c-sky' }})"><x-icon :name="$client->isLegal() ? 'building-2' : 'user'" :size="18" /></span>
                                 <div class="grow">
                                     <a href="{{ route('admin.clients.show', $client) }}">{{ $client->title }}</a>
                                     <small>{{ collect([$client->document, $client->phone ? Format::phone($client->phone) : null])->filter()->implode(' · ') }}</small>

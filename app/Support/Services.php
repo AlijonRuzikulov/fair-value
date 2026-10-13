@@ -9,13 +9,14 @@ namespace App\Support;
 class Services
 {
     /**
-     * @return array<string, array{icon:string, title:string, short:string, text:string, items:list<string>, documents:list<string>, term:string}>
+     * @return array<string, array{icon:string, color:string, title:string, short:string, text:string, items:list<string>, documents:list<string>, term:string}>
      */
     public static function all(): array
     {
         return [
             'real-estate' => [
                 'icon' => 'building-2',
+                'color' => '#10b981',
                 'title' => __('Real estate valuation'),
                 'short' => __('Apartments, houses, offices, shops, warehouses, production buildings and land plots.'),
                 'text' => __('We determine the market value of residential and non-residential property for bank loans, sale and purchase, inheritance, court and the charter capital. The report complies with the national valuation standards and is accepted by banks, notaries and courts.'),
@@ -25,6 +26,7 @@ class Services
             ],
             'vehicles' => [
                 'icon' => 'car',
+                'color' => '#06b6d4',
                 'title' => __('Vehicle valuation'),
                 'short' => __('Cars, trucks, buses and special machinery of any year of manufacture.'),
                 'text' => __('We inspect the vehicle, take into account its configuration, mileage and condition and compare it with the current market. The valuation is used for collateral, sale, inheritance, customs and accounting.'),
@@ -34,6 +36,7 @@ class Services
             ],
             'damage' => [
                 'icon' => 'wrench',
+                'color' => '#f43f5e',
                 'title' => __('Damage assessment'),
                 'short' => __('Restoration cost of a vehicle or property after an accident, flood or fire.'),
                 'text' => __('We calculate the cost of repair using spare part prices, repair time norms and paint costs, taking the wear of the vehicle into account, and determine the loss of commodity value. The conclusion is used to claim compensation from the insurer or the person responsible.'),
@@ -43,6 +46,7 @@ class Services
             ],
             'equipment' => [
                 'icon' => 'factory',
+                'color' => '#f59e0b',
                 'title' => __('Equipment valuation'),
                 'short' => __('Machines, production lines, office equipment, furniture and inventory.'),
                 'text' => __('We value single machines and whole production complexes, including imported equipment. The valuation is needed for collateral, leasing, revaluation of fixed assets and contribution to the charter capital.'),
@@ -52,6 +56,7 @@ class Services
             ],
             'business' => [
                 'icon' => 'briefcase',
+                'color' => '#8b5cf6',
                 'title' => __('Business and shares valuation'),
                 'short' => __('Enterprises, stakes in the charter capital, shares and intangible assets.'),
                 'text' => __('We determine the value of a business as a whole or of a stake in it, of shares, trademarks and software. Used for the sale of a business, attracting investment, reorganisation and corporate disputes.'),
@@ -61,6 +66,7 @@ class Services
             ],
             'business-plans' => [
                 'icon' => 'chart-line',
+                'color' => '#0ea5e9',
                 'title' => __('Business plans and feasibility studies'),
                 'short' => __('Business plans and feasibility studies (TEO) for banks and investors.'),
                 'text' => __('We prepare business plans and feasibility studies that meet the requirements of commercial banks, investors and state programmes: market analysis, production plan, financial model and payback calculation.'),
@@ -70,6 +76,7 @@ class Services
             ],
             'import-expertise' => [
                 'icon' => 'ship',
+                'color' => '#6366f1',
                 'title' => __('Expert opinion on import contracts'),
                 'short' => __('Conclusion on the conformity of import contract prices with the market.'),
                 'text' => __('We check whether the prices of goods and equipment in an import contract correspond to market prices. The conclusion is required by banks when opening letters of credit and paying under foreign trade contracts.'),
@@ -79,6 +86,7 @@ class Services
             ],
             'audit' => [
                 'icon' => 'file-check',
+                'color' => '#ec4899',
                 'title' => __('Audit opinion'),
                 'short' => __('Audit of financial statements and consulting on accounting.'),
                 'text' => __('Together with partner audit organisations we audit financial statements, check accounting and taxation and issue an audit opinion for shareholders, banks and government bodies.'),

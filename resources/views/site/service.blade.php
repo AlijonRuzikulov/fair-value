@@ -3,7 +3,7 @@
 
     <section class="section">
         <div class="container article-grid">
-            <article class="prose">
+            <article class="prose" style="--c: {{ $service['color'] }}">
                 <h2>{{ __('About the service') }}</h2>
                 <p>{{ $service['text'] }}</p>
 
@@ -44,7 +44,7 @@
             </div>
             <div class="services-grid">
                 @foreach ($others as $otherSlug => $other)
-                    <article class="service-card">
+                    <article class="service-card" style="--c: {{ $other['color'] }}">
                         <span class="service-icon"><x-icon :name="$other['icon']" :size="26" /></span>
                         <h3>{{ $other['title'] }}</h3>
                         <p>{{ $other['short'] }}</p>

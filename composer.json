@@ -46,7 +46,8 @@
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
             "@php artisan key:generate",
             "@php -r \"touch('database/database.sqlite');\"",
-            "@php artisan migrate:fresh --seed --seeder=DemoSeeder --force"
+            "@php artisan migrate:fresh --seed --seeder=DemoSeeder --force",
+            "@php -r \"file_put_contents('.env', rtrim(preg_replace('/^DEMO_MODE=.*/m', '', file_get_contents('.env'))).PHP_EOL.'DEMO_MODE=true'.PHP_EOL);\""
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",

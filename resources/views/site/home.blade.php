@@ -65,7 +65,7 @@
             </div>
             <div class="services-grid">
                 @foreach ($services as $slug => $service)
-                    <article class="service-card reveal">
+                    <article class="service-card reveal" style="--c: {{ $service['color'] }}">
                         <span class="service-icon"><x-icon :name="$service['icon']" :size="26" /></span>
                         <h3>{{ $service['title'] }}</h3>
                         <p>{{ $service['short'] }}</p>
@@ -191,11 +191,11 @@
                 <p class="eyebrow">{{ __('Contacts') }}</p>
                 <h2 class="section-title">{{ __('Call us for detailed information') }}</h2>
                 <ul class="contact-list">
-                    <li><span class="mark"><x-icon name="phone" :size="20" /></span><div><small>{{ __('Phone') }}</small><a href="{{ Format::telLink($phone) }}">{{ $phone }}</a></div></li>
-                    @if (Setting::get('telegram'))<li><span class="mark"><x-icon name="send" :size="20" /></span><div><small>Telegram</small><a href="https://t.me/{{ ltrim(Setting::get('telegram'), '@') }}" target="_blank" rel="noopener">{{ '@'.ltrim(Setting::get('telegram'), '@') }}</a></div></li>@endif
-                    @if (Setting::get('instagram'))<li><span class="mark"><x-icon name="instagram" :size="20" /></span><div><small>Instagram</small><a href="https://instagram.com/{{ ltrim(Setting::get('instagram'), '@') }}" target="_blank" rel="noopener">{{ '@'.ltrim(Setting::get('instagram'), '@') }}</a></div></li>@endif
-                    @if (Setting::get('email'))<li><span class="mark"><x-icon name="mail" :size="20" /></span><div><small>{{ __('E-mail') }}</small><a href="mailto:{{ Setting::get('email') }}">{{ Setting::get('email') }}</a></div></li>@endif
-                    @if (Setting::get('address'))<li><span class="mark"><x-icon name="map-pin" :size="20" /></span><div><small>{{ __('Address') }}</small><strong>{{ Setting::get('address') }}</strong></div></li>@endif
+                    <li><span class="mark tone-emerald"><x-icon name="phone" :size="20" /></span><div><small>{{ __('Phone') }}</small><a href="{{ Format::telLink($phone) }}">{{ $phone }}</a></div></li>
+                    @if (Setting::get('telegram'))<li><span class="mark tone-sky"><x-icon name="send" :size="20" /></span><div><small>Telegram</small><a href="https://t.me/{{ ltrim(Setting::get('telegram'), '@') }}" target="_blank" rel="noopener">{{ '@'.ltrim(Setting::get('telegram'), '@') }}</a></div></li>@endif
+                    @if (Setting::get('instagram'))<li><span class="mark tone-pink"><x-icon name="instagram" :size="20" /></span><div><small>Instagram</small><a href="https://instagram.com/{{ ltrim(Setting::get('instagram'), '@') }}" target="_blank" rel="noopener">{{ '@'.ltrim(Setting::get('instagram'), '@') }}</a></div></li>@endif
+                    @if (Setting::get('email'))<li><span class="mark tone-violet"><x-icon name="mail" :size="20" /></span><div><small>{{ __('E-mail') }}</small><a href="mailto:{{ Setting::get('email') }}">{{ Setting::get('email') }}</a></div></li>@endif
+                    @if (Setting::get('address'))<li><span class="mark tone-rose"><x-icon name="map-pin" :size="20" /></span><div><small>{{ __('Address') }}</small><strong>{{ Setting::get('address') }}</strong></div></li>@endif
                 </ul>
             </div>
             <div class="panel reveal">

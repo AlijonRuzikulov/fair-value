@@ -13,41 +13,67 @@
 <body>
 <div class="auth">
     <section class="auth-side">
-        <a class="auth-brand" href="{{ route('home') }}"><x-logo-mark :size="40" /> {{ \App\Models\Setting::get('name') }}</a>
+        <span class="auth-glow g1"></span><span class="auth-glow g2"></span><span class="auth-glow g3"></span><span class="auth-glow g4"></span>
+        <a class="auth-brand" href="{{ route('home') }}"><x-logo-mark :size="42" /> {{ \App\Models\Setting::get('name') }}</a>
         <div>
-            <h2>{{ __('Valuation system') }}</h2>
+            <h2>{{ __('Valuation system') }} <span>{{ \App\Models\Setting::get('name') }}</span></h2>
             <p>{{ __('Clients, objects, reports and damage calculations of the company in one place.') }}</p>
             <div class="auth-points">
-                <span><x-icon name="circle-check" :size="20" /> {{ __('Real estate, vehicles, equipment and business') }}</span>
-                <span><x-icon name="circle-check" :size="20" /> {{ __('Damage calculation with price lists and repair norms') }}</span>
-                <span><x-icon name="circle-check" :size="20" /> {{ __('QR verification of reports for banks and courts') }}</span>
+                <div class="auth-point"><i style="--g: linear-gradient(135deg, #34d399, #0d9488)"><x-icon name="building-2" :size="18" /></i> {{ __('Real estate, vehicles, equipment and business') }}</div>
+                <div class="auth-point"><i style="--g: linear-gradient(135deg, #fbbf24, #f97316)"><x-icon name="calculator" :size="18" /></i> {{ __('Damage calculation with price lists and repair norms') }}</div>
+                <div class="auth-point"><i style="--g: linear-gradient(135deg, #a78bfa, #c026d3)"><x-icon name="qr-code" :size="18" /></i> {{ __('QR verification of reports for banks and courts') }}</div>
             </div>
         </div>
-        <p style="opacity: .75; font-size: 13px">© {{ date('Y') }} {{ \App\Models\Setting::get('legal_name') }}</p>
+        <p class="auth-copy">© {{ date('Y') }} {{ \App\Models\Setting::get('legal_name') }}</p>
     </section>
 
     <main class="auth-main">
-        <form method="post" action="{{ url('/login') }}" class="auth-form">
-            @csrf
-            <x-logo-mark :size="48" />
-            <h1>{{ __('Sign in') }}</h1>
-            <p class="lead">{{ __('Enter the e-mail and password issued by the administrator.') }}</p>
+        <div class="auth-card">
+            <form method="post" action="{{ url('/login') }}" class="auth-form">
+                @csrf
+                <div class="auth-head">
+                    <x-logo-mark :size="48" />
+                    <div>
+                        <h1>{{ __('Sign in') }}</h1>
+                        <p>{{ __('Enter the e-mail and password issued by the administrator.') }}</p>
+                    </div>
+                </div>
 
-            <x-field name="email" type="email" :label="__('E-mail')" span="12" required autofocus autocomplete="username" />
-            <x-field name="password" type="password" :label="__('Password')" span="12" required autocomplete="current-password" />
+                @if (config('fairvalue.demo'))
+                    <div class="auth-demo">
+                        <span><strong>{{ __('Demo access') }}:</strong> <code>demo@fairvalue.uz</code> / <code>demo12345</code></span>
+                        <button type="button" class="btn btn-sm" data-demo-fill><x-icon name="key-round" :size="14" /> {{ __('Fill in') }}</button>
+                    </div>
+                @endif
 
-            <label class="check-inline"><input type="checkbox" name="remember" value="1"> {{ __('Remember me') }}</label>
+                <x-field name="email" type="email" :label="__('E-mail')" span="12" required autofocus autocomplete="username" />
+                <x-field name="password" type="password" :label="__('Password')" span="12" required autocomplete="current-password" />
 
-            <button class="btn btn-primary" type="submit">{{ __('Sign in') }} <x-icon name="arrow-right" :size="16" /></button>
+                <div class="auth-row">
+                    <label class="check-inline"><input type="checkbox" name="remember" value="1"> {{ __('Remember me') }}</label>
+                </div>
 
-            <div class="auth-langs">
-                @foreach ($locales as $code => $meta)
-                    <a href="{{ route('locale', $code) }}" @class(['is-active' => $code === app()->getLocale()])>{{ $meta['label'] }}</a>
-                @endforeach
+                <button class="btn btn-primary" type="submit">{{ __('Sign in') }} <x-icon name="arrow-right" :size="16" /></button>
+            </form>
+
+            <div class="auth-foot">
+                <a class="back-link" href="{{ route('home') }}"><x-icon name="arrow-left" :size="16" /> {{ __('Back to the website') }}</a>
+                <nav class="auth-langs" aria-label="{{ __('Language') }}">
+                    @foreach ($locales as $code => $meta)
+                        <a href="{{ route('locale', $code) }}" @class(['is-active' => $code === app()->getLocale()])>{{ $meta['short'] }}</a>
+                    @endforeach
+                </nav>
             </div>
-            <a class="back-link" style="justify-content: center" href="{{ route('home') }}"><x-icon name="arrow-left" :size="16" /> {{ __('Back to the website') }}</a>
-        </form>
+        </div>
     </main>
 </div>
+@if (config('fairvalue.demo'))
+    <script>
+        document.querySelector('[data-demo-fill]').addEventListener('click', function () {
+            document.getElementById('f-email').value = 'demo@fairvalue.uz';
+            document.getElementById('f-password').value = 'demo12345';
+        });
+    </script>
+@endif
 </body>
 </html>

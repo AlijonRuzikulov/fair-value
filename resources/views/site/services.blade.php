@@ -5,11 +5,11 @@
         <div class="container">
             <div class="services-grid">
                 @foreach ($services as $slug => $service)
-                    <article class="service-card reveal">
+                    <article class="service-card reveal" style="--c: {{ $service['color'] }}">
                         <span class="service-icon"><x-icon :name="$service['icon']" :size="26" /></span>
                         <h3>{{ $service['title'] }}</h3>
                         <p>{{ $service['short'] }}</p>
-                        <p style="flex: 0; font-size: 13px; font-weight: 700; color: var(--brand-ink)"><x-icon name="clock" :size="14" /> {{ $service['term'] }}</p>
+                        <p style="flex: 0; font-size: 13px; font-weight: 700; color: color-mix(in srgb, var(--c) 78%, #111735)"><x-icon name="clock" :size="14" /> {{ $service['term'] }}</p>
                         <a class="link-arrow stretch" href="{{ route('services.show', $slug) }}">{{ __('More') }} <x-icon name="arrow-right" :size="16" /></a>
                     </article>
                 @endforeach

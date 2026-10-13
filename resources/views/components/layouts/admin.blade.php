@@ -35,9 +35,9 @@
                     <p class="nav-section">{{ $item['section'] }}</p>
                 @elseif (isset($item['children']))
                     @php $open = \App\Support\AdminMenu::isActive($item['key'], $nav); @endphp
-                    <details class="nav-group" @if ($open) open @endif>
+                    <details class="nav-group" style="--c: {{ $item['color'] }}" @if ($open) open @endif>
                         <summary @class(['nav-link', 'is-current' => $open])>
-                            <x-icon :name="$item['icon']" :size="20" />
+                            <span class="nav-ico"><x-icon :name="$item['icon']" :size="18" /></span>
                             <span>{{ $item['label'] }}</span>
                             <x-icon name="chevron-down" :size="16" class="nav-caret" />
                         </summary>
@@ -48,8 +48,8 @@
                         </ul>
                     </details>
                 @else
-                    <a href="{{ $item['url'] }}" @class(['nav-link', 'is-active' => \App\Support\AdminMenu::isActive($item['key'], $nav)]) @if ($nav === $item['key']) aria-current="page" @endif>
-                        <x-icon :name="$item['icon']" :size="20" />
+                    <a href="{{ $item['url'] }}" style="--c: {{ $item['color'] }}" @class(['nav-link', 'is-active' => \App\Support\AdminMenu::isActive($item['key'], $nav)]) @if ($nav === $item['key']) aria-current="page" @endif>
+                        <span class="nav-ico"><x-icon :name="$item['icon']" :size="18" /></span>
                         <span>{{ $item['label'] }}</span>
                         @if (! empty($item['badge']))<span class="nav-badge">{{ $item['badge'] }}</span>@endif
                     </a>

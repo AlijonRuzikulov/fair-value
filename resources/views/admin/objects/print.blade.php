@@ -19,22 +19,22 @@
         body { margin: 0; font-family: 'Manrope', Arial, sans-serif; font-size: 12.5px; line-height: 1.5; color: #111827; background: #e5e7eb; }
         .sheet { width: 210mm; min-height: 297mm; margin: 24px auto; padding: 16mm 14mm; background: #fff; box-shadow: 0 10px 40px rgba(0,0,0,.12); }
         .toolbar { position: sticky; top: 0; display: flex; justify-content: center; gap: 8px; padding: 12px; background: #111827; }
-        .toolbar button, .toolbar a { padding: 8px 16px; border: 0; border-radius: 8px; background: #f07c1e; color: #fff; font: inherit; font-weight: 700; cursor: pointer; text-decoration: none; }
+        .toolbar button, .toolbar a { padding: 8px 16px; border: 0; border-radius: 8px; background: #4f46e5; color: #fff; font: inherit; font-weight: 700; cursor: pointer; text-decoration: none; }
         .toolbar a { background: #374151; }
-        header { display: flex; justify-content: space-between; gap: 20px; padding-bottom: 14px; border-bottom: 2px solid #f07c1e; }
+        header { display: flex; justify-content: space-between; gap: 20px; padding-bottom: 14px; border-bottom: 2px solid #4f46e5; }
         .brand { display: flex; gap: 12px; align-items: center; }
         .brand strong { display: block; font-size: 18px; letter-spacing: .1em; text-transform: uppercase; }
         .brand small { display: block; color: #6b7280; }
         .company { text-align: right; color: #4b5563; font-size: 11.5px; }
         h1 { margin: 22px 0 4px; font-family: 'Lora', Georgia, serif; font-size: 22px; text-align: center; }
         .subtitle { text-align: center; color: #4b5563; margin: 0 0 18px; }
-        h2 { margin: 18px 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: #b4500a; }
+        h2 { margin: 18px 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: #4338ca; }
         table { width: 100%; border-collapse: collapse; }
         td, th { padding: 6px 8px; border: 1px solid #d1d5db; vertical-align: top; text-align: left; }
         th { background: #f9fafb; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: #4b5563; }
         .facts td:first-child { width: 38%; color: #4b5563; background: #fafafa; }
         .r { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
-        .total { margin-top: 16px; padding: 14px 16px; border: 2px solid #f07c1e; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+        .total { margin-top: 16px; padding: 14px 16px; border: 2px solid #4f46e5; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
         .total span { font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
         .total strong { font-size: 20px; font-variant-numeric: tabular-nums; }
         .bottom { display: flex; justify-content: space-between; gap: 24px; margin-top: 28px; align-items: flex-end; }

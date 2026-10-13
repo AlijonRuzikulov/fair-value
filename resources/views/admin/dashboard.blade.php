@@ -15,7 +15,7 @@
 <x-layouts.admin :title="__('Dashboard')" nav="dashboard" icon="layout-dashboard" :subtitle="now()->translatedFormat('l, j F Y')">
     <div class="grid grid-4">
         <div class="card stat">
-            <span class="stat-icon"><x-icon name="clock" :size="22" /></span>
+            <span class="stat-icon amber"><x-icon name="clock" :size="22" /></span>
             <div>
                 <p class="stat-label">{{ __('In progress') }}</p>
                 <p class="stat-value">{{ Format::number($active) }}</p>
@@ -31,7 +31,7 @@
             </div>
         </div>
         <div class="card stat">
-            <span class="stat-icon ink"><x-icon name="wallet" :size="22" /></span>
+            <span class="stat-icon violet"><x-icon name="wallet" :size="22" /></span>
             <div>
                 <p class="stat-label">{{ __('Fees this month') }}</p>
                 <p class="stat-value">{{ Format::compact($feesThisMonth) }}</p>
@@ -51,6 +51,10 @@
     <div class="grid grid-main">
         <x-card :title="__('Objects registered in the last 12 months')" icon="chart-column">
             <svg class="chart" viewBox="0 0 {{ $w }} {{ $h }}" role="img" aria-label="{{ __('Objects registered in the last 12 months') }}" data-chart>
+                <defs>
+                    <linearGradient id="bar-past" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a5b4fc"/><stop offset="1" stop-color="#c7d2fe"/></linearGradient>
+                    <linearGradient id="bar-now" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c026d3"/><stop offset="1" stop-color="#6366f1"/></linearGradient>
+                </defs>
                 @for ($v = 0; $v <= $yMax; $v += $step)
                     @php $y = $top + $plotH - $v / $yMax * $plotH; @endphp
                     <line class="{{ $v === 0 ? 'axis-line' : 'grid-line' }}" x1="{{ $left }}" x2="{{ $w - $right }}" y1="{{ $y }}" y2="{{ $y }}" />
@@ -73,7 +77,7 @@
                     <g data-tip="{{ $tip }}" tabindex="0">
                         <rect x="{{ $left + $slot * $i }}" y="{{ $top }}" width="{{ $slot }}" height="{{ $plotH }}" fill="transparent" />
                         @if ($bh > 0)
-                            <path fill="{{ $loop->last ? '#f07c1e' : '#f6b073' }}" d="M{{ $x }},{{ $top + $plotH }} V{{ $y + $r }} Q{{ $x }},{{ $y }} {{ $x + $r }},{{ $y }} H{{ $x + $barW - $r }} Q{{ $x + $barW }},{{ $y }} {{ $x + $barW }},{{ $y + $r }} V{{ $top + $plotH }} Z" />
+                            <path fill="{{ $loop->last ? 'url(#bar-now)' : 'url(#bar-past)' }}" d="M{{ $x }},{{ $top + $plotH }} V{{ $y + $r }} Q{{ $x }},{{ $y }} {{ $x + $r }},{{ $y }} H{{ $x + $barW - $r }} Q{{ $x + $barW }},{{ $y }} {{ $x + $barW }},{{ $y + $r }} V{{ $top + $plotH }} Z" />
                         @endif
                         @if (($i === $peak || $loop->last) && $month['total'] > 0)
                             <text x="{{ $cx }}" y="{{ $y - 6 }}" text-anchor="middle" style="fill: var(--ink); font-weight: 700">{{ $month['total'] }}</text>
@@ -115,14 +119,14 @@
     <div class="grid grid-main">
         <x-card :title="__('Modules')" icon="layers">
             <div class="module-links">
-                <a class="module-link" href="{{ route('admin.clients.index') }}">
-                    <x-icon name="users" :size="22" />
+                <a class="module-link" href="{{ route('admin.clients.index') }}" style="--c: var(--c-sky)">
+                    <span class="mod-ico"><x-icon name="users" :size="22" /></span>
                     <strong>{{ Format::number($clientsCount) }}</strong>
                     <span>{{ __('Clients') }} @if ($clientsThisMonth)<em class="faint" style="font-style: normal">+{{ $clientsThisMonth }}</em>@endif</span>
                 </a>
-                @foreach ($modules as $alias => [$label, $icon, $route])
-                    <a class="module-link" href="{{ route($route) }}">
-                        <x-icon :name="$icon" :size="22" />
+                @foreach ($modules as $alias => [$label, $icon, $route, $color])
+                    <a class="module-link" href="{{ route($route) }}" style="--c: var(--c-{{ $color }})">
+                        <span class="mod-ico"><x-icon :name="$icon" :size="22" /></span>
                         <strong>{{ Format::number($byModule[$alias]['total']) }}</strong>
                         <span>{{ $label }}@if ($byModule[$alias]['active']) · {{ __(':n open', ['n' => $byModule[$alias]['active']]) }}@endif</span>
                     </a>
@@ -137,7 +141,7 @@
                 <ul class="mini-list">
                     @foreach ($rates as $rate)
                         <li>
-                            <span class="mini-icon" style="font-weight: 800; font-size: 11px">{{ $rate->code }}</span>
+                            <span class="mini-icon" style="font-weight: 800; font-size: 11px; --c: var(--c-{{ ['USD' => 'emerald', 'EUR' => 'sky', 'RUB' => 'rose', 'GBP' => 'violet', 'CNY' => 'amber', 'KZT' => 'cyan'][$rate->code] ?? 'slate' }})">{{ $rate->code }}</span>
                             <div class="grow"><strong class="num">{{ Format::number($rate->rate, 2) }}</strong> <span class="muted">{{ __('sum') }}</span><small>{{ $rate->rate_date->format('d.m.Y') }}</small></div>
                             @if ($rate->diff != 0)
                                 <span @class(['rate-diff', 'up' => $rate->diff > 0, 'down' => $rate->diff < 0])><x-icon :name="$rate->diff > 0 ? 'trending-up' : 'trending-down'" :size="14" />{{ Format::number(abs($rate->diff), 2) }}</span>
@@ -157,7 +161,7 @@
                 <ul class="mini-list">
                     @foreach ($recent as $object)
                         <li>
-                            <span class="mini-icon"><x-icon :name="$modules[$object->getMorphClass()][1]" :size="18" /></span>
+                            <span class="mini-icon" style="--c: var(--c-{{ $modules[$object->getMorphClass()][3] }})"><x-icon :name="$modules[$object->getMorphClass()][1]" :size="18" /></span>
                             <div class="grow">
                                 <a href="{{ route($object->routePrefix().'.show', $object->id) }}">{{ $object->title }}</a>
                                 <small>{{ $object->typeLabel() }} · {{ $object->updated_at->diffForHumans() }}@if ($object->appraiser) · {{ $object->appraiser->name }}@endif</small>
@@ -196,7 +200,7 @@
                             <div class="status-line">
                                 <span>{{ $row['user']->name }}</span>
                                 <strong class="num">{{ $row['total'] }}</strong>
-                                <div class="track"><div class="fill" style="width: {{ round($row['total'] / $maxLoad * 100) }}%; background: #f6b073"></div></div>
+                                <div class="track"><div class="fill" style="width: {{ round($row['total'] / $maxLoad * 100) }}%; background: linear-gradient(90deg, #818cf8, #c084fc)"></div></div>
                             </div>
                         @endforeach
                     </div>

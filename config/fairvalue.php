@@ -82,6 +82,18 @@ return [
         'password' => env('ADMIN_PASSWORD'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Demo mode
+    |--------------------------------------------------------------------------
+    |
+    | Shows the demo account on the sign-in page. Turned on by
+    | "composer demo" and in Codespaces; never enable it on the real site.
+    |
+    */
+
+    'demo' => (bool) env('DEMO_MODE', false),
+
     'uploads' => [
         'max_kb' => 20480,
         'mimes' => 'pdf,doc,docx,xls,xlsx,jpg,jpeg,png,webp,heic,zip,rar,txt',

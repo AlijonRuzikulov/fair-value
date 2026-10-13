@@ -17,6 +17,15 @@ class AuthTest extends TestCase
         $this->get('/login')->assertOk();
     }
 
+    public function test_demo_login_is_shown_only_in_demo_mode(): void
+    {
+        config(['fairvalue.demo' => false]);
+        $this->get('/login')->assertOk()->assertDontSee('demo12345')->assertDontSee('data-demo-fill', false);
+
+        config(['fairvalue.demo' => true]);
+        $this->get('/login')->assertOk()->assertSee('demo@fairvalue.uz')->assertSee('demo12345')->assertSee('data-demo-fill', false);
+    }
+
     public function test_employee_can_sign_in_and_out(): void
     {
         $user = User::factory()->create(['email' => 'a@fairvalue.uz', 'password' => 'secret123']);

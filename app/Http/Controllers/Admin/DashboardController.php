@@ -16,15 +16,15 @@ use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
-    /** Morph alias => [label, icon, route]. */
+    /** Morph alias => [label, icon, route, colour]. */
     private function modules(): array
     {
         return [
-            'real_estate' => [__('Real estate'), 'building', 'admin.real-estates.index'],
-            'asset' => [__('Movable property'), 'boxes', 'admin.assets.index'],
-            'vehicle' => [__('Vehicles'), 'car', 'admin.vehicles.index'],
-            'damage_case' => [__('Damage assessments'), 'wrench', 'admin.damage-cases.index'],
-            'other_asset' => [__('Other property'), 'monitor', 'admin.other-assets.index'],
+            'real_estate' => [__('Real estate'), 'building', 'admin.real-estates.index', 'emerald'],
+            'asset' => [__('Movable property'), 'boxes', 'admin.assets.index', 'amber'],
+            'vehicle' => [__('Vehicles'), 'car', 'admin.vehicles.index', 'cyan'],
+            'damage_case' => [__('Damage assessments'), 'wrench', 'admin.damage-cases.index', 'rose'],
+            'other_asset' => [__('Other property'), 'monitor', 'admin.other-assets.index', 'violet'],
         ];
     }
 

@@ -17,11 +17,15 @@ if [ -n "${CODESPACE_NAME:-}" ]; then
     url="https://${CODESPACE_NAME}-8000.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-app.github.dev}"
     sed -i "s|^APP_URL=.*|APP_URL=${url}|" .env
 fi
-if grep -q '^TRUSTED_PROXIES=' .env; then
-    sed -i 's|^TRUSTED_PROXIES=.*|TRUSTED_PROXIES=*|' .env
-else
-    echo 'TRUSTED_PROXIES=*' >> .env
-fi
+set_env() {
+    if grep -q "^$1=" .env; then
+        sed -i "s|^$1=.*|$1=$2|" .env
+    else
+        echo "$1=$2" >> .env
+    fi
+}
+set_env TRUSTED_PROXIES '*'
+set_env DEMO_MODE true
 
 touch database/database.sqlite
 php artisan migrate:fresh --seed --seeder=DemoSeeder --force
