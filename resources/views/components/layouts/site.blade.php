@@ -23,7 +23,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <script>document.documentElement.classList.add('js')</script>
+    <script nonce="{{ Vite::cspNonce() }}">document.documentElement.classList.add('js')</script>
     <title>{{ $fullTitle }}</title>
     <meta name="description" content="{{ $metaDescription }}">
     <link rel="canonical" href="{{ url()->current() }}">
@@ -37,7 +37,7 @@
     <link rel="icon" href="{{ asset('images/favicon.svg') }}" type="image/svg+xml">
     <link rel="stylesheet" href="{{ asset('css/fonts.css') }}">
     <link rel="stylesheet" href="{{ asset('css/site.css') }}?v={{ filemtime(public_path('css/site.css')) }}">
-    <script type="application/ld+json">{!! json_encode([
+    <script type="application/ld+json" nonce="{{ Vite::cspNonce() }}">{!! json_encode([
         '@context' => 'https://schema.org',
         '@type' => 'ProfessionalService',
         'name' => $brand,

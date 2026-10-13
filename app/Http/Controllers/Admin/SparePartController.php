@@ -116,14 +116,17 @@ class SparePartController extends CatalogController
         $carModelId = $this->carModelId($row[4] ?? null);
         $partNumber = ($row[1] ?? '') ?: null;
 
+        $values = [
+            'name' => $name,
+            'unit' => array_key_exists($row[2] ?? '', AssetController::units()) ? $row[2] : 'pcs',
+            'price' => $price,
+            'price_date' => now()->toDateString(),
+        ];
+        $this->checkRow(['part_number' => $partNumber, ...$values]);
+
         SparePart::updateOrCreate(
             $partNumber ? ['part_number' => $partNumber, 'car_model_id' => $carModelId] : ['name' => $name, 'car_model_id' => $carModelId],
-            [
-                'name' => $name,
-                'unit' => array_key_exists($row[2] ?? '', AssetController::units()) ? $row[2] : 'pcs',
-                'price' => $price,
-                'price_date' => now()->toDateString(),
-            ]
+            $values
         );
     }
 

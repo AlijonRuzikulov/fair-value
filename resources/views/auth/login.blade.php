@@ -69,7 +69,7 @@
     </main>
 </div>
 @if ($hint)
-    <script>
+    <script nonce="{{ Vite::cspNonce() }}">
         document.querySelector('[data-demo-fill]').addEventListener('click', function () {
             document.getElementById('f-email').value = this.dataset.email;
             document.getElementById('f-password').value = this.dataset.password;

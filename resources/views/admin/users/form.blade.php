@@ -22,7 +22,7 @@
         </x-card>
         <x-card :title="__('Password')" icon="key-round">
             <div class="form-grid">
-                <x-field name="password" type="password" :label="$user->exists ? __('New password') : __('Password')" span="6" :required="! $user->exists" autocomplete="new-password" :hint="$user->exists ? __('Leave empty to keep the current password.') : __('At least 8 characters.')" />
+                <x-field name="password" type="password" :label="$user->exists ? __('New password') : __('Password')" span="6" :required="! $user->exists" autocomplete="new-password" :hint="$user->exists ? __('Leave empty to keep the current password.') : __('At least 10 characters, with letters and numbers.')" />
                 <x-field name="password_confirmation" type="password" :label="__('Repeat password')" span="6" autocomplete="new-password" />
             </div>
         </x-card>

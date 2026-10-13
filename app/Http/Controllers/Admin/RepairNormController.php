@@ -120,6 +120,8 @@ class RepairNormController extends CatalogController
             throw new \InvalidArgumentException('Part, operation and hours are required');
         }
 
+        $this->checkRow(['part_name' => $name, 'operation' => $operation->value, 'hours' => $hours]);
+
         RepairNorm::updateOrCreate(
             ['part_name' => $name, 'operation' => $operation->value, 'car_model_id' => $this->carModelId($row[3] ?? null)],
             ['hours' => $hours]

@@ -116,12 +116,15 @@ class CarModelController extends CatalogController
             throw new \InvalidArgumentException('Brand and model are required');
         }
 
-        CarModel::updateOrCreate(['brand' => $brand, 'model' => $model], [
+        $values = [
             'category' => ($row[2] ?? '') ?: null,
             'body_type' => ($row[3] ?? '') ?: null,
             'years' => ($row[4] ?? '') ?: null,
             'labor_rate' => NumberInput::float($row[5] ?? null),
-        ]);
+        ];
+        $this->checkRow(['brand' => $brand, 'model' => $model, ...$values]);
+
+        CarModel::updateOrCreate(['brand' => $brand, 'model' => $model], $values);
     }
 
     protected function lookupItem(Model $item): array

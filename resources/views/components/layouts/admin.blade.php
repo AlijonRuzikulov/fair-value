@@ -134,6 +134,13 @@
             @if (session('error'))
                 <div class="toast toast-error" role="alert" data-toast><x-icon name="triangle-alert" :size="18" /> {{ session('error') }}</div>
             @endif
+            @if (session('initial_password') && ! request()->routeIs('admin.profile.*'))
+                <div class="security-note" role="alert">
+                    <x-icon name="triangle-alert" :size="20" />
+                    <span>{{ __('You are signed in with the initial password, which anyone could know. Change it now.') }}</span>
+                    <a class="btn btn-sm" href="{{ route('admin.profile.edit') }}">{{ __('Change password') }}</a>
+                </div>
+            @endif
 
             @if ($back || $actions)
                 <div class="page-bar">

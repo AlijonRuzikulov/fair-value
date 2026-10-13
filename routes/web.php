@@ -31,7 +31,7 @@ Route::get('/sitemap.xml', [Site\PageController::class, 'sitemap'])->name('sitem
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'show'])->name('login');
-    Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:6,1');
+    Route::post('/login', [LoginController::class, 'login'])->middleware('throttle:login');
 });
 Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->name('logout');
 
@@ -41,7 +41,8 @@ Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->
 |--------------------------------------------------------------------------
 */
 
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'active'])->group(function () {
+// auth.session signs out other devices when a password is changed.
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'active'])->group(function () {
     Route::get('/', Admin\DashboardController::class)->name('dashboard');
 
     // Clients
@@ -91,7 +92,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'active'])->group(fu
     Route::get('districts', Admin\DistrictLookupController::class)->name('districts');
 
     Route::get('profile', [Admin\ProfileController::class, 'edit'])->name('profile.edit');
-    Route::put('profile', [Admin\ProfileController::class, 'update'])->name('profile.update');
+    Route::put('profile', [Admin\ProfileController::class, 'update'])->middleware('throttle:10,1')->name('profile.update');
 
     // Administrators only
     Route::middleware('can:admin')->group(function () {

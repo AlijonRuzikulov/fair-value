@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -27,11 +28,14 @@ class LoginController extends Controller
         ]);
 
         if (! Auth::attempt([...$credentials, 'is_active' => true], $request->boolean('remember'))) {
+            Log::warning('Failed sign-in', ['email' => $credentials['email'], 'ip' => $request->ip()]);
+
             throw ValidationException::withMessages(['email' => __('Incorrect e-mail or password.')]);
         }
 
         $request->session()->regenerate();
         $request->user()->forceFill(['last_login_at' => now()])->saveQuietly();
+        $request->session()->put('initial_password', $this->usesInitialPassword($request->user()));
         Activity::record('login', $request->user(), label: $request->user()->name);
 
         return redirect()->intended(route('admin.dashboard'));
@@ -46,6 +50,14 @@ class LoginController extends Controller
         return redirect()->route('login');
     }
 
+    /** Whether the user still signs in with ADMIN_PASSWORD from .env. */
+    private function usesInitialPassword(User $user): bool
+    {
+        $password = (string) config('fairvalue.admin.password');
+
+        return $password !== '' && Hash::check($password, $user->password);
+    }
+
     /**
      * On a trial copy (DEMO_MODE=true) the sign-in page shows the first
      * administrator's login from .env, until that password is changed.
@@ -57,12 +69,12 @@ class LoginController extends Controller
         $email = (string) config('fairvalue.admin.email');
         $password = (string) config('fairvalue.admin.password');
 
-        if (! config('fairvalue.demo') || $email === '' || $password === '') {
+        if (! config('fairvalue.demo') || app()->isProduction() || $email === '' || $password === '') {
             return null;
         }
 
         $admin = User::where('email', $email)->where('is_active', true)->first();
 
-        return $admin && Hash::check($password, $admin->password) ? ['email' => $email, 'password' => $password] : null;
+        return $admin && $this->usesInitialPassword($admin) ? ['email' => $email, 'password' => $password] : null;
     }
 }

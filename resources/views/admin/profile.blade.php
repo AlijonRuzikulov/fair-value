@@ -11,7 +11,7 @@
         <x-card :title="__('Change password')" icon="key-round">
             <div class="form-grid">
                 <x-field name="current_password" type="password" :label="__('Current password')" span="4" autocomplete="current-password" />
-                <x-field name="password" type="password" :label="__('New password')" span="4" autocomplete="new-password" />
+                <x-field name="password" type="password" :label="__('New password')" span="4" autocomplete="new-password" :hint="__('At least 10 characters, with letters and numbers.')" />
                 <x-field name="password_confirmation" type="password" :label="__('Repeat password')" span="4" autocomplete="new-password" />
             </div>
         </x-card>

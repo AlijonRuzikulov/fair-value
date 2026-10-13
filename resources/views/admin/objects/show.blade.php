@@ -7,7 +7,9 @@
 <x-layouts.admin :title="$item->title" :subtitle="$module->singular()" :nav="$nav" :icon="$module->icon()" :back="route($module->routeName('index'), $module->routeParams($item))">
     <x-slot:actions>
         <a class="btn" href="{{ route($module->routeName('print'), $item->id) }}" target="_blank"><x-icon name="printer" :size="16" /> {{ __('Print') }}</a>
-        <a class="btn btn-primary" href="{{ route($module->routeName('edit'), $item->id) }}"><x-icon name="pencil" :size="16" /> {{ __('Edit') }}</a>
+        @can('edit-valuation', $item)
+            <a class="btn btn-primary" href="{{ route($module->routeName('edit'), $item->id) }}"><x-icon name="pencil" :size="16" /> {{ __('Edit') }}</a>
+        @endcan
         @can('delete-records')
             <form method="post" action="{{ route($module->routeName('destroy'), $item->id) }}" data-confirm="{{ __('Delete this record? It can be restored by an administrator.') }}">
                 @csrf @method('delete')

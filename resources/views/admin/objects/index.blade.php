@@ -107,7 +107,7 @@
                                 <td class="t-actions">
                                     <div class="row-actions">
                                         <a class="btn btn-sm btn-icon" href="{{ route($module->routeName('show'), $item->id) }}" title="{{ __('View') }}" aria-label="{{ __('View') }}"><x-icon name="eye" :size="16" /></a>
-                                        <a class="btn btn-sm btn-icon" href="{{ route($module->routeName('edit'), $item->id) }}" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}"><x-icon name="pencil" :size="16" /></a>
+                                        @can('edit-valuation', $item)<a class="btn btn-sm btn-icon" href="{{ route($module->routeName('edit'), $item->id) }}" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}"><x-icon name="pencil" :size="16" /></a>@endcan
                                         <a class="btn btn-sm btn-icon" href="{{ route($module->routeName('print'), $item->id) }}" target="_blank" title="{{ __('Print') }}" aria-label="{{ __('Print') }}"><x-icon name="printer" :size="16" /></a>
                                     </div>
                                 </td>

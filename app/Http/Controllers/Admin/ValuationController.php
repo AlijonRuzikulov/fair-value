@@ -210,6 +210,7 @@ abstract class ValuationController extends Controller
     public function edit(Request $request, string $id): View
     {
         $item = $this->find($id);
+        Gate::authorize('edit-valuation', $item);
         $item->load('clients');
 
         return $this->form($request, $item);
@@ -218,6 +219,7 @@ abstract class ValuationController extends Controller
     public function update(Request $request, string $id): RedirectResponse
     {
         $item = $this->find($id);
+        Gate::authorize('edit-valuation', $item);
         $this->persist($item, $this->validated($request, $item), $request);
 
         return redirect()->route("admin.{$this->slug()}.show", $item->id)->with('status', __('Changes saved.'));
@@ -278,6 +280,10 @@ abstract class ValuationController extends Controller
             'districts' => self::districtOptions(old('region_id', $item->region_id)),
             'personRows' => $this->personRows($item),
             ...$this->sharedOptions(),
+            // Only appraisers and administrators complete a valuation.
+            'statuses' => $request->user()->can('finalize-valuations')
+                ? ValuationStatus::options()
+                : array_diff_key(ValuationStatus::options(), [ValuationStatus::Completed->value => true]),
             ...$this->formData($item),
         ]);
     }
@@ -364,8 +370,12 @@ abstract class ValuationController extends Controller
             'contract_date' => ['nullable', 'date'],
             'service_fee' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
             'report_number' => ['nullable', 'string', 'max:60'],
-            'status' => ['required', Rule::enum(ValuationStatus::class)],
-            'appraiser_id' => ['nullable', 'integer', 'exists:users,id'],
+            'status' => ['required', Rule::enum(ValuationStatus::class)
+                ->when($request->user()->cannot('finalize-valuations'), fn ($rule) => $rule->except([ValuationStatus::Completed]))],
+            // An active appraiser or administrator (or the one already assigned).
+            'appraiser_id' => ['nullable', 'integer', Rule::exists('users', 'id')->where(fn ($query) => $query
+                ->where(fn ($q) => $q->where('is_active', true)->whereIn('role', [UserRole::Admin->value, UserRole::Appraiser->value]))
+                ->when($item?->appraiser_id, fn ($q, $current) => $q->orWhere('id', $current)))],
             'notes' => ['nullable', 'string', 'max:5000'],
             'persons' => ['nullable', 'array', 'max:20'],
             'persons.*.client_id' => ['nullable', 'integer', 'exists:clients,id'],

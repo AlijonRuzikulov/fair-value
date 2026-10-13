@@ -77,6 +77,10 @@
     setTimeout(function () { t.remove(); }, 5400);
   });
 
+  $$('[data-print]').forEach(function (btn) {
+    btn.addEventListener('click', function () { window.print(); });
+  });
+
   document.addEventListener('submit', function (e) {
     var form = e.target;
     if (form.dataset && form.dataset.confirm && !window.confirm(form.dataset.confirm)) e.preventDefault();

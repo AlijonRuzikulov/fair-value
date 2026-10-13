@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
+use App\Models\Activity;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -28,7 +29,8 @@ class UserController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        User::create($this->validated($request));
+        $user = User::create($this->validated($request));
+        Activity::record('created', $user, $this->logged($user), $user->name);
 
         return redirect()->route('admin.users.index')->with('status', __('Employee added.'));
     }
@@ -49,6 +51,9 @@ class UserController extends Controller
         }
 
         $user->update($data);
+        if ($user->wasChanged()) {
+            Activity::record('updated', $user, $this->logged($user), $user->name);
+        }
 
         return redirect()->route('admin.users.index')->with('status', __('Changes saved.'));
     }
@@ -61,6 +66,7 @@ class UserController extends Controller
 
         // Keep the history: employees are deactivated, not deleted.
         $user->update(['is_active' => false]);
+        Activity::record('updated', $user, ['is_active' => false], $user->name);
 
         return redirect()->route('admin.users.index')->with('status', __('The employee has been deactivated.'));
     }
@@ -75,7 +81,7 @@ class UserController extends Controller
             'position' => ['nullable', 'string', 'max:255'],
             'certificate_number' => ['nullable', 'string', 'max:60'],
             'is_active' => ['boolean'],
-            'password' => [$user ? 'nullable' : 'required', 'confirmed', Password::min(8)],
+            'password' => [$user ? 'nullable' : 'required', 'confirmed', Password::defaults()],
         ]);
 
         $data['is_active'] = $request->boolean('is_active');
@@ -84,5 +90,17 @@ class UserController extends Controller
         }
 
         return $data;
+    }
+
+    /** Changed fields for the activity log; the password itself is never written there. */
+    private function logged(User $user): array
+    {
+        $changes = $user->wasRecentlyCreated ? $user->getAttributes() : $user->getChanges();
+        $changes = array_intersect_key($changes, array_flip(['name', 'email', 'role', 'position', 'is_active', 'password']));
+        if (array_key_exists('password', $changes)) {
+            $changes['password'] = '••••••';
+        }
+
+        return $changes;
     }
 }

@@ -139,7 +139,7 @@ class DamageCase extends Model
         return [
             __('Object type') => $this->typeLabel(),
             __('Vehicle') => $this->vehicle_name,
-            __('State number') => $this->plate_number,
+            __('State number') => Vehicle::maskPlate($this->plate_number),
             __('Incident date') => $this->incident_date?->format('d.m.Y'),
         ];
     }

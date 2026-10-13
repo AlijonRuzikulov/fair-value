@@ -195,7 +195,30 @@ TRUSTED_PROXIES=*
 ```
 
 Shunda sayt mijozlarning haqiqiy IP manzilini va `https` ni to‘g‘ri aniqlaydi.
+Muhim: bunda serverga **faqat Cloudflare orqali** kirish mumkin bo‘lsin (server firewall’ida
+80/443 portlarni faqat [Cloudflare IP manzillari](https://www.cloudflare.com/ips/) uchun oching) —
+aks holda kirish urinishlari cheklovini soxta IP bilan aylanib o‘tish mumkin.
 Laravel PHP’da yozilgani uchun uni Cloudflare Workers / Pages’ning o‘zida yurgizib bo‘lmaydi.
+
+### Xavfsizlik — ishga tushirishdan oldin
+
+- `.env`: `APP_ENV=production`, `APP_DEBUG=false`, `DEMO_MODE=false`, `SESSION_SECURE_COOKIE=true`,
+  `APP_URL` — saytning aniq manzili (boshqa domen nomi bilan kelgan so‘rovlarga sayt javob bermaydi).
+- Administrator paroli kamida 12 belgi, boshqa joyda ishlatilmagan bo‘lsin (tizim 10 belgidan qisqa parolni qabul qilmaydi);
+  har bir xodimga alohida hisob va kerakli rol bering (operator, baholovchi, administrator).
+  Ishdan ketgan xodimni **Xodimlar** sahifasida o‘chirib qo‘ying (nofaol qiling).
+- Sayt faqat **https** orqali ochilsin (Cloudflare yoki hostingning bepul SSL’i).
+- Sayt ildizi — faqat `public` papkasi. `.env`, `database/` va `storage/` brauzerdan ochilmasligi kerak.
+- Zaxira nusxa: har kuni bazani (`database/database.sqlite` yoki MySQL dump) va
+  `storage/app` papkasini (yuklangan hujjatlar) boshqa joyga nusxalang.
+- Vaqti-vaqti bilan yangilang: `composer update` va `composer audit` (ma’lum zaifliklarni tekshiradi).
+
+Tizimda: parollar shifrlangan (bcrypt); kirish urinishlari bir hisob uchun daqiqasiga 5 ta,
+soatiga 50 ta bilan cheklangan; parol almashtirilsa boshqa qurilmalardagi seanslar yopiladi;
+barcha formalar CSRF tokeni bilan himoyalangan; brauzerga himoya sarlavhalari (CSP,
+X-Frame-Options va boshqalar) yuboriladi; yuklangan hujjatlar faqat tizimga kirgan xodimlarga
+ochiladi; yakunlangan hisobotni faqat baholovchi yoki administrator o‘zgartira oladi;
+xodimlarning harakatlari **Faoliyat jurnali**ga yoziladi.
 
 ### Telegram’ga ariza xabarlari
 

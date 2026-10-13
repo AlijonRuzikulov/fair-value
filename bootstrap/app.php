@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureUserIsActive;
+use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -14,6 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->append(SecurityHeaders::class);
+        // Outside local development only the APP_URL domain is answered.
+        $middleware->trustHosts();
         $middleware->web(append: [SetLocale::class]);
         $middleware->alias(['active' => EnsureUserIsActive::class]);
         $middleware->redirectUsersTo(fn () => route('admin.dashboard'));

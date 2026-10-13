@@ -102,11 +102,14 @@ class SmallPartController extends CatalogController
             throw new \InvalidArgumentException('Name and price are required');
         }
 
-        SmallPart::updateOrCreate(['name' => $name], [
+        $values = [
             'unit' => array_key_exists($row[1] ?? '', AssetController::units()) ? $row[1] : 'pcs',
             'price' => $price,
             'price_date' => now()->toDateString(),
-        ]);
+        ];
+        $this->checkRow(['name' => $name, ...$values]);
+
+        SmallPart::updateOrCreate(['name' => $name], $values);
     }
 
     protected function lookupItem(Model $item): array

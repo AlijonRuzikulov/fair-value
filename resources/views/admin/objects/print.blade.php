@@ -54,7 +54,7 @@
 </head>
 <body>
 <div class="toolbar">
-    <button type="button" onclick="window.print()">{{ __('Print') }}</button>
+    <button type="button" data-print>{{ __('Print') }}</button>
     <a href="{{ route($module->routeName('show'), $item->id) }}">{{ __('Back') }}</a>
 </div>
 <div class="sheet">

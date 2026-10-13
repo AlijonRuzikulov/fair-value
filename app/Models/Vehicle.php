@@ -57,7 +57,7 @@ class Vehicle extends Model
         return [
             __('Object type') => $this->typeLabel(),
             __('Object') => $this->title,
-            __('State number') => $this->plate_number,
+            __('State number') => self::maskPlate($this->plate_number),
             __('Body number (VIN)') => self::mask($this->vin),
         ];
     }
@@ -70,5 +70,16 @@ class Vehicle extends Model
         }
 
         return substr($value, 0, 3).str_repeat('•', strlen($value) - 9).substr($value, -6);
+    }
+
+    /** Shows only the region code and the last letters: "01 A 123 BC" → "01 ••• BC". */
+    public static function maskPlate(?string $value): ?string
+    {
+        $value = trim((string) $value);
+        if (mb_strlen($value) < 5) {
+            return $value === '' ? null : $value;
+        }
+
+        return mb_substr($value, 0, 2).' ••• '.mb_substr($value, -2);
     }
 }

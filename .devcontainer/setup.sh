@@ -26,6 +26,9 @@ if [ -n "${CODESPACE_NAME:-}" ]; then
     set_env APP_URL "https://${CODESPACE_NAME}-8000.${GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN:-app.github.dev}"
 fi
 set_env TRUSTED_PROXIES '*'
+# The codespace link is public: never show error details to visitors.
+set_env APP_DEBUG false
+set_env SESSION_SECURE_COOKIE true
 # The sign-in page shows the first login until the password is changed.
 set_env DEMO_MODE true
 grep -q '^ADMIN_EMAIL=.' .env || set_env ADMIN_EMAIL admin@fairvalue.uz

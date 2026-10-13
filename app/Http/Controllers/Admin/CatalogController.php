@@ -14,6 +14,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -55,6 +56,15 @@ abstract class CatalogController extends Controller
 
     /** Creates or updates a record from one CSV row (already keyed by position). */
     abstract protected function importRow(array $row): void;
+
+    /** Checks an imported row against the form rules; an invalid row is skipped. */
+    protected function checkRow(array $attributes): void
+    {
+        $validator = Validator::make($attributes, array_intersect_key($this->rules(), $attributes));
+        if ($validator->fails()) {
+            throw new \InvalidArgumentException($validator->errors()->first());
+        }
+    }
 
     /** One entry of the lookup used by the damage calculator. */
     abstract protected function lookupItem(Model $item): array;

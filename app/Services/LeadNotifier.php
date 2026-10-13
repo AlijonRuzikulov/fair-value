@@ -7,6 +7,7 @@ use App\Support\Format;
 use App\Support\Services;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Throwable;
 
 /**
@@ -26,8 +27,9 @@ class LeadNotifier
 
         $lines = [
             '🆕 Yangi ariza #'.$lead->id,
-            '👤 '.$lead->name,
-            '📞 '.Format::phone($lead->phone),
+            // One line each, so text from the form cannot imitate other lines.
+            '👤 '.Str::squish($lead->name),
+            '📞 '.Str::squish(Format::phone($lead->phone)),
         ];
         if ($lead->service) {
             $lines[] = '📋 '.(Services::titles()[$lead->service] ?? $lead->service);
@@ -35,7 +37,8 @@ class LeadNotifier
         if ($lead->message) {
             $lines[] = '💬 '.$lead->message;
         }
-        $lines[] = route('admin.leads.show', $lead);
+        // From APP_URL, not from the request's Host header.
+        $lines[] = rtrim((string) config('app.url'), '/').route('admin.leads.show', $lead, false);
 
         try {
             Http::timeout(5)->post("https://api.telegram.org/bot{$token}/sendMessage", [

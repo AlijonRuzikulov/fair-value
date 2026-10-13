@@ -38,7 +38,7 @@ class AttachmentController extends Controller
         foreach ($request->file('files') as $file) {
             $path = $file->storeAs(
                 'attachments/'.$data['type'].'/'.$owner->getKey(),
-                Str::uuid().'.'.strtolower($file->getClientOriginalExtension()),
+                Str::uuid().'.'.strtolower($file->extension() ?: $file->getClientOriginalExtension()),
                 'local'
             );
 

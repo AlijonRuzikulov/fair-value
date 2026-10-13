@@ -36,7 +36,7 @@ class CsvExport
         $value = (string) ($value ?? '');
 
         // Prevent spreadsheet formula injection.
-        if ($value !== '' && in_array($value[0], ['=', '+', '-', '@'], true) && ! is_numeric($value)) {
+        if ($value !== '' && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true) && ! is_numeric($value)) {
             $value = "'".$value;
         }
 
