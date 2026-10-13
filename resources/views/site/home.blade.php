@@ -2,12 +2,12 @@
     use App\Models\Setting;
     use App\Support\Format;
     $phone = Setting::get('phone');
-    $stats = [
+    $stats = array_filter([
         [Setting::get('stat_years'), __('years on the market')],
         [Setting::get('stat_reports'), __('reports completed')],
         [Setting::get('stat_clients'), __('satisfied clients')],
         [Setting::get('stat_banks'), __('banks accept our reports')],
-    ];
+    ], fn ($stat) => filled($stat[0]));
     $faq = [
         [__('How much does a valuation cost?'), __('The price depends on the type of property, its size and the purpose of the valuation. Call us or leave a request — we will name the exact price, and it is fixed in the contract before the work starts.')],
         [__('How long does it take?'), __('An apartment, a house or a car is usually valued within 1–2 working days after the inspection. Business, equipment complexes and large objects take from 5 working days.')],
@@ -44,16 +44,18 @@
         </div>
     </section>
 
-    {{-- Numbers --}}
-    <section class="stats">
-        <div class="container">
-            <div class="stats-grid">
-                @foreach ($stats as [$value, $label])
-                    <div class="stat"><strong>{{ $value }}</strong><span>{{ $label }}</span></div>
-                @endforeach
+    {{-- Numbers (only those filled in on the Settings page) --}}
+    @if ($stats)
+        <section class="stats">
+            <div class="container">
+                <div class="stats-grid" style="--n: {{ count($stats) }}">
+                    @foreach ($stats as [$value, $label])
+                        <div class="stat"><strong>{{ $value }}</strong><span>{{ $label }}</span></div>
+                    @endforeach
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
+    @endif
 
     {{-- Services --}}
     <section class="section" id="services">

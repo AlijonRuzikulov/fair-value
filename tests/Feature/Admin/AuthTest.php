@@ -17,13 +17,19 @@ class AuthTest extends TestCase
         $this->get('/login')->assertOk();
     }
 
-    public function test_demo_login_is_shown_only_in_demo_mode(): void
+    public function test_first_login_is_shown_on_a_trial_copy_until_the_password_is_changed(): void
     {
+        config(['fairvalue.admin.email' => 'admin@fairvalue.uz', 'fairvalue.admin.password' => 'admin12345']);
+        $admin = User::factory()->admin()->create(['email' => 'admin@fairvalue.uz', 'password' => 'admin12345']);
+
         config(['fairvalue.demo' => false]);
-        $this->get('/login')->assertOk()->assertDontSee('demo12345')->assertDontSee('data-demo-fill', false);
+        $this->get('/login')->assertOk()->assertDontSee('admin12345')->assertDontSee('data-demo-fill', false);
 
         config(['fairvalue.demo' => true]);
-        $this->get('/login')->assertOk()->assertSee('demo@fairvalue.uz')->assertSee('demo12345')->assertSee('data-demo-fill', false);
+        $this->get('/login')->assertOk()->assertSee('admin@fairvalue.uz')->assertSee('admin12345')->assertSee('data-demo-fill', false);
+
+        $admin->update(['password' => 'my-own-password']);
+        $this->get('/login')->assertOk()->assertDontSee('admin12345')->assertDontSee('data-demo-fill', false);
     }
 
     public function test_employee_can_sign_in_and_out(): void

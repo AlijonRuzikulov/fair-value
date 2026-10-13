@@ -39,10 +39,11 @@
                     </div>
                 </div>
 
-                @if (config('fairvalue.demo'))
+                @if ($hint)
                     <div class="auth-demo">
-                        <span><strong>{{ __('Demo access') }}:</strong> <code>demo@fairvalue.uz</code> / <code>demo12345</code></span>
-                        <button type="button" class="btn btn-sm" data-demo-fill><x-icon name="key-round" :size="14" /> {{ __('Fill in') }}</button>
+                        <span><strong>{{ __('First sign-in') }}:</strong> <code>{{ $hint['email'] }}</code> / <code>{{ $hint['password'] }}</code></span>
+                        <button type="button" class="btn btn-sm" data-demo-fill data-email="{{ $hint['email'] }}" data-password="{{ $hint['password'] }}"><x-icon name="key-round" :size="14" /> {{ __('Fill in') }}</button>
+                        <small>{{ __('Change the password in your profile after signing in — this hint will then disappear.') }}</small>
                     </div>
                 @endif
 
@@ -67,11 +68,11 @@
         </div>
     </main>
 </div>
-@if (config('fairvalue.demo'))
+@if ($hint)
     <script>
         document.querySelector('[data-demo-fill]').addEventListener('click', function () {
-            document.getElementById('f-email').value = 'demo@fairvalue.uz';
-            document.getElementById('f-password').value = 'demo12345';
+            document.getElementById('f-email').value = this.dataset.email;
+            document.getElementById('f-password').value = this.dataset.password;
         });
     </script>
 @endif

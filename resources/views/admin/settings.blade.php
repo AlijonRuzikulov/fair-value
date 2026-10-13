@@ -29,6 +29,7 @@
         </x-card>
 
         <x-card :title="__('Numbers on the home page')" icon="chart-column">
+            <p class="field-hint" style="margin-bottom: 14px">{{ __('Fill in only real figures, for example 5+ or 300+. An empty field is not shown on the website.') }}</p>
             <div class="form-grid">
                 <x-field name="stat_years" :label="__('Years of experience')" :value="$values['stat_years']" span="3" />
                 <x-field name="stat_reports" :label="__('Reports completed')" :value="$values['stat_reports']" span="3" />

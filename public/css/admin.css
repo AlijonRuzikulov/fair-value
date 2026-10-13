@@ -1185,6 +1185,7 @@ a.page-link:hover { background: var(--neutral-soft); }
 }
 .auth-demo strong { color: var(--brand-ink); }
 .auth-demo code { font-family: ui-monospace, Menlo, Consolas, monospace; font-weight: 700; color: var(--ink); }
+.auth-demo small { color: var(--muted); font-size: 12px; line-height: 1.45; }
 .auth-foot { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 20px; }
 .auth-langs { display: flex; gap: 4px; padding: 4px; border-radius: 10px; background: var(--neutral-soft); }
 .auth-langs a { padding: 4px 10px; border-radius: 7px; font-size: 12px; font-weight: 700; color: var(--muted); }

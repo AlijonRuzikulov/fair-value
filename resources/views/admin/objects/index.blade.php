@@ -50,7 +50,8 @@
         </div>
 
         @if ($items->isEmpty())
-            <x-empty :icon="$module->icon()" :text="__('Try changing the filters or add a new record.')">
+            @php $searching = collect(request()->except(['page', 'kind']))->filter(fn ($value) => filled($value))->isNotEmpty(); @endphp
+            <x-empty :icon="$module->icon()" :title="$searching ? null : __('No records yet')" :text="$searching ? __('Try changing the filters or add a new record.') : __('Add the first record — it will appear here.')">
                 <a class="btn btn-primary" href="{{ route($module->routeName('create'), $params) }}"><x-icon name="plus" :size="16" /> {{ __('Add') }}</a>
             </x-empty>
         @else

@@ -45,10 +45,11 @@ return [
         'bank_mfo' => '',
         'director' => '',
         'map_url' => '',
-        'stat_years' => '10+',
-        'stat_reports' => '5000+',
-        'stat_clients' => '3000+',
-        'stat_banks' => '20+',
+        // Numbers on the home page; empty ones are not shown.
+        'stat_years' => '',
+        'stat_reports' => '',
+        'stat_clients' => '',
+        'stat_banks' => '',
         'labor_rate' => '120000',
     ],
 

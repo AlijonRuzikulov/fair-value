@@ -3,23 +3,19 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\User;
+use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\DemoSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 /**
- * Every admin page renders with demo data in every language.
+ * Every admin page renders in every language, with sample data and on the
+ * empty system a new installation starts with.
  */
 class PagesTest extends TestCase
 {
     use RefreshDatabase;
-
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->seed(DemoSeeder::class);
-    }
 
     public static function pages(): array
     {
@@ -69,10 +65,31 @@ class PagesTest extends TestCase
         ];
     }
 
+    /** Pages that do not need an existing record. */
+    public static function emptyPages(): array
+    {
+        return array_values(array_filter(self::pages(), fn (array $page) => ! preg_match('~/\d+(/|$)|=1\b~', $page[0])));
+    }
+
     #[DataProvider('pages')]
     public function test_page_renders(string $url): void
     {
-        $admin = User::where('email', 'demo@fairvalue.uz')->first();
+        $this->seed(DemoSeeder::class);
+
+        $this->assertPageRenders($url);
+    }
+
+    #[DataProvider('emptyPages')]
+    public function test_page_renders_on_an_empty_system(string $url): void
+    {
+        $this->seed(DatabaseSeeder::class);
+
+        $this->assertPageRenders($url);
+    }
+
+    private function assertPageRenders(string $url): void
+    {
+        $admin = User::where('email', config('fairvalue.admin.email'))->firstOrFail();
 
         foreach (array_keys(config('fairvalue.locales')) as $locale) {
             $this->actingAs($admin)

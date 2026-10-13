@@ -46,8 +46,8 @@
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
             "@php artisan key:generate",
             "@php -r \"touch('database/database.sqlite');\"",
-            "@php artisan migrate:fresh --seed --seeder=DemoSeeder --force",
-            "@php -r \"file_put_contents('.env', rtrim(preg_replace('/^DEMO_MODE=.*/m', '', file_get_contents('.env'))).PHP_EOL.'DEMO_MODE=true'.PHP_EOL);\""
+            "@php -r \"file_put_contents('.env', rtrim(preg_replace(['/^DEMO_MODE=.*/m', '/^ADMIN_PASSWORD=[ \\t]*\\n/m'], ['', 'ADMIN_PASSWORD=admin12345'.PHP_EOL], file_get_contents('.env'))).PHP_EOL.'DEMO_MODE=true'.PHP_EOL);\"",
+            "@php artisan migrate:fresh --seed --seeder=DemoSeeder --force"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",

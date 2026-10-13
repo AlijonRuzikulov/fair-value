@@ -60,18 +60,23 @@ shaxsiy ma’lumotlari bu sahifada **hech qachon** ko‘rsatilmaydi.
 
 ## Hozir sinab ko‘rish
 
+Tizim **bo‘sh** holda ishga tushadi: mijozlar, obyektlar, arizalar va xodimlar yo‘q —
+faqat viloyat/tumanlar ro‘yxati va bitta administrator. Hammasini o‘zingiz kiritasiz.
+
 ### 1-usul: brauzerda, hech narsa o‘rnatmasdan (GitHub Codespaces)
 
 1. GitHub’da repozitoriyni oching va **`claude/amazing-bohr-4qrtrr`** branchini tanlang.
 2. Yashil **Code** tugmasi → **Codespaces** → **Create codespace on claude/amazing-bohr-4qrtrr**.
-3. 3–5 daqiqa kuting: PHP, kutubxonalar va namuna ma’lumotlar avtomatik o‘rnatiladi.
+3. 3–5 daqiqa kuting: PHP, kutubxonalar va baza avtomatik o‘rnatiladi.
 4. Pastdagi **Ports** bo‘limida **8000** portining yonidagi globus belgisini bosing — sayt yangi oynada ochiladi.
-5. Admin panel: manzil oxiriga `/admin` qo‘shing, kirish — `demo@fairvalue.uz` / `demo12345`.
+5. Admin panel: manzil oxiriga `/admin` qo‘shing. Birinchi kirish — `admin@fairvalue.uz` / `admin12345`
+   (kirish sahifasida ham ko‘rsatib turiladi). Kirgach, o‘ng yuqoridagi ism → **Mening profilim** da
+   parolni almashtiring — shundan keyin bu yozuv kirish sahifasidan yo‘qoladi.
 
 Shaxsiy GitHub hisobida Codespaces oyiga ~60 soat bepul. Ishlatmaganda
-*Codespaces → Stop codespace* qiling.
+*Codespaces → Stop codespace* qiling. Kiritilgan ma’lumotlar codespace o‘chirilmaguncha saqlanadi.
 
-**“HTTP ERROR 502” chiqsa** — server hali ishga tushmagan. Codespace oynasida
+**“HTTP ERROR 502” chiqsa yoki yangi versiyani olish kerak bo‘lsa** — Codespace oynasida
 terminalni oching (`Ctrl + \``) va bajaring:
 
 ```bash
@@ -80,7 +85,9 @@ bash .devcontainer/setup.sh
 bash .devcontainer/serve.sh
 ```
 
-Terminalda `Server running on [http://0.0.0.0:8000]` yozuvi chiqqach, sayt sahifasini yangilang.
+`setup.sh` kiritilgan ma’lumotlarni o‘chirmaydi (faqat eski versiyadagi namuna
+ma’lumotlarni bir marta tozalaydi). Terminalda `Server running on [http://0.0.0.0:8000]`
+yozuvi chiqqach, sayt sahifasini yangilang.
 
 ### 2-usul: o‘z kompyuteringizda (Windows, macOS)
 
@@ -91,31 +98,45 @@ Terminalda `Server running on [http://0.0.0.0:8000]` yozuvi chiqqach, sayt sahif
 3. Loyiha papkasida terminal (PowerShell) oching va bajaring:
 
 ```bash
-composer install
-composer demo          # .env, kalit va namuna ma’lumotlar bilan SQLite baza
+composer setup         # kutubxonalar, .env, kalit, bo‘sh baza va administrator
 php artisan serve
 ```
 
-4. Brauzerda <http://localhost:8000> — sayt, <http://localhost:8000/admin> — admin panel
-   (`demo@fairvalue.uz` / `demo12345`).
+4. Terminalda `Administrator: admin@fairvalue.uz / ...` qatori chiqadi — shu login va parol bilan
+   <http://localhost:8000/admin> ga kiring. Sayt: <http://localhost:8000>.
+   Parolni oldindan o‘zingiz belgilash uchun `.env` dagi `ADMIN_PASSWORD` ni to‘ldiring.
 
-`composer demo` bazani tozalab, qaytadan namuna ma’lumotlar bilan to‘ldiradi —
-**ishlab turgan saytda ishlatmang**. Katalogdagi narxlar ham faqat namuna.
-U `.env` ga `DEMO_MODE=true` yozadi — kirish sahifasida demo login va
-“To‘ldirish” tugmasi chiqadi. Haqiqiy saytda `DEMO_MODE=false` bo‘lsin.
+### Namuna ma’lumotlar bilan ko‘rish (faqat sinov uchun)
 
-### Haqiqiy ish uchun (namuna ma’lumotlarsiz)
+```bash
+composer demo
+```
+
+Bazani **butunlay o‘chirib**, o‘ylab topilgan mijozlar, obyektlar, arizalar va narxlar bilan
+to‘ldiradi; kirish — `admin@fairvalue.uz` / `admin12345`. **Ishlab turgan saytda ishlatmang.**
+
+### Bazani butunlay tozalash
+
+```bash
+php artisan migrate:fresh --seed --force
+```
+
+Barcha ma’lumotlar o‘chadi, faqat viloyatlar va administrator qayta yaratiladi.
+
+### Haqiqiy ish uchun
 
 ```bash
 composer install
-cp .env.example .env
+cp .env.example .env                     # ADMIN_EMAIL / ADMIN_PASSWORD ni to‘ldiring
 php artisan key:generate
 touch database/database.sqlite          # yoki .env da MySQL sozlang
 php artisan migrate --seed               # hududlar va birinchi administrator
 ```
 
-`db:seed` administratorning e-mail va parolini ekranga chiqaradi
-(`.env` dagi `ADMIN_EMAIL` / `ADMIN_PASSWORD` orqali o‘zingiz belgilashingiz mumkin).
+`db:seed` administratorning e-mail va parolini ekranga chiqaradi. Haqiqiy saytda
+`.env` da `DEMO_MODE=false` bo‘lsin — u yoqilganda kirish sahifasida birinchi login ko‘rinadi.
+Bosh sahifadagi raqamlar (yillar, hisobotlar, mijozlar, banklar) **Sozlamalar** sahifasida
+kiritiladi; bo‘sh qoldirilsa saytda ko‘rinmaydi.
 
 ---
 

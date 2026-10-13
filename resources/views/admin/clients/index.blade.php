@@ -39,7 +39,10 @@
         </div>
 
         @if ($clients->isEmpty())
-            <x-empty icon="users" :text="__('Try changing the filters or add a new record.')" />
+            @php $searching = collect(request()->except(['page', 'type']))->filter(fn ($value) => filled($value))->isNotEmpty(); @endphp
+            <x-empty icon="users" :title="$searching ? null : __('No clients yet')" :text="$searching ? __('Try changing the filters or add a new record.') : __('Add the first client — it will appear here.')">
+                @unless ($searching)<a class="btn btn-primary" href="{{ route('admin.clients.create', ['type' => $type->value]) }}"><x-icon name="plus" :size="16" /> {{ __('Add') }}</a>@endunless
+            </x-empty>
         @else
             <div class="table-wrap">
                 <table class="table">

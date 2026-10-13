@@ -23,11 +23,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Seeder;
 
 /**
- * Sample data for trying the system out:
+ * Sample data for trying the system out (composer demo):
  *
  *     php artisan db:seed --class=DemoSeeder
  *
- * Do not run on the production database. Catalogue prices are examples
+ * The real system starts empty (DatabaseSeeder: regions and the first
+ * administrator only). Do not run on the production database. Catalogue prices are examples
  * only and must be replaced with real price lists.
  */
 class DemoSeeder extends Seeder
@@ -36,8 +37,8 @@ class DemoSeeder extends Seeder
     {
         $this->call(DatabaseSeeder::class);
 
-        if (! User::where('email', 'demo@fairvalue.uz')->exists()) {
-            User::factory()->admin()->create(['name' => 'Asliddin Saydaliyev', 'email' => 'demo@fairvalue.uz', 'password' => 'demo12345']);
+        // Sign in as the administrator from DatabaseSeeder (ADMIN_EMAIL / ADMIN_PASSWORD).
+        if (! User::where('email', 'dilshod@fairvalue.uz')->exists()) {
             User::factory()->create(['name' => 'Dilshod Karimov', 'email' => 'dilshod@fairvalue.uz']);
             User::factory()->create(['name' => 'Malika Yusupova', 'email' => 'malika@fairvalue.uz']);
             User::factory()->operator()->create(['name' => 'Nilufar Rahimova', 'email' => 'nilufar@fairvalue.uz']);

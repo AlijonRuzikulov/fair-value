@@ -24,5 +24,5 @@ if php -r 'exit(@fsockopen("127.0.0.1", 8000) ? 0 : 1);'; then
     exit 0
 fi
 
-echo "Fair Value: open the PORTS tab → port 8000 (globe icon). Admin: /admin — demo@fairvalue.uz / demo12345"
+echo "Fair Value: open the PORTS tab → port 8000 (globe icon). Admin panel: /admin (the login is shown on the sign-in page)"
 exec php artisan serve --host=0.0.0.0 --port=8000
