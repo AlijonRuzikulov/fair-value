@@ -12,6 +12,8 @@ use App\Models\Client;
 use App\Models\District;
 use App\Models\Region;
 use App\Models\User;
+use App\Services\Analogs\AnalogFinder;
+use App\Services\Analogs\ListingAi;
 use App\Services\CurrencyService;
 use App\Support\CsvExport;
 use App\Support\Format;
@@ -187,7 +189,7 @@ abstract class ValuationController extends Controller
         $class = $this->model();
         $item = $this->persist(new $class, $this->validated($request, null), $request);
 
-        return redirect()->route("admin.{$this->slug()}.show", $item->id)->with('status', __('Saved.'));
+        return redirect()->route("admin.{$this->slug()}.show", $item->id)->with('status', __('Saved.'))->with('find_analogs', self::shouldFindAnalogs($item));
     }
 
     public function show(Request $request, string $id): View
@@ -222,7 +224,20 @@ abstract class ValuationController extends Controller
         Gate::authorize('edit-valuation', $item);
         $this->persist($item, $this->validated($request, $item), $request);
 
-        return redirect()->route("admin.{$this->slug()}.show", $item->id)->with('status', __('Changes saved.'));
+        return redirect()->route("admin.{$this->slug()}.show", $item->id)->with('status', __('Changes saved.'))->with('find_analogs', self::shouldFindAnalogs($item));
+    }
+
+    /**
+     * The comparative approach was chosen and there are no analogues yet:
+     * the object page starts the automatic search by itself.
+     */
+    private static function shouldFindAnalogs(Model $item): bool
+    {
+        return in_array($item::class, AnalogFinder::OBJECTS, true)
+            && in_array(ValuationApproach::Comparative->value, (array) $item->approaches, true)
+            && $item->analogs()->doesntExist()
+            && Gate::allows('edit-valuation', $item)
+            && app(ListingAi::class)->available();
     }
 
     public function destroy(Request $request, string $id): RedirectResponse

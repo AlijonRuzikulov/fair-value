@@ -34,6 +34,7 @@
 
             @includeIf('admin.'.$module->slugName().'._show')
 
+
             <x-card :title="__('Persons')" icon="users" flush>
                 @if ($item->clients->isEmpty())
                     <x-empty icon="users" :title="__('No persons linked')" />
@@ -127,6 +128,12 @@
             @include('admin.objects._activity', ['activities' => $item->activities])
         </aside>
     </div>
+
+    @if ($analogType = array_search($item::class, \App\Services\Analogs\AnalogFinder::OBJECTS, true))
+        <div style="margin-top: 20px">
+            @include('admin.objects._analogs', ['analogType' => $analogType, 'aiAvailable' => app(\App\Services\Analogs\ListingAi::class)->available()])
+        </div>
+    @endif
 
     @push('scripts')
         <script src="{{ asset('js/vendor/qrcode.js') }}"></script>

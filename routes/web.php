@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\Site;
+use App\Services\Analogs\AnalogFinder;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -79,6 +80,16 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
     }
 
     // "Baholash plus" — valuation calculators
+    // Analogues of the comparative approach
+    Route::controller(Admin\AnalogController::class)->group(function () {
+        $types = array_keys(AnalogFinder::OBJECTS);
+        Route::post('{type}/{id}/analogs', 'store')->whereIn('type', $types)->whereNumber('id')->middleware('throttle:20,1')->name('analogs.store');
+        Route::put('{type}/{id}/analogs', 'update')->whereIn('type', $types)->whereNumber('id')->name('analogs.update');
+        Route::post('{type}/{id}/analogs/apply', 'apply')->whereIn('type', $types)->whereNumber('id')->name('analogs.apply');
+        Route::post('analogs/{analog}/fill', 'fill')->middleware('throttle:60,1')->name('analogs.fill');
+        Route::delete('analogs/{analog}', 'destroy')->name('analogs.destroy');
+    });
+
     Route::get('tools', Admin\ToolsController::class)->name('tools');
 
     // Website requests

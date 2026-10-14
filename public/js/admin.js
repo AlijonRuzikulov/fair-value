@@ -77,6 +77,51 @@
     setTimeout(function () { t.remove(); }, 5400);
   });
 
+  /* ---------- Analogues: read the saved links one at a time ---------- */
+
+  var fillBox = $('[data-analog-fill]');
+  if (fillBox) {
+    var fillUrls = JSON.parse(fillBox.getAttribute('data-analog-fill') || '[]');
+    var counter = $('[data-progress]', fillBox);
+    var csrf = $('meta[name="csrf-token"]');
+    var done = 0;
+    var failed = 0;
+    var next = function () {
+      if (!fillUrls.length) {
+        if (failed && failed === done) {
+          fillBox.textContent = fillBox.getAttribute('data-failed');
+        } else {
+          window.location.reload();
+        }
+        return;
+      }
+      fetch(fillUrls.shift(), {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'X-CSRF-TOKEN': csrf ? csrf.content : '', 'Accept': 'application/json' }
+      }).then(function (r) { if (!r.ok) failed++; }, function () { failed++; })
+        .then(function () { done++; if (counter) counter.textContent = done; next(); });
+    };
+    next();
+  }
+
+  /* A long request: show that it is running and prevent a second click. */
+  document.addEventListener('submit', function (e) {
+    var busy = e.target.querySelector && e.target.querySelector('[data-busy]');
+    if (!busy || e.defaultPrevented) return;
+    setTimeout(function () {
+      busy.disabled = true;
+      busy.textContent = busy.getAttribute('data-busy');
+    }, 0);
+  });
+
+  /* The comparative approach was just chosen: search for analogues at once. */
+  var autoForm = $('form[data-auto-submit]');
+  if (autoForm) {
+    autoForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (autoForm.requestSubmit) autoForm.requestSubmit(); else autoForm.submit();
+  }
+
   $$('[data-print]').forEach(function (btn) {
     btn.addEventListener('click', function () { window.print(); });
   });

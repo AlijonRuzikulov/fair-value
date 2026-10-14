@@ -1064,6 +1064,58 @@ a.page-link:hover { background: var(--neutral-soft); }
 .analog-table input.input { height: 36px; font-size: 13px; }
 .analog-table td, .analog-table th { padding: 8px 6px; vertical-align: middle; }
 
+/* --- Analogues (comparative approach) -------------------------------- */
+
+.analog-tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 14px; }
+.analog-tool { display: grid; gap: 8px; align-content: start; padding: 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-2, #fafbff); }
+.analog-tool .btn { justify-self: start; }
+.analog-tool textarea.input { min-height: 74px; }
+.analog-tool-title { display: flex; align-items: center; gap: 8px; font-weight: 800; color: var(--ink); }
+.analog-tool-title .icon { color: var(--brand-2, #7c3aed); }
+.analog-manual { margin-bottom: 16px; border: 1px dashed var(--line); border-radius: 14px; padding: 12px 16px; }
+.analog-manual summary { display: flex; align-items: center; gap: 8px; font-weight: 700; cursor: pointer; list-style: none; }
+.analog-manual summary::-webkit-details-marker { display: none; }
+.analog-manual[open] summary { margin-bottom: 14px; }
+.analog-progress { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding: 12px 16px; border-radius: 12px; background: var(--brand-soft); color: var(--brand-ink); font-weight: 600; }
+.spinner { width: 18px; height: 18px; border: 2.5px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.analog-list td, .analog-list th { padding: 8px 8px; vertical-align: top; }
+.analog-list th { white-space: nowrap; }
+.analog-list .input { height: 34px; padding: 0 8px; font-size: 13px; }
+.analog-list tbody + tbody { border-top: 1px solid var(--line); }
+.analog-list .analog-row > tr > td { border-bottom: 0; }
+.analog-list .analog-row.is-off td { background: #fafafa; }
+.analog-list .analog-row.is-off .analog-offer a { color: var(--muted); }
+.analog-offer { min-width: 240px; max-width: 360px; }
+.analog-offer a { font-weight: 700; }
+.analog-no { margin-right: 4px; font-weight: 800; color: var(--muted); }
+.analog-offer .badge { margin-top: 4px; }
+.analog-note { display: block; margin-top: 4px; font-size: 12px; color: #b45309; }
+.analog-price { display: flex; gap: 4px; }
+.analog-price input.input { width: 118px; }
+.analog-price select.input { width: 74px; padding-right: 22px; background-position: right 4px center; }
+.analog-floor { white-space: nowrap; }
+.analog-floor .input { width: 46px; }
+.w-80 { width: 84px; }
+.analog-adj td { padding-top: 0; }
+.analog-adj-inner { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font-size: 12px; color: var(--muted); }
+.analog-adj-title { font-weight: 700; }
+.adj-field { display: inline-flex; align-items: center; gap: 6px; }
+.adj-field .input.adj-input { width: 58px; height: 30px; text-align: right; }
+.adj-total { font-weight: 800; color: var(--ink); }
+.analog-actions { display: flex; justify-content: flex-end; margin-top: 12px; }
+.analog-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+.analog-summary small { font-size: 12px; opacity: .85; }
+.analog-summary .result-box strong { font-size: 21px; }
+.result-box.is-warning { background: #fff7ed; color: #9a3412; }
+.result-box.is-main { background: var(--grad, var(--brand)); color: #fff; }
+.result-box.is-main strong { color: #fff; }
+.analog-apply { display: flex; align-items: center; justify-content: flex-end; gap: 14px; flex-wrap: wrap; margin-top: 14px; }
+@media (max-width: 900px) {
+  .analog-tools { grid-template-columns: minmax(0, 1fr); }
+  .analog-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 /* --- Auth ------------------------------------------------------------- */
 
 .auth {

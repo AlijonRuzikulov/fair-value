@@ -50,6 +50,9 @@
                             <x-field :name="'value_'.$value" :value="$item->{'value_'.$value}" money :suffix="__('sum')" span="12" :placeholder="__('Value by this approach')" data-approach-value />
                         </div>
                     @endforeach
+                    @if (in_array($item::class, \App\Services\Analogs\AnalogFinder::OBJECTS, true))
+                        <p class="field-hint span-12">{{ __('With the comparative approach, similar offers are found on the listing sites and compared on the object page after saving.') }}</p>
+                    @endif
                     <x-field name="market_value" :label="__('Market value (final)')" :value="$item->market_value" money :suffix="__('sum')" span="6" :hint="__('The result of reconciling the approaches.')" />
                 @endif
             </div>

@@ -25,6 +25,7 @@ Interfeys uch tilda ishlaydi: **o‘zbekcha (kirill)**, **o‘zbekcha (lotin)** 
 | **Yetkazilgan zarar** | Zararni baholash kalkulyatori: ehtiyot qismlar − eskirish + kichik qismlar + ta’mir ishlari (normo-soat × narx) + bo‘yoq + boshqa + tovar qiymatining yo‘qotilishi. Kataloglar: avtolar ro‘yxati, avto ehtiyot qismlar, kichik ehtiyot qismlar, ta’mir muddati normalari (Excel/CSV’dan import) |
 | **Boshqa mol-mulk** | Biznes, ulushlar, nomoddiy aktivlar, yer huquqi va boshqalar |
 | **Baholash plyus** | Qiyosiy (analoglar bilan), xarajat va daromad yondashuvlari kalkulyatorlari, natijalarni kelishtirish, valyuta konvertori |
+| **Qiyosiy yondashuv — analoglar** | Ko‘chmas mulk sahifasida: OLX.uz, Uybor.uz va boshqa saytlardan o‘xshash e’lonlarni topish (sun’iy intellekt) yoki link orqali qo‘shish, tuzatishlar, vaznlar va qiymat hisobi |
 | **Saytdan arizalar** | Saytdan kelgan arizalar, holatini belgilash; xohlasangiz Telegram’ga xabar |
 | **Xodimlar** | Rollar: administrator, baholovchi, operator |
 | **Viloyat va tumanlar** | O‘zbekistonning 14 ta hududi va 200+ tumani (uch tilda) |
@@ -244,6 +245,37 @@ barcha formalar CSRF tokeni bilan himoyalangan; brauzerga himoya sarlavhalari (C
 X-Frame-Options va boshqalar) yuboriladi; yuklangan hujjatlar faqat tizimga kirgan xodimlarga
 ochiladi; yakunlangan hisobotni faqat baholovchi yoki administrator o‘zgartira oladi;
 xodimlarning harakatlari **Faoliyat jurnali**ga yoziladi.
+
+### Qiyosiy yondashuv: analoglarni avtomatik topish
+
+Ko‘chmas mulk obyektida **“Qiyosiy”** yondashuv belgilanib saqlansa, obyekt sahifasidagi
+**“Qiyosiy yondashuv — analoglar”** bo‘limi o‘xshash e’lonlarni o‘zi qidiradi:
+
+1. **Topish.** Sun’iy intellekt (Claude) OLX.uz, Uybor.uz, Realt24.uz, Domtut.uz saytlarida obyektga
+   o‘xshash (turi, maydoni, xonalari, tumani) sotuv e’lonlarini qidiradi. Yoki baholovchi o‘zi
+   e’lon linklarini yoki saytda filtrlar bilan ochilgan qidiruv sahifasi linkini qo‘yadi.
+2. **O‘qish.** Server har bir e’lon sahifasini ochadi va narx, valyuta, maydon, xonalar, qavatni ajratib
+   oladi. Dollardagi narxlar Markaziy bank kursi bo‘yicha so‘mga o‘tkaziladi.
+3. **Tuzatishlar.** Har bir analog uchun taklif qilinadi: savdolashish −5 %, maydon farqi,
+   1-qavat / oxirgi qavat; joylashuv, holat va boshqa tuzatishlarni baholovchi kiritadi.
+   Narxi boshqalardan ±35 % dan ortiq farq qiladigan e’lon avtomatik chetga olinadi.
+4. **Natija.** Tuzatilgan 1 m² narxlari vaznlar bilan o‘rtacha olinadi (kam tuzatish talab qilgan analog
+   ko‘proq hisobga olinadi), obyekt maydoniga ko‘paytiriladi. Tarqoqlik 33 % dan oshsa, ogohlantiriladi.
+   **“Qiyosiy qiymat sifatida saqlash”** natijani obyektga yozadi.
+
+Avtomatik qidiruv uchun `.env` ga Claude API kalitini yozing ([console.anthropic.com](https://console.anthropic.com)):
+
+```env
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+Kalitsiz ham ishlaydi: e’lon linklarini qo‘ysangiz, sahifadagi ma’lumotlar (narx, maydon va h.k.) o‘qiladi,
+yoki e’lonni qo‘lda kiritasiz. Sun’iy intellektga **faqat ochiq e’lon sahifalari va obyekt tavsifi**
+(maydon, xonalar, tuman) yuboriladi — mijozlarning shaxsiy ma’lumotlari yuborilmaydi.
+Server faqat ro‘yxatdagi saytlarga murojaat qiladi (`ANALOG_DOMAINS`).
+
+**Muhim:** e’lonlar — sotuvchining so‘ragan narxi; topilgan qiymatlar va tuzatishlarni har doim baholovchi
+tekshiradi. Saytlar tuzilishini o‘zgartirsa, ba’zi maydonlarni qo‘lda to‘ldirishga to‘g‘ri kelishi mumkin.
 
 ### Telegram’ga ariza xabarlari
 

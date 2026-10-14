@@ -40,4 +40,10 @@ return [
         'chat_id' => env('TELEGRAM_CHAT_ID'),
     ],
 
+    // Claude (Anthropic) — finds and reads sale offers for the comparative approach.
+    'anthropic' => [
+        'key' => env('ANTHROPIC_API_KEY'),
+        'model' => env('ANTHROPIC_MODEL', 'claude-opus-5-5'),
+    ],
+
 ];

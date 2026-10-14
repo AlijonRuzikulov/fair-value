@@ -1,1 +1,4 @@
-{}
+{
+    "Automatic search needs an AI key (ANTHROPIC_API_KEY in .env).": "Автоматик қидирув учун сунъий интеллект калити керак (.env да ANTHROPIC_API_KEY).",
+    "Needs an AI key: ANTHROPIC_API_KEY in the .env file. Until then, paste links to listings.": "Сунъий интеллект калити керак: .env файлида ANTHROPIC_API_KEY. Ҳозирча эълон линкларини қўйинг."
+}

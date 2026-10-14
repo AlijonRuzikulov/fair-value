@@ -95,6 +95,31 @@ return [
 
     'demo' => (bool) env('DEMO_MODE', false),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Analogues for the comparative approach
+    |--------------------------------------------------------------------------
+    |
+    | Sale offers are read only from these sites (and their subdomains).
+    | Adjustments are percentages suggested for every analogue; the appraiser
+    | can change each of them.
+    |
+    */
+
+    'analogs' => [
+        'domains' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+            'ANALOG_DOMAINS', 'olx.uz,uybor.uz,realt24.uz,domtut.uz'
+        ))))),
+        'max_links' => 10,
+        'search_results' => 8,
+        'bargain' => -5.0,           // asking price → sale price
+        'first_floor' => -5.0,       // compared with a middle floor
+        'last_floor' => -3.0,
+        'area_elasticity' => 0.1,    // larger flats cost less per m²
+        'max_area_adjustment' => 10.0,
+        'outlier' => 0.35,           // further than ±35 % from the median → left out
+    ],
+
     'uploads' => [
         'max_kb' => 20480,
         'mimes' => 'pdf,doc,docx,xls,xlsx,jpg,jpeg,png,webp,heic,zip,rar,txt',

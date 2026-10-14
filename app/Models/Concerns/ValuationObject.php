@@ -6,6 +6,7 @@ use App\Enums\PersonRole;
 use App\Enums\ValuationApproach;
 use App\Enums\ValuationPurpose;
 use App\Enums\ValuationStatus;
+use App\Models\Analog;
 use App\Models\Attachment;
 use App\Models\Client;
 use App\Models\District;
@@ -105,6 +106,12 @@ trait ValuationObject
     public function attachments(): MorphMany
     {
         return $this->morphMany(Attachment::class, 'attachable')->latest('id');
+    }
+
+    /** Sale offers of the comparative approach. */
+    public function analogs(): MorphMany
+    {
+        return $this->morphMany(Analog::class, 'object')->orderBy('id');
     }
 
     /**

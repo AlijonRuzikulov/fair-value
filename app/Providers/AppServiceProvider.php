@@ -12,6 +12,8 @@ use App\Models\RepairNorm;
 use App\Models\SmallPart;
 use App\Models\SparePart;
 use App\Models\User;
+use App\Services\Analogs\ClaudeListingAi;
+use App\Services\Analogs\ListingAi;
 use App\Services\CurrencyService;
 use App\Support\Registry;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -33,7 +35,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(ListingAi::class, ClaudeListingAi::class);
     }
 
     /**
