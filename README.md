@@ -345,10 +345,19 @@ Hisobot **kirill** yoki **lotin** yozuvida chiqadi (bir tugma bilan almashadi). 
 
 Har bir sahifada sarlavha, sahifa raqami va hisobotni tekshirish QR-kodi bor.
 
-- **Hisobot ma’lumotlari** (obyekt sahifasidagi ⚙ tugma): hisobot sanasi, qiymat turi, huquqlar,
-  konstruktiv elementlar, yondashuvlarni tanlash sabablari, muvofiqlashtirish ballari, ilovalar.
-  Hammasi oqilona standart qiymatlar bilan to‘ldirilgan — faqat farq qiladiganini o‘zgartirasiz.
-  **“Tayyorlik”** ro‘yxati nima yetishmayotganini ko‘rsatadi.
+- **Hisobotni tayyorlash** (obyekt sahifasidagi tugma) — 6 qadam, har birida nima bajarilgani ko‘rinadi:
+  1. **Hujjatlar** — pasport (ID-karta) va kadastr ko‘chirmasi skanerini yoki rasmini yuklaysiz,
+     **“Hujjatlarni o‘qish”** bosilsa sun’iy intellekt mulk egasini (F.I.Sh., JShShIR, pasport, berilgan sana)
+     va obyektni (kadastr raqami, maydonlar, manzil, viloyat/tuman, huquq va uni belgilovchi hujjat, yuklamalar)
+     o‘qiydi. Tekshirish sahifasida “hozir / hujjatda” yonma-yon ko‘rinadi, faqat belgilanganlar saqlanadi;
+     mulk egasi mavjud mijozlar orasidan JShShIR bo‘yicha topiladi yoki yangi mijoz yaratiladi;
+  2. **Obyekt va huquqlar** — tayyor variantlardan tanlanadigan maydonlar;
+  3. **Ko‘zdan kechirish** — sana, **bino turi bo‘yicha bir bosishda to‘ldirish** (panel, g‘isht, monolit,
+     hovli, ofis, ombor), qurilish hajmini hisoblash (maydon × ship balandligi), kommunikatsiyalar, rasmlar;
+  4. **Bozor va analoglar** — qiyosiy yondashuv natijasi;
+  5. **Yondashuvlar va qiymat** — sabablar, mezonlar bo‘yicha ballar (vaznlar darhol hisoblanadi),
+     yakuniy qiymatni muvofiqlashtirilgan qiymatdan bir tugma bilan qo‘yish;
+  6. **Hisobot** — yozuv, sanalar, ilovalar va **“Tayyorlik”** ro‘yxati.
 - **Hisobot matnlari** (Sozlamalar → Hisobot matnlari, administrator): atamalar, bayonotlar,
   makroiqtisodiy jadval, metodologiya va boshqa standart bo‘limlar — bir marta tahrirlanadi va barcha
   hisobotlarda ishlatiladi. Lotin yozuvida yoziladi, kirill hisobot avtomatik tayyorlanadi.
@@ -357,8 +366,18 @@ Har bir sahifada sarlavha, sahifa raqami va hisobotni tekshirish QR-kodi bor.
   sertifikati matni ham shu yerda.
 - **Xodimlar**: baholovchining malaka sertifikati raqami, sanasi va uni bergan organ.
 
-Obyekt rasmlari va hujjatlar (pasport, kadastr ko‘chirmasi) obyekt sahifasiga **rasm** (JPG, PNG) sifatida
-yuklanadi; PDF fayllar hisobotga qo‘shilmaydi. Valyuta kurslari kerakli sana uchun Markaziy bank
+Hisobot **muqovasi** obyektning birinchi rasmi bilan, undan keyin **“Asosiy xulosalar”** sahifasi (qiymat,
+1 m² narxi, dollar ekvivalenti, obyekt bozordagi analoglar orasida qayerda turgani grafigi, yondashuvlar
+vazni), tuzatishlar ta’siri grafigi va boshqa jadvallar bilan chiqadi.
+
+Obyekt rasmlari va hujjatlar (pasport, kadastr ko‘chirmasi) **rasm** (JPG, PNG) sifatida yuklanadi;
+PDF fayllar hujjatlarni o‘qishda ishlatiladi, lekin hisobot ilovasiga qo‘shilmaydi.
+
+**Hujjatlarni o‘qish va maxfiylik.** “Hujjatlarni o‘qish” tugmasi bosilganda tanlangan skanerlar (pasport,
+kadastr ko‘chirmasi — ya’ni shaxsiy ma’lumotlar) o‘qish uchun Claude (Anthropic) API’ga yuboriladi; rasmlar
+oldin kichraytiriladi. Anthropic API orqali yuborilgan ma’lumotlar standart holatda model o‘qitish uchun
+ishlatilmaydi. Bu imkoniyatni butunlay o‘chirish uchun `.env` ga `AI_DOCUMENTS=false` yozing — shunda
+ma’lumotlar qo‘lda kiritiladi. Analoglar qidiruvida esa faqat ochiq e’lonlar va obyekt tavsifi yuboriladi. Valyuta kurslari kerakli sana uchun Markaziy bank
 arxividan bir marta yuklab olinadi (`CBU_HISTORY=false` bilan o‘chiriladi).
 
 ### Telegram’ga ariza xabarlari

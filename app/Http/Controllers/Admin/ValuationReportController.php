@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\RealEstateFeature;
 use App\Enums\ValuationApproach;
 use App\Http\Controllers\Controller;
 use App\Models\Activity;
@@ -9,11 +10,15 @@ use App\Models\RealEstate;
 use App\Reports\RealEstateReport;
 use App\Reports\ReportScript;
 use App\Services\CurrencyService;
+use App\Services\Documents\DocumentAi;
+use App\Support\ComparativeCalculator;
+use App\Support\NumberInput;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -23,18 +28,22 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
  */
 class ValuationReportController extends Controller
 {
-    public function edit(string $id): View
+    public function edit(string $id, DocumentAi $ai): View
     {
-        $item = RealEstate::with(['clients', 'attachments', 'analogs', 'appraiser'])->findOrFail($id);
+        $item = RealEstate::with(['clients', 'attachments', 'analogs', 'appraiser', 'region', 'district'])->findOrFail($id);
         Gate::authorize('edit-valuation', $item);
+        $values = RealEstateReport::values($item);
 
         return view('admin.real-estates.report-form', [
             'item' => $item,
+            'values' => $values,
+            'steps' => RealEstateReport::steps($item),
             'checklist' => RealEstateReport::checklist($item),
-            'values' => RealEstateReport::values($item),
-            'defaults' => RealEstateReport::defaults($item),
-            'images' => RealEstateReport::attachmentRoles($item, RealEstateReport::values($item)),
+            'images' => RealEstateReport::attachmentRoles($item, $values),
+            'scans' => $item->attachments->filter(fn ($a) => $a->isImage() || $a->mime === 'application/pdf')->sortBy('id')->values(),
             'companyDocuments' => RealEstateReport::companyDocuments(),
+            'comparative' => ComparativeCalculator::calculate((float) $item->total_area, $item->analogs, RealEstateReport::comparativeOptions($item)),
+            'aiAvailable' => $ai->available(),
         ]);
     }
 
@@ -43,7 +52,12 @@ class ValuationReportController extends Controller
         $item = RealEstate::with(['clients', 'attachments'])->findOrFail($id);
         Gate::authorize('edit-valuation', $item);
 
+        $request->merge(['market_value' => NumberInput::normalize($request->input('market_value'))]);
         $rules = [
+            'inspection_date' => ['nullable', 'date', 'before_or_equal:today'],
+            'features' => ['nullable', 'array'],
+            'features.*' => [Rule::enum(RealEstateFeature::class)],
+            'market_value' => ['nullable', 'numeric', 'min:0', 'max:999999999999999'],
             'script' => ['required', 'in:'.ReportScript::LATIN.','.ReportScript::CYRILLIC],
             'report_date' => ['required', 'date'],
             'building_volume' => ['nullable', 'numeric', 'min:0', 'max:10000000'],
@@ -92,6 +106,19 @@ class ValuationReportController extends Controller
             $report[$flag] = $request->boolean($flag);
         }
 
+        // Fields of the object itself (logged as ordinary changes of the object).
+        // Only the fields shown on the page are changed (unticked boxes send nothing, hence "features_shown").
+        $objectFields = [];
+        foreach (['inspection_date', 'market_value'] as $field) {
+            if ($request->exists($field)) {
+                $objectFields[$field] = $data[$field] ?? null;
+            }
+        }
+        if ($request->boolean('features_shown')) {
+            $objectFields['features'] = array_values($data['features'] ?? []);
+        }
+        $item->fill($objectFields)->save();
+
         $changes = [];
         $old = (array) $item->report;
         foreach (array_unique([...array_keys($old), ...array_keys($report)]) as $key) {
@@ -109,7 +136,9 @@ class ValuationReportController extends Controller
             return redirect()->route('admin.real-estates.report', $item->id);
         }
 
-        return redirect()->route('admin.real-estates.report.edit', $item->id)->with('status', __('Changes saved.'));
+        $step = in_array($request->input('step'), array_keys(RealEstateReport::steps($item)), true) ? '#step-'.$request->input('step') : '';
+
+        return redirect()->to(route('admin.real-estates.report.edit', $item->id).$step)->with('status', __('Changes saved.'));
     }
 
     public function show(Request $request, string $id): Response

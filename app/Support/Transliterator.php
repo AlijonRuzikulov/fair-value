@@ -54,7 +54,7 @@ class Transliterator
         'Chevrolet', 'Daewoo', 'Nexia', 'Cobalt', 'Spark', 'Gentra', 'Lacetti', 'Malibu', 'Damas', 'Labo',
         'Matiz', 'Tracker', 'Onix', 'Captiva', 'Equinox', 'Tahoe', 'Isuzu', 'MAN', 'BYD', 'Kia', 'Hyundai',
         'Toyota', 'Lada', 'GM', 'Cyrl', 'Latn', 'TEO', 'IT', 'HTML', 'CBU', 'Google', 'Yandex', 'MChJ', 'LLC',
-        'HTTPS', 'https', 'IP', 'README', 'cron', 'SQLite', 'MySQL', 'JPG', 'JPEG', 'PNG', 'WEBP', 'USD', 'UZS',
+        'HTTPS', 'https', 'IP', 'README', 'cron', 'SQLite', 'MySQL', 'JPG', 'JPEG', 'PNG', 'WEBP', 'USD', 'UZS', 'Claude', 'Anthropic', 'AI',
     ];
 
     /** Two-letter combinations first, then single letters. */
@@ -96,6 +96,11 @@ class Transliterator
         // Roman numerals like "II", "XX" stay Latin.
         if (preg_match('/^[IVX]{2,}$/', $word)) {
             return $word;
+        }
+
+        // An abbreviation with a suffix: MBSga → МБСга, STIRga → СТИРга.
+        if (preg_match('/^([A-Z]{2,})(ga|ka|qa|da|ta|dan|tan|dagi|ning|ni|lar|larga|larning|larni|larda)$/', $word, $m)) {
+            return mb_strtoupper(self::word($m[1])).self::word($m[2]);
         }
 
         $lower = mb_strtolower($word);

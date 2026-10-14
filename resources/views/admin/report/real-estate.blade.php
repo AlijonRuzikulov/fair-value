@@ -68,40 +68,115 @@
     <script src="{{ asset('js/vendor/paged.polyfill.min.js') }}"></script>
 </head>
 <body data-toolbar='@json($toolbar ?? [])'>
-<div class="qr-run" data-qr="{{ $item->verifyUrl() }}"></div>
 
-{{-- ============================== Cover ============================== --}}
+{{-- ============================== Cover (full page) ============================== --}}
+@php
+    $coverPhoto = $photos->first();
+    $perM2 = $final !== null && $item->total_area > 0 ? $final / (float) $item->total_area : null;
+    $usdValue = $final !== null && ($rates['USD'] ?? 0) > 0 ? $final / $rates['USD'] : null;
+    $words = $finalWords ? mb_strtoupper(mb_substr($finalWords, 0, 1)).mb_substr($finalWords, 1).' so‘m' : null;
+@endphp
 <section class="cover">
-    @include('admin.report._letterhead')
-    <div class="cover-title">{{ $phrase($title) }}</div>
-    <div class="cover-name">{{ mb_strtoupper($t('Baholash hisoboti')) }}</div>
-    <table class="cover-facts">
-        <tr><td>{{ $t("Ro'yxatga olingan raqam") }}</td><td>№ {{ $reportNo }}</td></tr>
-        <tr><td>{{ $t('Manzili') }}</td><td>{{ $t($location) }}</td></tr>
-        <tr><td>{{ $t('Kadastr raqami') }}</td><td>{{ $s->v($item->cadastral_number) }}</td></tr>
-        <tr><td>{{ $t('Aniqlanadigan qiymat turi') }}</td><td>{{ $t($f['value_type']) }}</td></tr>
-        <tr><td>{{ $t('Baholash sanasi') }}</td><td>{{ $date($valuationDate) }}</td></tr>
-        <tr><td>{{ $t("Hisobot tuzilgan sana") }}</td><td>{{ $date($reportDate) }}</td></tr>
-        <tr><td>{{ $t('Mulkchilik shakli') }}</td><td>{{ $t($f['ownership_form']) }}</td></tr>
-        <tr><td>{{ $t('Buyurtmachi') }}</td><td>{{ $s->v($customer?->title) }}</td></tr>
-        <tr><td>{{ $t('Baholovchi') }}</td><td>{{ $s->v($appraiser?->name) }}</td></tr>
-        <tr><td>{{ $t('Baholovchi tashkilot') }}</td><td>{{ $companyName }}</td></tr>
-    </table>
-    @if ($final !== null)
-        <div class="cover-value"><span>{{ $t($f['value_type']) }}</span><strong>{{ $sum($final) }}</strong></div>
-    @endif
-    <div class="cover-bottom">
-        <div class="cover-city">{{ $t($company['report_city'] ?: 'Toshkent') }} — {{ $reportDate->format('Y') }}</div>
-        <div class="cover-qr">
-            <div class="qr" data-qr="{{ $item->verifyUrl() }}"></div>
-            <div>{{ $t('Hisobot haqiqiyligini tekshirish') }}: <b>{{ $item->verify_code }}</b></div>
+    <div class="cover-hero">
+        @if ($coverPhoto)<img class="cover-bg" src="{{ route('admin.attachments.show', $coverPhoto) }}" alt="">@endif
+        <div class="cover-shade"></div>
+        <div class="cover-top">
+            <div class="cover-brand"><x-logo-mark :size="56" /><div><b>{{ $companyName }}</b><small>{{ $company['legal_name_ru'] }}</small></div></div>
+            <div class="cover-no">{{ $t('Hisobot') }} № {{ $reportNo }}<small>{{ $date($reportDate) }}</small></div>
+        </div>
+        <div class="cover-head">
+            <span class="cover-kicker">{{ mb_strtoupper($t('Baholash hisoboti')) }}</span>
+            <h1>{{ $t($item->name) }}</h1>
+            <p>{{ $t($location) }}</p>
+            <p class="cover-purpose">{{ $phrase($title) }}</p>
+        </div>
+    </div>
+    <div class="cover-body">
+        <div class="cover-metrics">
+            <div class="metric main"><span>{{ $t($f['value_type']) }}</span><strong>{{ $sum($final) }}</strong>@if ($usdValue)<small>≈ {{ $num($usdValue, 0) }} {{ $t('AQSh dollari') }}</small>@endif</div>
+            <div class="metric"><span>{{ $t('1 m² qiymati') }}</span><strong>{{ $sum($perM2) }}</strong></div>
+            <div class="metric"><span>{{ $t('Umumiy maydoni') }}</span><strong>{{ $num($item->total_area) }} m²</strong></div>
+            <div class="metric"><span>{{ $t('Baholash sanasi') }}</span><strong>{{ $valuationDate->format('d.m.Y') }}</strong></div>
+        </div>
+        <table class="cover-facts">
+            <tr><td>{{ $t('Kadastr raqami') }}</td><td>{{ $s->v($item->cadastral_number) }}</td><td>{{ $t('Baholash maqsadi') }}</td><td>{{ $item->purpose ? $t($item->purposeLabel()) : '—' }}</td></tr>
+            <tr><td>{{ $t('Mulk egasi') }}</td><td>{{ $s->v($owner?->title) }}</td><td>{{ $t('Buyurtmachi') }}</td><td>{{ $s->v($customer?->title) }}</td></tr>
+            <tr><td>{{ $t('Baholovchi') }}</td><td>{{ $s->v($appraiser?->name) }}</td><td>{{ $t('Mulkchilik shakli') }}</td><td>{{ $t($f['ownership_form']) }}</td></tr>
+        </table>
+        <div class="cover-bottom">
+            <div class="cover-city">{{ $t($company['report_city'] ?: 'Toshkent') }} · {{ $reportDate->format('Y') }}<small>{{ $requisites ? $t($requisites) : '' }}</small></div>
+            <div class="cover-qr">
+                <div class="qr" data-qr="{{ $item->verifyUrl() }}"></div>
+                <div>{{ $t('Haqiqiylikni tekshirish') }}<b>{{ $item->verify_code }}</b></div>
+            </div>
         </div>
     </div>
 </section>
 
+{{-- ============================== Executive summary ============================== --}}
+<h2 class="section" id="summary"><span class="sec-no">★</span>{{ $t('Asosiy xulosalar') }}</h2>
+{{-- The QR code repeated in the corner of every following page. --}}
+<div class="qr-run" data-qr="{{ $item->verifyUrl() }}"></div>
+<div class="summary-value">
+    <div>
+        <span>{{ str_replace(':type', mb_strtolower($t($f['value_type'])), $t('Baholash sanasidagi :type')) }}</span>
+        <strong>{{ $sum($final) }}</strong>
+        @if ($words)<em>({{ $t($words) }})</em>@endif
+    </div>
+    <dl>
+        <div><dt>{{ $t('1 m² uchun') }}</dt><dd>{{ $sum($perM2) }}</dd></div>
+        @if ($usdValue)<div><dt>{{ $t('AQSh dollarida') }}</dt><dd>{{ $num($usdValue, 0) }} $</dd></div>@endif
+        <div><dt>{{ $t('USD kursi') }}</dt><dd>{{ $num($rates['USD'] ?? null) }}</dd></div>
+    </dl>
+</div>
+<div class="summary-grid">
+    <div><span>{{ $t('Obyekt') }}</span><b>{{ $t($item->name) }}</b></div>
+    <div><span>{{ $t('Manzil') }}</span><b>{{ $t($location) }}</b></div>
+    <div><span>{{ $t('Kadastr raqami') }}</span><b>{{ $s->v($item->cadastral_number) }}</b></div>
+    <div><span>{{ $t('Maydoni / qavati') }}</span><b>{{ $num($item->total_area) }} m²@if ($item->floor) · {{ $item->floor }}/{{ $item->floors_total ?: '—' }} {{ $t('qavat') }}@endif</b></div>
+    <div><span>{{ $t('Qurilgan yili / holati') }}</span><b>{{ $item->year_built ?: '—' }} · {{ $f['repair'] ? $t($f['repair']) : '—' }}</b></div>
+    <div><span>{{ $t('Baholash maqsadi') }}</span><b>{{ $item->purpose ? $t($item->purposeLabel()) : '—' }}</b></div>
+    <div><span>{{ $t("Ko'zdan kechirildi / baholash sanasi") }}</span><b>{{ $item->inspection_date?->format('d.m.Y') ?? '—' }} · {{ $valuationDate->format('d.m.Y') }}</b></div>
+    <div><span>{{ $t("Qo'llanilgan yondashuvlar") }}</span><b>{{ $applied ? collect($applied)->map(fn ($a) => $t($approachNames[$a->value]))->implode(', ') : '—' }}</b></div>
+</div>
+
+@if ($hasGrid && $comparative['count'] > 0)
+    @php
+        $points = collect($analogs)->map(fn ($a) => ['no' => $numberOf[$a->id], 'raw' => $comparative['rows'][$a->id]['price_m2'], 'adj' => $comparative['rows'][$a->id]['adjusted_m2']]);
+        $lo = min($points->min('raw'), $points->min('adj'), $perM2 ?: PHP_INT_MAX) * 0.94;
+        $hi = max($points->max('raw'), $points->max('adj'), $perM2 ?: 0) * 1.04;
+        $pos = fn ($v) => round(($v - $lo) / max(1, $hi - $lo) * 100, 2);
+    @endphp
+    <h3 class="sub">{{ $t('Bozordagi o‘rni: 1 m² narxlari') }}</h3>
+    <div class="position">
+        <div class="pos-axis">
+            @foreach ($points as $p)
+                <span class="pos-dot raw" style="left: {{ $pos($p['raw']) }}%" title="№{{ $p['no'] }}"></span>
+                <span class="pos-dot adj" style="left: {{ $pos($p['adj']) }}%"><i>№{{ $p['no'] }}</i></span>
+            @endforeach
+            @if ($perM2)<span class="pos-mark" style="left: {{ $pos($perM2) }}%"><i>{{ $t('Obyekt') }}<br>{{ $num($perM2, 0) }}</i></span>@endif
+        </div>
+        <div class="pos-scale"><span>{{ $num($lo, 0) }}</span><span>{{ $num(($lo + $hi) / 2, 0) }}</span><span>{{ $num($hi, 0) }} {{ $t("so'm/m²") }}</span></div>
+        <div class="pos-legend"><span><i class="raw"></i>{{ $t('Taklif narxi') }}</span><span><i class="adj"></i>{{ $t('Tuzatishlardan keyin') }}</span><span><i class="mark"></i>{{ $t('Baholash obyekti') }}</span></div>
+    </div>
+@endif
+
+@if (count($applied) > 0)
+    <h3 class="sub">{{ $t('Yondashuvlar vazni') }}</h3>
+    <div class="weights">
+        @foreach (ValuationApproach::cases() as $approach)
+            @if ($weights[$approach->value] > 0)
+                <div class="weight w-{{ $approach->value }}" style="flex: {{ $weights[$approach->value] }}"><b>{{ $num($weights[$approach->value] * 100, 0) }} %</b><span>{{ $t($approachNames[$approach->value]) }}</span></div>
+            @endif
+        @endforeach
+    </div>
+@endif
+<p class="muted small">{{ $t("Ushbu sahifa hisobotning qisqacha mazmuni; to'liq asoslash quyidagi bo'limlarda keltirilgan. Hisobot to'liq hajmda haqiqiy.") }}</p>
+
 {{-- ============================== Contents ============================== --}}
-<h2 class="section" id="toc">{{ $t('Mundarija') }}</h2>
+<h2 class="section" id="toc"><span class="sec-no">≡</span>{{ $t('Mundarija') }}</h2>
 <ul class="toc">
+    <li><a href="#summary"><span class="no">★</span><span>{{ $t('Asosiy xulosalar') }}</span></a></li>
     @foreach ($sections as [$id, $no, $name])
         <li><a href="#{{ $id }}"><span class="no">{{ $no }}</span><span>{{ $t($name) }}</span></a></li>
         @if ($id === 's7' && $hasGrid)
@@ -111,7 +186,7 @@
 </ul>
 
 {{-- ============================== I. Cover letter ============================== --}}
-<h2 class="section" id="s1">I. {{ $t('Umumlashtiruvchi qism (ilova xat)') }}</h2>
+<h2 class="section" id="s1"><span class="sec-no">I</span>{{ $t('Umumlashtiruvchi qism (ilova xat)') }}</h2>
 @include('admin.report._letterhead')
 <div class="letter-head">
     <div><b>№ {{ $s->v($f['letter_number']) }}</b><br>{{ $date($reportDate) }}</div>
@@ -144,11 +219,11 @@
 @include('admin.report._signatures', ['director' => true, 'appraiserSign' => false])
 
 {{-- ============================== II. Terms ============================== --}}
-<h2 class="section" id="s2">II. {{ $t("Asosiy atamalar, ta'riflar va standart tamoyillari") }}</h2>
+<h2 class="section" id="s2"><span class="sec-no">II</span>{{ $t("Asosiy atamalar, ta'riflar va standart tamoyillari") }}</h2>
 {{ $text('terms') }}
 
 {{-- ============================== III. Task ============================== --}}
-<h2 class="section" id="s3">III. {{ $t('Baholashga oid vazifa, asosiy faktlar va xulosalar') }}</h2>
+<h2 class="section" id="s3"><span class="sec-no">III</span>{{ $t('Baholashga oid vazifa, asosiy faktlar va xulosalar') }}</h2>
 <table class="facts">
     <tr><td>{{ $t('Baholanayotgan aktivning nomi va tavsifi') }}</td><td>{{ $t($item->name) }}. {{ $t('Umumiy maydoni') }} {{ $num($item->total_area) }} {{ $t('kv. m') }}@if ($item->useful_area), {{ $t('foydali maydoni') }} {{ $num($item->useful_area) }} {{ $t('kv. m') }}@endif.</td></tr>
     <tr><td>{{ $t("Baholash obyektiga bo'lgan huquqlar") }}</td><td>{{ $t($f['rights']) }}</td></tr>
@@ -186,7 +261,7 @@
 {{ $text('sources') }}
 
 {{-- ============================== IV. Economy and market ============================== --}}
-<h2 class="section" id="s4">IV. {{ $t('Mamlakat va mintaqadagi umumiy iqtisodiy vaziyat, bozor tahlili') }}</h2>
+<h2 class="section" id="s4"><span class="sec-no">IV</span>{{ $t('Mamlakat va mintaqadagi umumiy iqtisodiy vaziyat, bozor tahlili') }}</h2>
 @if ($f['include_macro'])
     {{ $text('macro') }}
 @endif
@@ -213,7 +288,7 @@
 @endif
 
 {{-- ============================== V. Object ============================== --}}
-<h2 class="section" id="s5">V. {{ $t('Baholash obyektining tavsifi') }}</h2>
+<h2 class="section" id="s5"><span class="sec-no">V</span>{{ $t('Baholash obyektining tavsifi') }}</h2>
 <table class="facts">
     <tr><td>{{ $t('Baholash obyekti tarkibi') }}</td><td>{{ $t($item->name) }}@if ($item->cadastral_number), {{ $t('kadastr raqami') }} {{ $item->cadastral_number }}@endif, {{ $t('umumiy maydoni') }} {{ $num($item->total_area) }} {{ $t('kv. m') }}</td></tr>
     <tr><td>{{ $t('Vazifasi va joriy foydalanish') }}</td><td>{{ $t($f['function']) }}</td></tr>
@@ -265,12 +340,12 @@
 </table>
 
 {{-- ============================== VI. HBU ============================== --}}
-<h2 class="section" id="s6">VI. {{ $t('Eng samarali foydalanish tahlili') }}</h2>
+<h2 class="section" id="s6"><span class="sec-no">VI</span>{{ $t('Eng samarali foydalanish tahlili') }}</h2>
 {{ $text('hbu') }}
 <p><b>{{ $t('Xulosa') }}:</b> {{ $t($f['hbu_conclusion']) }}</p>
 
 {{-- ============================== VII. Approaches ============================== --}}
-<h2 class="section" id="s7">VII. {{ $t("Baholash yondashuvlari va usullarining tanlanishi va qo'llanilishi") }}</h2>
+<h2 class="section" id="s7"><span class="sec-no">VII</span>{{ $t("Baholash yondashuvlari va usullarining tanlanishi va qo'llanilishi") }}</h2>
 @if ($f['include_methodology'])
     <h3 class="sub">7.1. {{ $t('Baholash yondashuvlari va usullariga qisqacha sharh') }}</h3>
     {{ $text('methodology') }}
@@ -301,6 +376,30 @@
             @endforeach
         </tbody>
     </table>
+
+    @php
+        $effMax = collect($comparative['rows'])->map(fn ($r) => max($r['price_m2'], $r['adjusted_m2']))->max() * 1.05;
+        $effMin = collect($comparative['rows'])->map(fn ($r) => min($r['price_m2'], $r['adjusted_m2']))->min() * 0.9;
+        $effPos = fn ($v) => round(($v - $effMin) / max(1, $effMax - $effMin) * 100, 2);
+    @endphp
+    <div class="effect">
+        <div class="effect-title">{{ $t("Tuzatishlar ta'siri: 1 m² narxi taklifdan tuzatilgan narxgacha") }}</div>
+        @foreach ($analogs as $analog)
+            @php $row = $comparative['rows'][$analog->id]; $a = $effPos($row['price_m2']); $b = $effPos($row['adjusted_m2']); @endphp
+            <div class="effect-row">
+                <span class="effect-no">№{{ $numberOf[$analog->id] }}</span>
+                <span class="effect-track">
+                    <i class="effect-bar {{ $row['adjusted_m2'] < $row['price_m2'] ? 'down' : 'up' }}" style="left: {{ min($a, $b) }}%; width: {{ max(0.6, abs($b - $a)) }}%"></i>
+                    <i class="effect-dot raw" style="left: {{ $a }}%"></i>
+                    <i class="effect-dot adj" style="left: {{ $b }}%"></i>
+                    @if ($comparative['price_m2'])<i class="effect-final" style="left: {{ $effPos($comparative['price_m2']) }}%"></i>@endif
+                </span>
+                <span class="effect-num">{{ $pct($row['total']) }}</span>
+                <span class="effect-num">{{ $num($row['weight'] * 100, 1) }} %</span>
+            </div>
+        @endforeach
+        <div class="effect-legend"><span><i class="raw"></i>{{ $t('Taklif narxi') }}</span><span><i class="adj"></i>{{ $t('Tuzatilgan narx') }}</span><span><i class="wavg"></i>{{ $t('Vaznli o‘rtacha') }}: {{ $num($comparative['price_m2'], 0) }}</span><span class="right">{{ $t('Jami tuzatish · vazn') }}</span></div>
+    </div>
 
     @foreach ($chunks as $chunk)
         <table class="adj">
@@ -387,7 +486,7 @@
 @endforeach
 
 {{-- ============================== VIII. Reconciliation ============================== --}}
-<h2 class="section" id="s8">VIII. {{ $t('Natijalarni muvofiqlashtirish va yakuniy qiymat') }}</h2>
+<h2 class="section" id="s8"><span class="sec-no">VIII</span>{{ $t('Natijalarni muvofiqlashtirish va yakuniy qiymat') }}</h2>
 {{ $text('reconciliation') }}
 <table class="grid">
     <thead><tr><th>{{ $t('Mezonlar') }}</th>@foreach (ValuationApproach::cases() as $approach)<th class="c">{{ $t($approachNames[$approach->value]) }} ({{ $t($approachShort[$approach->value]) }})</th>@endforeach</tr></thead>
@@ -413,6 +512,13 @@
         <tr class="total"><td colspan="3"><b>{{ $t('Muvofiqlashtirilgan qiymat') }}</b> ({{ $t('Kyak = Kxar × C1 + Kdar × C2 + Kqiy × C3') }})</td><td class="num"><b>{{ $sum($reconciled) }}</b></td></tr>
     </tbody>
 </table>
+<div class="weights">
+    @foreach (ValuationApproach::cases() as $approach)
+        @if ($weights[$approach->value] > 0)
+            <div class="weight w-{{ $approach->value }}" style="flex: {{ $weights[$approach->value] }}"><b>{{ $num($weights[$approach->value] * 100, 0) }} %</b><span>{{ $t($approachNames[$approach->value]) }}</span></div>
+        @endif
+    @endforeach
+</div>
 <div class="final">
     <span>{{ str_replace(':type', mb_strtolower($t($f['value_type'])), $t('Baholash obyektining baholash sanasiga aniqlangan :type yaxlitlanganda')) }}</span>
     <strong>{{ $sum($final) }}</strong>
@@ -420,12 +526,12 @@
 </div>
 
 {{-- ============================== IX. Quality ============================== --}}
-<h2 class="section" id="s9">IX. {{ $t("Baholash to'g'risidagi hisobotning sifati to'g'risida bayonot") }}</h2>
+<h2 class="section" id="s9"><span class="sec-no">IX</span>{{ $t("Baholash to'g'risidagi hisobotning sifati to'g'risida bayonot") }}</h2>
 {{ $text('quality') }}
 @include('admin.report._signatures', ['director' => true, 'appraiserSign' => true])
 
 {{-- ============================== X. Appendices ============================== --}}
-<h2 class="section" id="s10">X. {{ $t('Ilovalar') }}</h2>
+<h2 class="section" id="s10"><span class="sec-no">X</span>{{ $t('Ilovalar') }}</h2>
 <ul>
     <li>{{ $t("Ko'chmas mulkni ko'zdan kechirish to'g'risidagi dalolatnoma") }};</li>
     @if ($hasGrid)<li>{{ $t('Qiyosiy yondashuv analoglari ma‘lumotlari') }};</li>@endif
@@ -484,7 +590,7 @@
     <h3 class="sub" style="break-before: page">{{ $t('Obyekt fotosuratlari') }}</h3>
     <div class="photo-grid">
         @foreach ($photos as $photo)
-            <figure><img src="{{ route('admin.attachments.show', $photo) }}" alt="{{ $photo->name }}"></figure>
+            <figure><img src="{{ route('admin.attachments.show', $photo) }}" alt="{{ $photo->name }}"><figcaption>{{ $loop->iteration }}-{{ $t('rasm') }}</figcaption></figure>
         @endforeach
     </div>
 @endif

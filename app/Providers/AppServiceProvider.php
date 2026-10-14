@@ -17,6 +17,8 @@ use App\Services\Analogs\ClaudeListingAi;
 use App\Services\Analogs\ListingAi;
 use App\Services\Audit\SecurityAlert;
 use App\Services\CurrencyService;
+use App\Services\Documents\ClaudeDocumentAi;
+use App\Services\Documents\DocumentAi;
 use App\Support\Registry;
 use Illuminate\Auth\Events\CurrentDeviceLogout;
 use Illuminate\Auth\Events\Failed;
@@ -74,6 +76,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(ListingAi::class, ClaudeListingAi::class);
+        $this->app->bind(DocumentAi::class, ClaudeDocumentAi::class);
     }
 
     /**

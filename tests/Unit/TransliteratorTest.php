@@ -30,6 +30,7 @@ class TransliteratorTest extends TestCase
             ['storage/ va bootstrap/cache/ papkalari', 'storage/ ва bootstrap/cache/ папкалари'],
             ['Telegram’ga xabar (IP :ip)', 'Telegram’га хабар (IP :ip)'],
             ['www.olx.uz, e-auksion.uz saytlari', 'www.olx.uz, e-auksion.uz сайтлари'],
+            ['10-son MBSga muvofiq', '10-сон МБСга мувофиқ'],
         ];
     }
 

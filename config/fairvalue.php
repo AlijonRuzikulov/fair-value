@@ -137,6 +137,11 @@ return [
     |
     */
 
+    'ai' => [
+        // Reading scans of passports and cadastral extracts with Claude (sends the scans to Anthropic).
+        'documents' => (bool) env('AI_DOCUMENTS', true),
+    ],
+
     'audit' => [
         'retention_days' => (int) env('AUDIT_RETENTION_DAYS', 1095),
     ],

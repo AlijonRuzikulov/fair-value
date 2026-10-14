@@ -316,6 +316,81 @@
     });
   });
 
+  /* ---------- Report preparation ------------------------------------- */
+
+  var numberText = function (n) { return new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 2 }).format(n).replace(/\u00a0/g, ' '); };
+  var readNumber = function (v) { var n = parseFloat(String(v || '').replace(/[\s\u00a0]/g, '').replace(',', '.')); return isNaN(n) ? 0 : n; };
+
+  // Building type → typical construction values.
+  $$('[data-preset-apply]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var select = $('[data-presets]');
+      var presets = JSON.parse(select.dataset.presets || '{}');
+      var values = presets[select.value];
+      if (!values) return;
+      Object.keys(values).forEach(function (name) {
+        var input = btn.form ? btn.form.elements[name] : document.querySelector('[name="' + name + '"]');
+        if (input) { input.value = values[name]; input.dispatchEvent(new Event('change')); }
+      });
+    });
+  });
+
+  // Building volume = area × ceiling height.
+  $$('[data-volume]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var wrap = btn.parentNode;
+      var height = readNumber($('[data-volume-height]', wrap).value);
+      var area = readNumber(btn.dataset.area);
+      if (area > 0 && height > 0) wrap.querySelector('input').value = numberText(Math.round(area * height * 100) / 100);
+    });
+  });
+
+  // Weights of the approaches from the scores, and the reconciled value.
+  $$('[data-scores]').forEach(function (table) {
+    var form = table.closest('form');
+    var reconciledOut = form && $('[data-reconciled]', form);
+    var reconciled = 0;
+    var update = function () {
+      var sums = {}, total = 0;
+      $$('[data-score]', table).forEach(function (input) {
+        var v = Math.max(0, readNumber(input.value));
+        sums[input.dataset.score] = (sums[input.dataset.score] || 0) + v;
+        total += v;
+      });
+      reconciled = 0;
+      $$('[data-weight]', table).forEach(function (cell) {
+        var key = cell.dataset.weight;
+        var w = total > 0 ? (sums[key] || 0) / total : 0;
+        cell.textContent = sums[key] !== undefined ? numberText(Math.round(w * 1000) / 10) + ' %' : '—';
+        var valueCell = $('[data-value="' + key + '"]', table);
+        var amount = valueCell ? readNumber(valueCell.dataset.amount) : 0;
+        reconciled += w * amount;
+      });
+      if (reconciledOut) reconciledOut.textContent = reconciled > 0 ? numberText(Math.round(reconciled)) : '—';
+    };
+    table.addEventListener('input', update);
+    update();
+    var use = form && $('[data-use-reconciled]', form);
+    if (use) use.addEventListener('click', function () {
+      if (reconciled > 0) form.elements.market_value.value = numberText(Math.round(reconciled / 1000) * 1000);
+    });
+  });
+
+  // The step being viewed is highlighted, and remembered when the form is saved.
+  var stepLinks = $$('[data-step-link]');
+  if (stepLinks.length && 'IntersectionObserver' in window) {
+    var current = $('[data-current-step]');
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        var key = entry.target.dataset.step;
+        stepLinks.forEach(function (a) { a.classList.toggle('is-current', a.dataset.stepLink === key); });
+        if (current) current.value = key;
+      });
+    }, { rootMargin: '-40% 0px -55% 0px' });
+    $$('[data-step]').forEach(function (el) { observer.observe(el); });
+  }
+
   /* ---------- Attachments --------------------------------------------- */
 
   // A file field that belongs to another form (form="…") sends it as soon as a file is chosen.

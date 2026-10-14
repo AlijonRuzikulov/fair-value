@@ -24,30 +24,81 @@ use Illuminate\Support\Collection;
  */
 final class RealEstateReport
 {
-    /** Form groups: group title → field → type (text, textarea, date, number, select). */
+    /** Report data by step of the preparation page: field → type (text, textarea, date, number, select). */
     public const FORM = [
-        'Report' => [
+        'object' => [
+            'function' => 'text', 'ownership_form' => 'text', 'rights' => 'text', 'rights_basis' => 'text', 'land_rights' => 'text',
+            'encumbrances' => 'text', 'ecology' => 'text', 'development' => 'text',
+            'land_category' => 'text', 'geology' => 'text', 'hydrogeology' => 'text', 'topography' => 'text',
+            'land_improvements' => 'text', 'land_hbu' => 'text',
+        ],
+        'inspection' => [
+            'building_volume' => 'number', 'completion' => 'number', 'foundation' => 'text', 'walls' => 'text',
+            'roof_cover' => 'text', 'roof_slab' => 'text', 'floor_type' => 'text', 'windows_doors' => 'text',
+            'repair' => 'text', 'architecture' => 'text', 'landscaping' => 'text', 'surroundings' => 'text', 'convertibility' => 'textarea',
+        ],
+        'approaches' => [
+            'reason_comparative' => 'textarea', 'reason_cost' => 'textarea', 'reason_income' => 'textarea', 'hbu_conclusion' => 'textarea',
+        ],
+        'report' => [
             'script' => 'select', 'report_date' => 'date', 'letter_number' => 'text', 'value_type' => 'text',
             'currency_text' => 'text', 'use_period' => 'text', 'report_format' => 'text', 'intended_users' => 'text',
             'deadline' => 'text', 'initial_info' => 'textarea', 'special_assumptions' => 'textarea', 'limiting_conditions' => 'textarea',
             'use_restrictions' => 'textarea',
         ],
-        'Object and rights' => [
-            'function' => 'text', 'ownership_form' => 'text', 'rights' => 'text', 'land_rights' => 'text',
-            'encumbrances' => 'text', 'ecology' => 'text', 'development' => 'text',
+    ];
+
+    /** Typical construction of common buildings: one click fills the inspection step. */
+    public const PRESETS = [
+        'panel' => [
+            'foundation' => 'Temirbeton bloklar', 'walls' => 'Temirbeton panellar', 'roof_slab' => 'Temirbeton plitalar',
+            'roof_cover' => 'Rulonli (ruberoid)', 'floor_type' => 'Linoleum, laminat', 'windows_doors' => 'Plastik derazalar, metall eshik',
+            'architecture' => 'Tipik loyiha', 'landscaping' => 'Obodonlashtirilgan', 'surroundings' => "Ko'p qavatli turar joy binolari",
         ],
-        'Land plot' => [
-            'land_category' => 'text', 'geology' => 'text', 'hydrogeology' => 'text', 'topography' => 'text',
-            'land_improvements' => 'text', 'land_hbu' => 'text',
+        'brick' => [
+            'foundation' => 'Lentasimon temirbeton', 'walls' => "Pishgan g'isht", 'roof_slab' => 'Temirbeton plitalar',
+            'roof_cover' => 'Rulonli', 'floor_type' => 'Laminat, kafel', 'windows_doors' => 'Plastik derazalar, metall eshik',
+            'architecture' => 'Oddiy', 'landscaping' => 'Obodonlashtirilgan', 'surroundings' => "Ko'p qavatli turar joy binolari",
         ],
-        'Building' => [
-            'building_volume' => 'number', 'completion' => 'number', 'foundation' => 'text', 'walls' => 'text',
-            'roof_cover' => 'text', 'roof_slab' => 'text', 'floor_type' => 'text', 'windows_doors' => 'text',
-            'repair' => 'text', 'architecture' => 'text', 'landscaping' => 'text', 'surroundings' => 'text', 'convertibility' => 'textarea',
+        'monolith' => [
+            'foundation' => 'Monolit temirbeton plita', 'walls' => 'Monolit temirbeton karkas, gazoblok', 'roof_slab' => 'Monolit temirbeton',
+            'roof_cover' => 'Membranali', 'floor_type' => 'Laminat, kafel', 'windows_doors' => 'Alyumin-plastik derazalar, metall eshik',
+            'architecture' => 'Zamonaviy', 'landscaping' => 'Obodonlashtirilgan, avtoturargoh', 'surroundings' => 'Yangi turar joy majmualari',
         ],
-        'Approaches' => [
-            'reason_comparative' => 'textarea', 'reason_cost' => 'textarea', 'reason_income' => 'textarea', 'hbu_conclusion' => 'textarea',
+        'house' => [
+            'foundation' => 'Lentasimon beton', 'walls' => "Pishgan g'isht", 'roof_slab' => "Yog'och to'sinlar",
+            'roof_cover' => 'Metallocherepitsa', 'floor_type' => 'Beton, laminat', 'windows_doors' => "Plastik derazalar, yog'och eshiklar",
+            'architecture' => 'Oddiy', 'landscaping' => 'Hovli obodonlashtirilgan', 'surroundings' => 'Xususiy turar joy uylari',
         ],
+        'office' => [
+            'foundation' => 'Temirbeton', 'walls' => "G'isht, temirbeton karkas", 'roof_slab' => 'Temirbeton plitalar',
+            'roof_cover' => 'Rulonli', 'floor_type' => 'Kafel, laminat', 'windows_doors' => 'Alyumin-plastik vitrajlar',
+            'architecture' => 'Zamonaviy', 'landscaping' => 'Obodonlashtirilgan, avtoturargoh', 'surroundings' => 'Turli maqsadli binolar',
+        ],
+        'warehouse' => [
+            'foundation' => 'Temirbeton ustunli', 'walls' => 'Sendvich-panellar, metall karkas', 'roof_slab' => 'Metall fermalar',
+            'roof_cover' => 'Profnastil', 'floor_type' => 'Beton', 'windows_doors' => 'Metall darvozalar',
+            'architecture' => 'Sanoat binosi', 'landscaping' => 'Asfaltlangan maydon', 'surroundings' => 'Sanoat va ombor binolari',
+        ],
+    ];
+
+    /** Suggestions offered in the fields (the appraiser may type anything). */
+    public const OPTIONS = [
+        'function' => ["Ko'p qavatli turar joy", 'Turar joy (hovli)', 'Noturar joy (savdo)', 'Noturar joy (ofis)', 'Ombor', 'Ishlab chiqarish binosi'],
+        'ownership_form' => ['Xususiy mulk', 'Davlat mulki', 'Jamoa mulki'],
+        'rights' => ['Egalik huquqi', 'Mulk huquqi', 'Ijara huquqi', 'Doimiy foydalanish huquqi'],
+        'land_rights' => ['Doimiy foydalanish', 'Meros qilib qoldiriladigan umrbod egalik', 'Ijara', 'Xususiy mulk'],
+        'encumbrances' => ['Mavjud emas', 'Ipoteka', 'Garov', 'Taqiq (arest)'],
+        'foundation' => ['Beton', 'Lentasimon temirbeton', 'Temirbeton bloklar', 'Monolit temirbeton plita', 'Temirbeton ustunli'],
+        'walls' => ["Pishgan g'isht", 'Temirbeton panellar', 'Monolit temirbeton', 'Gazoblok', 'Paxsa', 'Sendvich-panellar'],
+        'roof_cover' => ['Rulonli', 'Shifer', 'Metallocherepitsa', 'Profnastil', 'Membranali'],
+        'roof_slab' => ['Temirbeton plitalar', 'Monolit temirbeton', "Yog'och to'sinlar", 'Metall fermalar'],
+        'floor_type' => ['Beton', 'Laminat', 'Linoleum', 'Kafel', 'Parket', "Yog'och"],
+        'windows_doors' => ['Plastik', 'Alyumin-plastik', "Yog'och", 'Metall eshik'],
+        'repair' => ["A'lo (yangi ta'mir)", 'Yaxshi', 'Qoniqarli', "Ta'mir talab"],
+        'architecture' => ['Oddiy', 'Tipik loyiha', 'Zamonaviy'],
+        'landscaping' => ['Obodonlashtirilgan', 'Qisman obodonlashtirilgan', 'Obodonlashtirilmagan'],
+        'surroundings' => ['Turar joy binolari', "Ko'p qavatli turar joy binolari", 'Xususiy turar joy uylari', 'Turli maqsadli binolar', 'Sanoat binolari'],
     ];
 
     /** Reconciliation criteria (national standard No. 6), in the order of the scores. */
@@ -102,6 +153,7 @@ final class RealEstateReport
             'function' => $residential ? (($object->floors_total ?? 0) > 1 ? "Ko'p qavatli turar joy" : 'Turar joy') : 'Noturar joy',
             'ownership_form' => 'Xususiy mulk',
             'rights' => 'Egalik huquqi',
+            'rights_basis' => null,
             'land_rights' => 'Doimiy foydalanish',
             'encumbrances' => 'Mavjud emas',
             'ecology' => "Ma'lumot topilmadi",
@@ -171,6 +223,27 @@ final class RealEstateReport
             __('Report number (given when the valuation is completed)') => filled($object->report_number),
             __('Photos of the object') => $object->attachments->contains(fn (Attachment $a) => $a->isImage()),
             __('Company details (TIN, bank account)') => filled(Setting::get('inn')) && filled(Setting::get('bank_account')),
+        ];
+    }
+
+    /**
+     * Steps of the preparation page and whether each is complete.
+     *
+     * @return array<string, bool>
+     */
+    public static function steps(RealEstate $object): array
+    {
+        $object->loadMissing(['clients', 'appraiser', 'analogs', 'attachments']);
+        $applied = $object->approachList();
+        $included = $object->analogs->filter(fn (Analog $a) => $a->included && $a->isUsable())->count();
+
+        return [
+            'documents' => $object->clients->isNotEmpty() && filled($object->cadastral_number),
+            'object' => $object->total_area > 0 && filled($object->address) && $object->region_id !== null,
+            'inspection' => $object->inspection_date !== null && $object->attachments->contains(fn (Attachment $a) => $a->isImage()),
+            'analogs' => ! in_array(ValuationApproach::Comparative, $applied, true) || ($included >= 3 && $object->value_comparative !== null),
+            'approaches' => $applied !== [] && collect($applied)->every(fn (ValuationApproach $a) => $object->{$a->column()} !== null) && $object->market_value !== null,
+            'report' => filled($object->appraiser?->certificate_number) && filled(Setting::get('inn')) && filled(Setting::get('bank_account')),
         ];
     }
 

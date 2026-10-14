@@ -9,7 +9,7 @@
         @if ($item instanceof \App\Models\RealEstate)
             <a class="btn" href="{{ route('admin.real-estates.report', $item->id) }}" target="_blank"><x-icon name="scroll-text" :size="16" /> {{ __('Valuation report') }}</a>
             @can('edit-valuation', $item)
-                <a class="btn btn-icon" href="{{ route('admin.real-estates.report.edit', $item->id) }}" title="{{ __('Report data') }}" aria-label="{{ __('Report data') }}"><x-icon name="sliders-horizontal" :size="16" /></a>
+                <a class="btn btn-primary" href="{{ route('admin.real-estates.report.edit', $item->id) }}"><x-icon name="list-checks" :size="16" /> {{ __('Prepare the report') }}</a>
             @endcan
         @endif
         <a class="btn" href="{{ route($module->routeName('print'), $item->id) }}" target="_blank"><x-icon name="printer" :size="16" /> {{ __('Certificate') }}</a>
