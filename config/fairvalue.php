@@ -50,6 +50,8 @@ return [
         'oked' => '',
         'membership' => '',
         'report_city' => 'Toshkent',
+        // Alphabet of new reports: latn or cyrl (each object can still choose).
+        'report_script' => 'latn',
         // Numbers on the home page; empty ones are not shown.
         'stat_years' => '',
         'stat_reports' => '',

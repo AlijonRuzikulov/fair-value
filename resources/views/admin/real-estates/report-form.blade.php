@@ -295,7 +295,7 @@
                 <x-card :title="'6 · '.$stepInfo['report'][0]" :icon="$stepInfo['report'][2]" id="step-report" class="prep-step" data-step="report">
                     <x-slot:actions>@include('admin.real-estates._step-badge', ['ok' => $steps['report']])</x-slot:actions>
                     <div class="form-grid">
-                        <x-select name="script" :label="$labels['script']" :options="['cyrl' => 'Ўзбекча (кирилл)', 'latn' => 'O‘zbekcha (lotin)']" :value="$values['script']" span="4" />
+                        <x-select name="script" :label="$labels['script']" :options="['latn' => 'O‘zbekcha (lotin)', 'cyrl' => 'Ўзбекча (кирилл)']" :value="$values['script']" span="4" />
                         <x-field name="report_date" type="date" :label="$labels['report_date']" :value="$values['report_date']" span="4" />
                         @foreach (['letter_number', 'value_type', 'currency_text', 'use_period', 'report_format', 'intended_users', 'deadline'] as $name)
                             @include('admin.real-estates._report-field', $field($name, 'text', $values[$name] ?? null, 4))

@@ -136,7 +136,7 @@ final class RealEstateReport
         $pledgee = $object->clients->firstWhere('pivot.role', PersonRole::Pledgee->value);
 
         return [
-            'script' => ReportScript::CYRILLIC,
+            'script' => Setting::get('report_script') === ReportScript::CYRILLIC ? ReportScript::CYRILLIC : ReportScript::LATIN,
             'report_date' => ($object->completed_at ?? now())->toDateString(),
             'letter_number' => $object->contract_number,
             'value_type' => 'Bozor qiymati',

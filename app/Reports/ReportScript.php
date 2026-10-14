@@ -15,11 +15,11 @@ final class ReportScript
 
     public const CYRILLIC = 'cyrl';
 
-    public function __construct(public readonly string $script = self::CYRILLIC) {}
+    public function __construct(public readonly string $script = self::LATIN) {}
 
     public static function make(?string $script): self
     {
-        return new self($script === self::LATIN ? self::LATIN : self::CYRILLIC);
+        return new self($script === self::CYRILLIC ? self::CYRILLIC : self::LATIN);
     }
 
     public function isCyrillic(): bool

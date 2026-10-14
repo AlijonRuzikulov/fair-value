@@ -84,6 +84,7 @@ class FieldNames
             'oked' => __('OKED'),
             'membership' => __('Membership certificate of the appraisers\' association'),
             'report_city' => __('City printed on reports'),
+            'report_script' => __('Alphabet of reports'),
             'sections' => __('Sections'),
             'document' => __('Document'),
             'script' => __('Alphabet of the report'),

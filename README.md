@@ -329,7 +329,8 @@ tekshiradi. Saytlar tuzilishini o‘zgartirsa, ba’zi maydonlarni qo‘lda to�
 
 Ko‘chmas mulk sahifasidagi **“Baholash hisoboti”** tugmasi tizimdagi ma’lumotlardan to‘liq hisobotni
 (A4, sahifalarga bo‘lingan, 25–40 bet) yaratadi — **“Chop etish / PDF saqlash”** bilan PDF qilib olinadi.
-Hisobot **kirill** yoki **lotin** yozuvida chiqadi (bir tugma bilan almashadi). Tarkibi:
+Hisobot standart holatda **lotin** yozuvida chiqadi. Hisobot sahifasidagi tugma yoki tayyorlash sahifasining
+6-qadami bilan **kirill**ga almashtiriladi; kompaniya uchun standart yozuv: Sozlamalar → “Hisobot yozuvi”. Tarkibi:
 
 - muqova (rekvizitlar, logotip, asosiy ma’lumotlar, QR-kod) va **sahifa raqamlari bilan mundarija**;
 - I. Ilova xat — qiymat raqamda va **so‘z bilan** (“besh yuz o‘n to‘rt million…”), farazlar, imzolar;

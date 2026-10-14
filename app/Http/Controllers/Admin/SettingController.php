@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Activity;
 use App\Models\Setting;
 use App\Reports\RealEstateReport;
+use App\Reports\ReportScript;
 use App\Services\CurrencyService;
 use App\Support\NumberInput;
 use Illuminate\Http\RedirectResponse;
@@ -24,7 +25,7 @@ class SettingController extends Controller
         'name', 'legal_name', 'director', 'license', 'inn', 'phone', 'phone2', 'email', 'address',
         'working_hours', 'telegram', 'instagram', 'map_url', 'bank_name', 'bank_account', 'bank_mfo',
         'stat_years', 'stat_reports', 'stat_clients', 'stat_banks', 'labor_rate',
-        'legal_name_ru', 'oked', 'membership', 'report_city',
+        'legal_name_ru', 'oked', 'membership', 'report_city', 'report_script',
     ];
 
     public function edit(CurrencyService $currency): View
@@ -64,6 +65,7 @@ class SettingController extends Controller
             'oked' => ['nullable', 'string', 'max:20'],
             'membership' => ['nullable', 'string', 'max:1000'],
             'report_city' => ['nullable', 'string', 'max:80'],
+            'report_script' => ['nullable', 'in:'.ReportScript::LATIN.','.ReportScript::CYRILLIC],
         ]);
 
         $changes = [];

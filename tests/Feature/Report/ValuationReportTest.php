@@ -3,6 +3,7 @@
 namespace Tests\Feature\Report;
 
 use App\Enums\ValuationStatus;
+use App\Http\Controllers\Admin\SettingController;
 use App\Models\Activity;
 use App\Models\Analog;
 use App\Models\Client;
@@ -67,7 +68,7 @@ class ValuationReportTest extends TestCase
     {
         $this->actingAs($this->appraiser);
 
-        $cyrillic = $this->get('/admin/real-estates/'.$this->flat->id.'/report')->assertOk();
+        $cyrillic = $this->get('/admin/real-estates/'.$this->flat->id.'/report?script=cyrl')->assertOk();
         $cyrillic->assertSee('БАҲОЛАШ ҲИСОБОТИ')
             ->assertSee('Xodjayeva Xanay Mavlyankulovna', false)      // names stay as typed
             ->assertSee('514 168 000 сўм')
@@ -76,7 +77,7 @@ class ValuationReportTest extends TestCase
             ->assertSee('11 814,05')                                  // dollar rate on the valuation date
             ->assertSee('-2,08 %', false)->assertDontSee('Bozor qiymati');
 
-        $latin = $this->get('/admin/real-estates/'.$this->flat->id.'/report?script=latn')->assertOk();
+        $latin = $this->get('/admin/real-estates/'.$this->flat->id.'/report')->assertOk();
         $latin->assertSee('BAHOLASH HISOBOTI')
             ->assertSee('Besh yuz o‘n to‘rt million bir yuz oltmish sakkiz ming so‘m', false)
             ->assertSee('Taqqoslash elementlari');
@@ -87,20 +88,34 @@ class ValuationReportTest extends TestCase
         $this->assertSame(2, Activity::where('event', 'printed')->count());
     }
 
+    public function test_reports_are_in_latin_unless_the_company_chooses_cyrillic(): void
+    {
+        $admin = User::factory()->admin()->create();
+        $this->actingAs($this->appraiser)->get('/admin/real-estates/'.$this->flat->id.'/report')->assertSee('BAHOLASH HISOBOTI');
+
+        $settings = collect(SettingController::KEYS)->mapWithKeys(fn ($key) => [$key => Setting::get($key)])->all();
+        $this->actingAs($admin)->put('/admin/settings', [...$settings, 'report_script' => ReportScript::CYRILLIC])->assertSessionHasNoErrors();
+
+        $this->actingAs($this->appraiser)->get('/admin/real-estates/'.$this->flat->id.'/report')->assertSee('БАҲОЛАШ ҲИСОБОТИ');
+        // A report switched to Latin on its own page stays in Latin.
+        $this->put('/admin/real-estates/'.$this->flat->id.'/report', ['script' => ReportScript::LATIN, 'report_date' => '2026-10-12'])->assertSessionHasNoErrors();
+        $this->get('/admin/real-estates/'.$this->flat->id.'/report')->assertSee('BAHOLASH HISOBOTI');
+    }
+
     public function test_the_report_form_keeps_only_what_differs_from_the_defaults(): void
     {
         $this->actingAs($this->appraiser);
         $this->get('/admin/real-estates/'.$this->flat->id.'/report/edit')->assertOk()->assertSee('Bozor qiymati');
 
         $this->put('/admin/real-estates/'.$this->flat->id.'/report', [
-            'script' => ReportScript::LATIN, 'report_date' => '2026-10-12', 'value_type' => 'Bozor qiymati',
+            'script' => ReportScript::CYRILLIC, 'report_date' => '2026-10-12', 'value_type' => 'Bozor qiymati',
             'foundation' => 'Lentasimon beton', 'building_volume' => '220,84', 'completion' => '100',
             'scores' => [0 => ['comparative' => 2], 1 => ['comparative' => 1], 2 => ['comparative' => 1], 3 => ['comparative' => 1]],
             'company_documents' => '1', 'include_macro' => '0', 'include_methodology' => '1',
         ])->assertRedirect('/admin/real-estates/'.$this->flat->id.'/report/edit');
 
         $report = $this->flat->fresh()->report;
-        $this->assertSame('latn', $report['script']);
+        $this->assertSame('cyrl', $report['script']);
         $this->assertSame('Lentasimon beton', $report['foundation']);
         $this->assertEquals(220.84, $report['building_volume']);
         $this->assertArrayNotHasKey('value_type', $report, 'The default value is not stored.');
@@ -111,7 +126,8 @@ class ValuationReportTest extends TestCase
         $log = Activity::where('event', 'updated')->latest('id')->first();
         $this->assertArrayHasKey('report.foundation', $log->changes);
 
-        $this->get('/admin/real-estates/'.$this->flat->id.'/report')->assertOk()
+        $this->get('/admin/real-estates/'.$this->flat->id.'/report')->assertOk()->assertSee('БАҲОЛАШ ҲИСОБОТИ');
+        $this->get('/admin/real-estates/'.$this->flat->id.'/report?script=latn')->assertOk()
             ->assertSee('Lentasimon beton')
             ->assertDontSee('Yalpi ichki mahsulot');
     }
