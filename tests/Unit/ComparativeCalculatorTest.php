@@ -16,14 +16,16 @@ class ComparativeCalculatorTest extends TestCase
         return $analog;
     }
 
-    public function test_suggested_adjustments_follow_bargaining_floor_and_area(): void
+    public function test_suggested_adjustments_follow_bargaining_floor_area_and_condition(): void
     {
-        $subject = ['area' => 60.0, 'floor' => 4, 'floors_total' => 9];
+        $subject = ['area' => 60.0, 'floor' => 4, 'floors_total' => 9, 'condition' => 'Yaxshi'];
 
         $firstFloor = ComparativeCalculator::suggest($subject, $this->analog(1, 1, 60, ['floor' => 1, 'floors_total' => 9]));
         $this->assertSame(-5.0, $firstFloor['bargain']);
         $this->assertSame(5.0, $firstFloor['floor'], 'A first-floor analogue is cheaper, so its price is raised.');
         $this->assertSame(0.0, $firstFloor['area']);
+        $this->assertSame(0.0, $firstFloor['condition'], 'The condition of the analogue is unknown.');
+        $this->assertSame(ComparativeCalculator::ADJUSTMENTS, array_keys($firstFloor));
 
         $lastFloor = ComparativeCalculator::suggest($subject, $this->analog(2, 1, 60, ['floor' => 9, 'floors_total' => 9]));
         $this->assertSame(3.0, $lastFloor['floor']);
@@ -34,32 +36,69 @@ class ComparativeCalculatorTest extends TestCase
 
         $smaller = ComparativeCalculator::suggest($subject, $this->analog(4, 1, 30));
         $this->assertLessThan(0, $smaller['area']);
+
+        // Wear 15 % against 30 %: (100 − 15) / (100 − 30) − 1 = +21.4 %.
+        $worn = ComparativeCalculator::suggest($subject, $this->analog(5, 1, 60, ['condition' => 'Qoniqarli']));
+        $this->assertSame(21.4, $worn['condition']);
+        $euro = ComparativeCalculator::suggest($subject, $this->analog(6, 1, 60, ['condition' => 'Евроремонт']));
+        $this->assertLessThan(0, $euro['condition']);
     }
 
-    public function test_value_is_a_weighted_average_of_adjusted_prices(): void
+    public function test_adjustments_are_applied_one_after_another_and_weighted_by_their_number(): void
     {
         $analogs = collect([
-            $this->analog(1, 600_000_000, 60, ['adjustments' => ['bargain' => -5]]),        // 10 000 000/m² → 9 500 000
-            $this->analog(2, 660_000_000, 60, ['adjustments' => ['bargain' => -5, 'floor' => 10]]), // 11 000 000 → 11 550 000
+            $this->analog(1, 600_000_000, 60, ['adjustments' => ['bargain' => -5, 'area' => 2]]),                     // 10 000 000/m², 1 adjustment
+            $this->analog(2, 660_000_000, 60, ['adjustments' => ['bargain' => -5, 'floor' => 10, 'condition' => -10]]), // 11 000 000/m², 2 adjustments
             $this->analog(3, 900_000_000, 60, ['included' => false]),
-            $this->analog(4, 500_000_000, 0),                                                 // no area
+            $this->analog(4, 500_000_000, 0),                                                                          // no area
         ]);
 
         $result = ComparativeCalculator::calculate(50, $analogs);
 
+        $this->assertSame('count', $result['weighting']);
         $this->assertSame(2, $result['count']);
-        $this->assertSame(9_500_000.0, $result['rows'][1]['adjusted_m2']);
-        $this->assertSame(11_550_000.0, $result['rows'][2]['adjusted_m2']);
-        // Fewer adjustments → larger weight.
-        $this->assertGreaterThan($result['rows'][2]['weight'], $result['rows'][1]['weight']);
-        $this->assertEqualsWithDelta(1.0, $result['rows'][1]['weight'] + $result['rows'][2]['weight'], 0.0001);
+        $this->assertSame(9_690_000.0, $result['rows'][1]['adjusted_m2']);       // 10 000 000 × 0.95 × 1.02
+        $this->assertSame(10_345_500.0, $result['rows'][2]['adjusted_m2']);      // 11 000 000 × 0.95 × 1.10 × 0.90
+        $this->assertSame(9_500_000.0, $result['rows'][1]['steps']['bargain']['value']);
+        $this->assertSame(1, $result['rows'][1]['count'], 'Bargaining is not counted.');
+        $this->assertSame(2, $result['rows'][2]['count']);
+        $this->assertEqualsWithDelta(2 / 3, $result['rows'][1]['weight'], 0.0001);
+        $this->assertEqualsWithDelta(1 / 3, $result['rows'][2]['weight'], 0.0001);
 
-        $w1 = 1 / 1.05;
-        $w2 = 1 / 1.15;
-        $expected = (9_500_000 * $w1 + 11_550_000 * $w2) / ($w1 + $w2);
+        $expected = 9_690_000 * 2 / 3 + 10_345_500 / 3;
         $this->assertEqualsWithDelta($expected, $result['price_m2'], 0.01);
         $this->assertSame(round($expected * 50, -3), $result['value']);
         $this->assertGreaterThan(0, $result['variation']);
+    }
+
+    public function test_weights_can_follow_the_size_of_adjustments(): void
+    {
+        $analogs = collect([
+            $this->analog(1, 600_000_000, 60, ['adjustments' => ['bargain' => -5, 'area' => 2]]),
+            $this->analog(2, 660_000_000, 60, ['adjustments' => ['bargain' => -5, 'floor' => 10, 'condition' => -10]]),
+        ]);
+
+        $result = ComparativeCalculator::calculate(50, $analogs, ['weighting' => 'size']);
+
+        $w1 = 1 / 1.07;
+        $w2 = 1 / 1.25;
+        $this->assertEqualsWithDelta($w1 / ($w1 + $w2), $result['rows'][1]['weight'], 0.0001);
+        $this->assertEqualsWithDelta((9_690_000 * $w1 + 10_345_500 * $w2) / ($w1 + $w2), $result['price_m2'], 0.01);
+    }
+
+    public function test_market_conditions_of_a_dollar_price_follow_the_exchange_rates(): void
+    {
+        // 50 000 USD at 12 000 on the offer date; 12 600 on the valuation date → +5 %.
+        $analog = $this->analog(1, 600_000_000, 60, ['price' => 50_000, 'currency' => 'USD', 'usd_rate' => 12_000, 'adjustments' => ['market' => 30]]);
+
+        $result = ComparativeCalculator::calculate(60, collect([$analog]), ['usd_rate' => 12_600]);
+
+        $this->assertSame(5.0, $result['rows'][1]['steps']['market']['percent'], 'A typed value is ignored for dollar prices.');
+        $this->assertSame(10_500_000.0, $result['rows'][1]['adjusted_m2']);
+        $this->assertSame(1, $result['rows'][1]['count']);
+
+        $withoutRate = ComparativeCalculator::calculate(60, collect([$analog]));
+        $this->assertSame(0.0, $withoutRate['rows'][1]['steps']['market']['percent']);
     }
 
     public function test_offers_far_from_the_median_are_outliers(): void

@@ -24,6 +24,7 @@ class ClaudeListingAi implements ListingAi
         url: the address of the listing itself (from the links list for search results), or null if it is the page itself.
         location: district and city as written, e.g. "Chilonzor tumani, Toshkent". listed_at: YYYY-MM-DD or null.
         condition: the repair state if stated (e.g. "euro repair", "needs repair"), else null.
+        wall_material: the building's wall material if stated (e.g. "brick", "panel", "monolith"), else null.
         TXT;
 
     private const SEARCH_SYSTEM = <<<'TXT'
@@ -180,9 +181,10 @@ class ClaudeListingAi implements ListingAi
                             'floors_total' => $nullable('integer'),
                             'location' => $nullable('string'),
                             'condition' => $nullable('string'),
+                            'wall_material' => $nullable('string'),
                             'listed_at' => $nullable('string'),
                         ],
-                        'required' => ['url', 'title', 'price', 'currency', 'area_m2', 'rooms', 'floor', 'floors_total', 'location', 'condition', 'listed_at'],
+                        'required' => ['url', 'title', 'price', 'currency', 'area_m2', 'rooms', 'floor', 'floors_total', 'location', 'condition', 'wall_material', 'listed_at'],
                         'additionalProperties' => false,
                     ],
                 ],
@@ -204,6 +206,7 @@ class ClaudeListingAi implements ListingAi
         }
         $listing['location'] = isset($item['location']) ? mb_substr(trim($item['location']), 0, 250) : null;
         $listing['condition'] = isset($item['condition']) ? mb_substr(trim($item['condition']), 0, 250) : null;
+        $listing['wall_material'] = isset($item['wall_material']) ? mb_substr(trim($item['wall_material']), 0, 250) : null;
         $listing['listed_at'] = isset($item['listed_at']) && strtotime($item['listed_at']) ? date('Y-m-d', strtotime($item['listed_at'])) : null;
 
         return $listing;

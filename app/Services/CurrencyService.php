@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Activity;
 use App\Models\CurrencyRate;
+use DateTimeInterface;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -60,11 +61,52 @@ class CurrencyService
     }
 
     /**
-     * Downloads today's rates. Returns the number of stored rates.
+     * Official rate of a currency (sum per unit) on a date — the valuation
+     * date or the date of a sale offer. A missing day is downloaded from the
+     * bank's archive once (unless $download is false, e.g. while a page is
+     * shown); otherwise the closest earlier stored rate is used.
      */
-    public function fetch(): int
+    public function rateOn(string $code, DateTimeInterface|string|null $date, bool $download = true): ?float
     {
-        $response = Http::timeout(8)->retry(2, 500, throw: false)->acceptJson()->get(config('fairvalue.currency.source'));
+        $date = Carbon::parse($date ?? now())->startOfDay();
+        if ($date->isFuture()) {
+            $date = now()->startOfDay();
+        }
+
+        $find = fn () => CurrencyRate::where('code', $code)
+            ->whereDate('rate_date', '<=', $date->toDateString())
+            ->whereDate('rate_date', '>=', $date->copy()->subDays(10)->toDateString())
+            ->orderByDesc('rate_date')->first();
+
+        $rate = $find();
+        if ($download && (! $rate || ! $rate->rate_date->isSameDay($date)) && config('fairvalue.currency.history')
+            && Cache::add('currency.archive.'.$date->toDateString(), true, now()->addHours(6))) {
+            try {
+                $this->fetch($date);
+                $rate = $find();
+            } catch (Throwable $e) {
+                Log::warning('Archive exchange rates could not be fetched: '.$e->getMessage());
+            }
+        }
+
+        // No rate near that day: the closest one at all is better than none.
+        $rate ??= CurrencyRate::where('code', $code)->whereDate('rate_date', '<=', $date->toDateString())->orderByDesc('rate_date')->first()
+            ?? CurrencyRate::where('code', $code)->orderBy('rate_date')->first();
+
+        return $rate ? round((float) $rate->rate / max(1, (int) $rate->nominal), 4) : null;
+    }
+
+    /**
+     * Downloads the rates of today (or of a past date from the archive).
+     * Returns the number of stored rates.
+     */
+    public function fetch(?DateTimeInterface $date = null): int
+    {
+        $url = config('fairvalue.currency.source');
+        if ($date) {
+            $url = rtrim($url, '/').'/all/'.$date->format('Y-m-d').'/';
+        }
+        $response = Http::timeout(8)->retry(2, 500, throw: false)->acceptJson()->get($url);
         $response->throw();
 
         $codes = config('fairvalue.currency.codes');

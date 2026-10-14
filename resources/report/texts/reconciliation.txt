@@ -1,0 +1,16 @@
+Baholash natijalarini muvofiqlashtirish — baholashning turli yondashuvlari yordamida olingan natijalarni o'lchash va taqqoslash yo'li bilan baholash obyektining yakuniy qiymatini aniqlash. U quyidagi usullardan biri bilan amalga oshiriladi:
+- **mantiqiy tahlil usuli** — barcha muhim parametrlarni hisobga olgan holda baholovchining mantiqiy tahlili asosida har bir yondashuv natijasiga vazn beriladi;
+- **mezonlar bo'yicha moslashtirish usuli** — baholovchi tomonidan tanlangan to'rt yoki undan ortiq obyektiv mezon asosida har bir yondashuvning afzalliklari va kamchiliklari baholanadi;
+- **ierarxiyalarni tahlil qilish usuli** — muvofiqlashtirish muammosi qismlarga bo'linadi va ierarxiya ko'rinishida tahlil qilinadi.
+
+Ushbu hisobotda mezonlar bo'yicha moslashtirish usulidan foydalanildi. Yondashuvlarning solishtirma og'irliklari quyidagi mezonlar bo'yicha baholanadi:
+- tahlil va hisob-kitoblar o'tkazilgan ma'lumotlarning ishonchliligi va yetarliligi;
+- yondashuvning obyektga xos bo'lgan narx omillarini hisobga olish qobiliyati;
+- yondashuvning xaridor va sotuvchining haqiqiy niyatlarini aks ettirish qobiliyati;
+- yondashuvning hisoblanayotgan qiymat turiga muvofiqligi.
+
+Baholash obyektining yakuniy qiymati quyidagi formula bo'yicha aniqlanadi:
+
+> Kyak = Kxar × C1 + Kdar × C2 + Kqiy × C3,   C1 + C2 + C3 = 1
+
+bunda Kxar, Kdar, Kqiy — tegishincha xarajat, daromad va qiyosiy yondashuvlar bilan aniqlangan qiymatlar; C1, C2, C3 — har bir yondashuv uchun tanlangan solishtirma og'irliklar.

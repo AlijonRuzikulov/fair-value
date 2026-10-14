@@ -318,6 +318,11 @@
 
   /* ---------- Attachments --------------------------------------------- */
 
+  // A file field that belongs to another form (form="…") sends it as soon as a file is chosen.
+  $$('[data-submit-on-change]').forEach(function (input) {
+    input.addEventListener('change', function () { if (input.files.length && input.form) input.form.submit(); });
+  });
+
   $$('[data-upload]').forEach(function (form) {
     var input = $('[data-upload-input]', form);
     var zone = $('[data-dropzone]', form);

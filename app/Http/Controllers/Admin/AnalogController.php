@@ -6,7 +6,9 @@ use App\Enums\ValuationApproach;
 use App\Http\Controllers\Controller;
 use App\Models\Activity;
 use App\Models\Analog;
+use App\Reports\RealEstateReport;
 use App\Services\Analogs\AnalogFinder;
+use App\Services\Analogs\AnalogPhoto;
 use App\Services\Analogs\PageFetcher;
 use App\Services\CurrencyService;
 use App\Support\ComparativeCalculator;
@@ -16,7 +18,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
 /**
@@ -91,6 +95,7 @@ class AnalogController extends Controller
     {
         $object = $this->object($type, $id);
         $rows = (array) $request->input('analogs', []);
+        $currency = app(CurrencyService::class);
 
         foreach ($object->analogs as $analog) {
             $row = $rows[$analog->id] ?? null;
@@ -99,40 +104,81 @@ class AnalogController extends Controller
             }
 
             $price = NumberInput::normalize($row['price'] ?? null);
-            $currency = in_array($row['currency'] ?? null, ['UZS', 'USD'], true) ? $row['currency'] : $analog->currency;
-            $rate = $currency === 'USD' ? ((float) $analog->usd_rate ?: app(CurrencyService::class)->usd()) : null;
+            $code = in_array($row['currency'] ?? null, ['UZS', 'USD'], true) ? $row['currency'] : $analog->currency;
+            $listedAt = isset($row['listed_at']) && strtotime((string) $row['listed_at']) && strtotime((string) $row['listed_at']) <= time()
+                ? date('Y-m-d', strtotime((string) $row['listed_at'])) : null;
 
             $adjustments = [];
             foreach (ComparativeCalculator::ADJUSTMENTS as $key) {
                 $value = (float) NumberInput::normalize($row['adjustments'][$key] ?? 0);
-                $adjustments[$key] = max(-50, min(50, round($value, 1)));
+                $adjustments[$key] = max(-50, min(50, round($value, 2)));
             }
 
             $analog->fill([
                 'price' => is_numeric($price) && (float) $price > 0 ? (float) $price : null,
-                'currency' => $currency,
-                'usd_rate' => $rate,
+                'currency' => $code,
                 'area' => self::positive($row['area'] ?? null),
                 'floor' => self::integer($row['floor'] ?? null),
                 'floors_total' => self::integer($row['floors_total'] ?? null),
+                'listed_at' => $listedAt,
+                'condition' => self::text($row['condition'] ?? null),
+                'wall_material' => self::text($row['wall_material'] ?? null),
                 'adjustments' => $adjustments,
                 'included' => (bool) ($row['included'] ?? false),
             ]);
-            $analog->price_uzs = $analog->price === null ? null : ($currency === 'USD' ? ($rate ? round((float) $analog->price * $rate, 2) : null) : (float) $analog->price);
+            // A dollar price is converted at the rate of the day the offer was made.
+            if ($code !== 'USD') {
+                $analog->usd_rate = null;
+            } elseif ($analog->isDirty(['listed_at', 'currency']) || ! $analog->usd_rate) {
+                $analog->usd_rate = $currency->rateOn('USD', $listedAt ?? $analog->created_at) ?? $currency->usd();
+            }
+            $rate = (float) $analog->usd_rate;
+            $analog->price_uzs = $analog->price === null ? null : ($code === 'USD' ? ($rate ? round((float) $analog->price * $rate, 2) : null) : (float) $analog->price);
             if ($analog->status === Analog::READY && $analog->isUsable() && $analog->isDirty(['price', 'area', 'currency'])) {
                 $analog->note = null;
             }
             $analog->save();
         }
 
+        if (in_array($request->input('weighting'), ComparativeCalculator::WEIGHTING, true)) {
+            $object->report = [...(array) $object->report, 'weighting' => $request->input('weighting')];
+            Activity::muted(fn () => $object->save());
+        }
+
         return $this->back($type, $object)->with('status', __('Changes saved.'));
+    }
+
+    /** Uploads (or replaces) the photo of an analogue shown in the report. */
+    public function photo(Request $request, Analog $analog, AnalogPhoto $photos): RedirectResponse
+    {
+        Gate::authorize('edit-valuation', $analog->object);
+        $request->validate(['photo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120']], [], ['photo' => __('Photo')]);
+        $photos->upload($analog, $request->file('photo'));
+        Activity::record('uploaded', $analog->object, ['files' => [$request->file('photo')->getClientOriginalName()], 'record' => __('Analogue').' #'.$analog->id]);
+
+        return $this->back(self::typeOf($analog), $analog->object)->with('status', __('The photo has been saved.'));
+    }
+
+    public function deletePhoto(Analog $analog, AnalogPhoto $photos): RedirectResponse
+    {
+        Gate::authorize('edit-valuation', $analog->object);
+        $photos->delete($analog);
+
+        return $this->back(self::typeOf($analog), $analog->object)->with('status', __('Deleted.'));
+    }
+
+    public function showPhoto(Analog $analog): StreamedResponse
+    {
+        abort_unless($analog->photo_path && Storage::disk('local')->exists($analog->photo_path), 404);
+
+        return Storage::disk('local')->response($analog->photo_path, 'analog-'.$analog->id.'.'.pathinfo($analog->photo_path, PATHINFO_EXTENSION), ['Cache-Control' => 'private, max-age=86400']);
     }
 
     /** Writes the result into the comparative approach of the object. */
     public function apply(string $type, string $id): RedirectResponse
     {
         $object = $this->object($type, $id);
-        $result = ComparativeCalculator::calculate((float) $object->total_area, $object->analogs);
+        $result = ComparativeCalculator::calculate((float) $object->total_area, $object->analogs, RealEstateReport::comparativeOptions($object, download: true));
 
         if ($result['value'] === null) {
             return $this->back($type, $object)->with('error', __('Add at least one analogue with a price and an area.'));
@@ -150,9 +196,12 @@ class AnalogController extends Controller
         Gate::authorize('edit-valuation', $object);
         $analog->delete();
 
-        $type = array_search($object::class, AnalogFinder::OBJECTS, true);
+        return $this->back(self::typeOf($analog), $object)->with('status', __('Deleted.'));
+    }
 
-        return $this->back($type, $object)->with('status', __('Deleted.'));
+    private static function typeOf(Analog $analog): string
+    {
+        return (string) array_search($analog->object::class, AnalogFinder::OBJECTS, true);
     }
 
     private function object(string $type, string $id): Model
@@ -204,5 +253,12 @@ class AnalogController extends Controller
     private static function integer(mixed $value): ?int
     {
         return is_numeric($value) ? (int) $value : null;
+    }
+
+    private static function text(mixed $value): ?string
+    {
+        $value = trim((string) $value);
+
+        return $value === '' ? null : mb_substr($value, 0, 250);
     }
 }

@@ -29,6 +29,7 @@ class TransliteratorTest extends TestCase
             ['.env dagi ADMIN_PASSWORD', '.env даги ADMIN_PASSWORD'],
             ['storage/ va bootstrap/cache/ papkalari', 'storage/ ва bootstrap/cache/ папкалари'],
             ['Telegram’ga xabar (IP :ip)', 'Telegram’га хабар (IP :ip)'],
+            ['www.olx.uz, e-auksion.uz saytlari', 'www.olx.uz, e-auksion.uz сайтлари'],
         ];
     }
 

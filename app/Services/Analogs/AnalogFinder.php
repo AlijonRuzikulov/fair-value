@@ -29,6 +29,7 @@ class AnalogFinder
         private ListingParser $parser,
         private ListingAi $ai,
         private CurrencyService $currency,
+        private AnalogPhoto $photos,
     ) {}
 
     public function aiAvailable(): bool
@@ -123,6 +124,7 @@ class AnalogFinder
             }
             $this->apply($object, $target, $listing);
             $target->save();
+            $this->photos->download($target);
             $filled->push($target);
         }
 
@@ -201,7 +203,9 @@ class AnalogFinder
     {
         $currency = $listing['currency'] ?? 'UZS';
         $price = isset($listing['price']) ? (float) $listing['price'] : null;
-        $rate = $currency === 'USD' ? $this->currency->usd() : null;
+        // A dollar price is converted at the rate of the day the offer was made.
+        $rate = $currency === 'USD' ? ($this->currency->rateOn('USD', $listing['listed_at'] ?? null) ?? $this->currency->usd()) : null;
+        $image = isset($listing['image']) && AnalogPhoto::target((string) $listing['image']) ? mb_substr($listing['image'], 0, 1000) : null;
 
         $analog->fill([
             'status' => Analog::READY,
@@ -218,6 +222,8 @@ class AnalogFinder
             'floors_total' => $listing['floors_total'] ?? null,
             'location' => $listing['location'] ?? null,
             'condition' => $listing['condition'] ?? null,
+            'wall_material' => isset($listing['wall_material']) ? mb_substr($listing['wall_material'], 0, 250) : null,
+            'image_url' => $image ?? $analog->image_url,
             'listed_at' => $listing['listed_at'] ?? null,
             'included' => true,
             'note' => null,

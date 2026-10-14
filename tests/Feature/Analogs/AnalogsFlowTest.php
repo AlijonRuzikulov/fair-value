@@ -205,10 +205,9 @@ class AnalogsFlowTest extends TestCase
         $this->post($this->url('/apply'))->assertRedirect()->assertSessionHas('status');
 
         $flat = $this->flat->fresh();
-        // A: 10 000 000 × 1.05 = 10 500 000 (weight 1/1.15); B: 10 833 333 × 0.95 = 10 291 667 (weight 1/1.05).
-        $w1 = 1 / 1.15;
-        $w2 = 1 / 1.05;
-        $expected = round((10_500_000 * $w1 + 10_291_666.67 * $w2) / ($w1 + $w2) * 60, -3);
+        // A: 10 000 000 × 0.95 × 1.10 = 10 450 000; B: 10 833 333 × 0.95 = 10 291 667.
+        // One adjustment besides bargaining or none: equal weights.
+        $expected = round((10_450_000 + 10_291_666.67) / 2 * 60, -3);
         $this->assertEqualsWithDelta($expected, (float) $flat->value_comparative, 1000);
         $this->assertContains('comparative', $flat->approaches);
         $this->assertContains('cost', $flat->approaches);

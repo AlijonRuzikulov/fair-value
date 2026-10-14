@@ -45,6 +45,11 @@ return [
         'bank_mfo' => '',
         'director' => '',
         'map_url' => '',
+        // Printed on the valuation reports.
+        'legal_name_ru' => 'Общество с ограниченной ответственностью "FAIR VALUE"',
+        'oked' => '',
+        'membership' => '',
+        'report_city' => 'Toshkent',
         // Numbers on the home page; empty ones are not shown.
         'stat_years' => '',
         'stat_reports' => '',
@@ -66,6 +71,8 @@ return [
         'source' => env('CBU_RATES_URL', 'https://cbu.uz/uz/arkhiv-kursov-valyut/json/'),
         'codes' => ['USD', 'EUR', 'RUB', 'GBP', 'CNY', 'KZT'],
         'refresh_minutes' => 180,
+        // Rates of past dates (valuation date, dates of offers) are downloaded from the archive.
+        'history' => (bool) env('CBU_HISTORY', true),
     ],
 
     /*
@@ -117,6 +124,7 @@ return [
         'last_floor' => -3.0,
         'area_elasticity' => 0.1,    // larger flats cost less per m²
         'max_area_adjustment' => 10.0,
+        'max_condition_adjustment' => 30.0,
         'outlier' => 0.35,           // further than ±35 % from the median → left out
     ],
 

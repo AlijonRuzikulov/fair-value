@@ -1,0 +1,49 @@
+## Qiyosiy yondashuv
+
+Qiyosiy yondashuv baholash obyektini unga o'xshash, narxi ma'lum bo'lgan obyektlar (analoglar) bilan taqqoslashga asoslanadi. 10-son MBSga muvofiq baholovchi kamida uchta analogni tanlab olishi lozim. Analoglarni tanlashning asosiy mezoni — baholash obyektiga o'xshash eng samarali foydalanish.
+
+Taqqoslash birligi, qoida tariqasida, ko'chmas mulk turi bilan belgilanadi: bino yoki yer uchastkasining maydon birligi (kvadrat metr, sotix, gektar) narxi; bino hajmi birligi (kub metr) narxi; tijorat salohiyatiga ko'ra baholanadigan obyektlar uchun o'rin, xona narxi va boshqa o'lchov birliklari.
+
+Baholovchi qaysi taqqoslash elementi bo'yicha analog va baholash obyekti o'rtasidagi farqni aniqlagan bo'lsa, shu element bo'yicha analog narxiga tuzatish kiritadi. Tuzatishlar quyidagi taqqoslash elementlari bo'yicha ketma-ket kiritiladi:
+- beriladigan mulkiy huquqlar va ularning yuklamalari;
+- moliyalashtirish shartlari va haq to'lash shakli;
+- sotuv shartlari (taklif narxidan bitim narxiga o'tish — savdolashish);
+- xariddan keyingi xarajatlar;
+- bozor shartlari (taklif sanasidan baholash sanasigacha narxlar va valyuta kursining o'zgarishi);
+- joylashgan yeri;
+- fizik tavsiflar (maydon, qavat, qurilish materiallari, arxitekturaviy uslub, holati, qurilish tugallanganligi, obodonlashtirilganligi, qulayliklari, uchastka ekologiyasi);
+- iqtisodiy tavsiflar (foydalanish xarajatlari, boshqarish sifati, ijara shartlari);
+- foydalanish turi va eng samarali foydalanishga muvofiqligi;
+- ko'chmas mulk hisoblanmaydigan komponentlar.
+
+Tuzatish kiritilgan narxlar vaznli o'rtacha qiymat bo'yicha muvofiqlashtiriladi: kamroq (yoki kichikroq) tuzatish kiritilgan analog baholash obyektiga ko'proq o'xshash hisoblanadi va kattaroq vazn oladi.
+
+> V = Σ (Pᵢ × wᵢ) × S
+
+bunda V — baholash obyektining qiymati; Pᵢ — i-analogning tuzatishlardan keyingi 1 m² narxi; wᵢ — i-analogning vazni (Σ wᵢ = 1); S — baholash obyektining umumiy maydoni.
+
+## Daromad yondashuvi
+
+Ko'chmas mulk qiymatini baholash to'g'ridan-to'g'ri kapitallashtirish usuli yoki pul oqimlarini diskontlash usuli bilan amalga oshirilishi mumkin. To'g'ridan-to'g'ri kapitallashtirish usuli ko'chmas mulkning eng tipik yillik daromadini kapitallashtirish stavkasiga bo'lish yo'li bilan qiymatga aylantirishga asoslangan:
+
+> V = I / R
+
+bunda V — baholash obyektining qiymati; I — sof operatsion daromad; R — kapitallashtirish stavkasi.
+
+Pul oqimlarini diskontlash usulida obyekt qiymati prognoz davridagi har bir yilgi pul oqimlari va prognoz davri oxiridagi qayta sotishdan keladigan pul oqimining joriy qiymatlari yig'indisi sifatida aniqlanadi:
+
+> V = Σ Iᵢ / (1 + D)ⁱ + Vₙ / (1 + D)ⁿ
+
+bunda Iᵢ — i-yilning pul oqimi; D — diskontlash stavkasi; Vₙ — prognoz davri tugaganidan keyingi qiymat; n — prognoz davrining oxirgi yili.
+
+## Xarajat yondashuvi
+
+Xarajat yondashuvi bilan aniqlanadigan qiymat yer uchastkasiga bo'lgan huquqlar qiymatidan hamda yig'ilgan eskirish chegirib tashlangan holda yaxshilashlarni tiklash (almashtirish) qiymati va tadbirkor foydasidan iborat:
+
+> Sk = Se + (St + TF − In)
+
+bunda Sk — ko'chmas mulk obyektining qiymati; Se — yer uchastkasiga bo'lgan huquq qiymati; St — tiklash (almashtirish) qiymati; TF — tadbirkor foydasi; In — yig'ilgan eskirish.
+
+Yig'ilgan eskirish jismoniy, funksional va tashqi eskirishlarni hisobga olgan holda aniqlanadi:
+
+> In = 1 − (1 − Ifiz) × (1 − Ifunk) × (1 − Itash)

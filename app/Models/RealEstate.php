@@ -20,7 +20,7 @@ class RealEstate extends Model
     protected $fillable = [
         'kind', 'name', 'cadastral_number', 'total_area', 'useful_area', 'living_area',
         'land_area', 'floors_total', 'floor', 'rooms', 'year_built', 'wall_material',
-        'condition', 'features', ...self::VALUATION_FIELDS,
+        'condition', 'features', 'report', ...self::VALUATION_FIELDS,
     ];
 
     protected function casts(): array
@@ -28,6 +28,7 @@ class RealEstate extends Model
         return [
             'kind' => RealEstateKind::class,
             'features' => 'array',
+            'report' => 'array',
             'total_area' => 'decimal:2',
             'useful_area' => 'decimal:2',
             'living_area' => 'decimal:2',

@@ -10,6 +10,8 @@
                 <x-field name="phone" type="tel" :label="__('Phone')" :value="$user->phone" span="6" />
                 <x-select name="role" :label="__('Role')" :options="\App\Enums\UserRole::options()" :value="$user->role" span="6" required />
                 <x-field name="certificate_number" :label="__('Qualification certificate')" :value="$user->certificate_number" span="6" :hint="__('Appraiser qualification certificate number; printed on certificates.')" />
+                <x-field name="certificate_date" type="date" :label="__('Certificate issued on')" :value="$user->certificate_date" span="6" />
+                <x-field name="certificate_issuer" :label="__('Certificate issued by')" :value="$user->certificate_issuer" span="12" :placeholder="__('Agency for State Assets Management of the Republic of Uzbekistan')" />
                 <div class="field span-12">
                     <input type="hidden" name="is_active" value="0">
                     <label class="check" style="max-width: 320px">

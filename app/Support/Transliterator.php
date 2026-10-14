@@ -44,6 +44,7 @@ class Transliterator
         'potensial' => 'потенциал', 'spetsifikatsiya' => 'спецификация', 'funksional' => 'функционал',
         'funksiya' => 'функция', 'aksiya' => 'акция', 'litsenziya' => 'лицензия', 'sotsial' => 'социал',
         'jshshir' => 'ЖШШИР', 'aqsh' => 'АҚШ', 'yth' => 'ЙТҲ', 'stir' => 'СТИР',
+        'obyekt' => 'объект', 'subyekt' => 'субъект',
     ];
 
     /** Words that stay in Latin script. */
@@ -53,7 +54,7 @@ class Transliterator
         'Chevrolet', 'Daewoo', 'Nexia', 'Cobalt', 'Spark', 'Gentra', 'Lacetti', 'Malibu', 'Damas', 'Labo',
         'Matiz', 'Tracker', 'Onix', 'Captiva', 'Equinox', 'Tahoe', 'Isuzu', 'MAN', 'BYD', 'Kia', 'Hyundai',
         'Toyota', 'Lada', 'GM', 'Cyrl', 'Latn', 'TEO', 'IT', 'HTML', 'CBU', 'Google', 'Yandex', 'MChJ', 'LLC',
-        'HTTPS', 'https', 'IP', 'README', 'cron', 'SQLite', 'MySQL',
+        'HTTPS', 'https', 'IP', 'README', 'cron', 'SQLite', 'MySQL', 'JPG', 'JPEG', 'PNG', 'WEBP', 'USD', 'UZS',
     ];
 
     /** Two-letter combinations first, then single letters. */
@@ -74,9 +75,10 @@ class Transliterator
 
         // Protect HTML tags, :placeholders, URLs, e-mails, {braces}, the word
         // "e-mail", codes such as "FV-7K3M-9Q2X", settings such as
-        // "APP_DEBUG=false", the ".env" file and folders such as "storage/".
+        // "APP_DEBUG=false", the ".env" file, folders such as "storage/" and
+        // site names such as "www.olx.uz".
         return preg_replace_callback(
-            '/(<[^>]+>|:[a-z_]+|https?:\/\/\S+|\S+@\S+|\{[^}]*\}|&[a-z]+;|\b[Ee]-mail\b|\b(?=[A-Z0-9-]*\d)[A-Z0-9]+(?:-[A-Z0-9]+)+\b|\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+(?:=[a-z0-9]+)?\b|\.env\b|\b[a-z]+\/(?:[a-z]+\/)*(?=[\s),.]|$))|([A-Za-z\']+)/u',
+            '/(<[^>]+>|:[a-z_]+|https?:\/\/\S+|\S+@\S+|\{[^}]*\}|&[a-z]+;|\b[Ee]-mail\b|\b(?=[A-Z0-9-]*\d)[A-Z0-9]+(?:-[A-Z0-9]+)+\b|\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+(?:=[a-z0-9]+)?\b|\.env\b|\b[a-z]+\/(?:[a-z]+\/)*(?=[\s),.]|$)|\b(?:[a-z0-9-]+\.)+(?:uz|ru|com|org|net)\b)|([A-Za-z\']+)/u',
             fn ($m) => $m[1] !== '' ? $m[1] : self::word($m[2]),
             $text
         );

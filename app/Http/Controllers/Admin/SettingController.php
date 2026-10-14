@@ -5,10 +5,13 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Activity;
 use App\Models\Setting;
+use App\Reports\RealEstateReport;
 use App\Services\CurrencyService;
 use App\Support\NumberInput;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Throwable;
 
@@ -21,13 +24,14 @@ class SettingController extends Controller
         'name', 'legal_name', 'director', 'license', 'inn', 'phone', 'phone2', 'email', 'address',
         'working_hours', 'telegram', 'instagram', 'map_url', 'bank_name', 'bank_account', 'bank_mfo',
         'stat_years', 'stat_reports', 'stat_clients', 'stat_banks', 'labor_rate',
+        'legal_name_ru', 'oked', 'membership', 'report_city',
     ];
 
     public function edit(CurrencyService $currency): View
     {
         $values = collect(self::KEYS)->mapWithKeys(fn ($key) => [$key => Setting::get($key)])->all();
 
-        return view('admin.settings', ['values' => $values, 'rates' => $currency->latest()]);
+        return view('admin.settings', ['values' => $values, 'rates' => $currency->latest(), 'documents' => RealEstateReport::companyDocuments()]);
     }
 
     public function update(Request $request): RedirectResponse
@@ -56,6 +60,10 @@ class SettingController extends Controller
             'stat_clients' => ['nullable', 'string', 'max:20'],
             'stat_banks' => ['nullable', 'string', 'max:20'],
             'labor_rate' => ['nullable', 'numeric', 'min:0'],
+            'legal_name_ru' => ['nullable', 'string', 'max:255'],
+            'oked' => ['nullable', 'string', 'max:20'],
+            'membership' => ['nullable', 'string', 'max:1000'],
+            'report_city' => ['nullable', 'string', 'max:80'],
         ]);
 
         $changes = [];
@@ -71,6 +79,39 @@ class SettingController extends Controller
         }
 
         return back()->with('status', __('Settings saved.'));
+    }
+
+    /** Certificates, the insurance policy and other company documents appended to every report. */
+    public function storeDocuments(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'files' => ['required', 'array', 'max:10'],
+            'files.*' => ['image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
+        ], [], ['files' => __('Files'), 'files.*' => __('File')]);
+
+        $documents = RealEstateReport::companyDocuments();
+        foreach ($request->file('files') as $file) {
+            $documents[] = [
+                'name' => Str::limit($file->getClientOriginalName(), 120, ''),
+                'path' => $file->storeAs('company', Str::uuid().'.'.strtolower($file->extension() ?: 'jpg'), 'local'),
+            ];
+        }
+        Setting::put(['report_documents' => json_encode(array_slice($documents, 0, 30), JSON_UNESCAPED_UNICODE)]);
+        Activity::record('uploaded', null, ['files' => array_map(fn ($f) => $f->getClientOriginalName(), $request->file('files'))], 'Company documents');
+
+        return back()->with('status', trans_choice('{1} File uploaded.|[2,*] :count files uploaded.', count($request->file('files'))));
+    }
+
+    public function destroyDocument(int $index): RedirectResponse
+    {
+        $documents = RealEstateReport::companyDocuments();
+        $document = $documents[$index] ?? abort(404);
+        Storage::disk('local')->delete($document['path']);
+        unset($documents[$index]);
+        Setting::put(['report_documents' => json_encode(array_values($documents), JSON_UNESCAPED_UNICODE)]);
+        Activity::record('file_deleted', null, ['file' => $document['name']], 'Company documents');
+
+        return back()->with('status', __('File deleted.'));
     }
 
     public function refreshRates(CurrencyService $currency): RedirectResponse

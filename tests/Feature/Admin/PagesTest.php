@@ -33,6 +33,9 @@ class PagesTest extends TestCase
             ['/admin/real-estates/1'],
             ['/admin/real-estates/1/edit'],
             ['/admin/real-estates/1/print'],
+            ['/admin/real-estates/1/report'],
+            ['/admin/real-estates/1/report?script=latn'],
+            ['/admin/real-estates/1/report/edit'],
             ['/admin/assets'],
             ['/admin/assets/create'],
             ['/admin/assets/1'],
@@ -62,6 +65,7 @@ class PagesTest extends TestCase
             ['/admin/activity'],
             ['/admin/activity?category=auth&q=a&ip=1&from=2026-01-01&to=2026-12-31'],
             ['/admin/system'],
+            ['/admin/report-texts'],
             ['/admin/regions'],
             ['/admin/profile'],
         ];

@@ -30,6 +30,8 @@ class ListingParser
             $listing['currency'] ??= self::currency($meta['product:price:currency'] ?? null);
         }
 
+        $listing['image'] ??= self::absolute(trim($meta['og:image'] ?? $meta['og:image:url'] ?? $meta['twitter:image'] ?? ''), $url);
+
         $text = $listing['title'].' '.($meta['og:description'] ?? $meta['description'] ?? '').' '.$this->text($html, 20000);
 
         return self::merge($listing, self::fromText($text));
@@ -81,7 +83,7 @@ class ListingParser
         return [
             'url' => $url, 'title' => null, 'price' => null, 'currency' => null, 'area' => null,
             'rooms' => null, 'floor' => null, 'floors_total' => null, 'location' => null,
-            'condition' => null, 'listed_at' => null,
+            'condition' => null, 'wall_material' => null, 'listed_at' => null, 'image' => null,
         ];
     }
 
@@ -168,6 +170,16 @@ class ListingParser
             unset($found['area']);
         }
 
+        $labels = [
+            'wall_material' => '(?:Материал стен|Тип строения|Qurilish turi|Devor materiali|Қурилиш тури|Девор материали)',
+            'condition' => '(?:Ремонт|Состояние|Ta\'mir|Ta‘mir|Taʼmir|Holati|Таъмир|Ҳолати)',
+        ];
+        foreach ($labels as $key => $label) {
+            if (preg_match('/(?:^|\n)\s*'.$label.'\s*:\s*([^\n:]{2,40})(?:\n|$)/iu', $text, $m)) {
+                $found[$key] = self::clean($m[1]);
+            }
+        }
+
         return $found;
     }
 
@@ -193,6 +205,15 @@ class ListingParser
         $rooms = $node['numberOfRooms'] ?? $node['itemOffered']['numberOfRooms'] ?? null;
         $posted = $node['datePosted'] ?? $offer['availabilityStarts'] ?? null;
 
+        $image = $node['image'] ?? $node['itemOffered']['image'] ?? null;
+        if (is_array($image)) {
+            $image = array_is_list($image) ? ($image[0] ?? null) : null;
+            $image = is_array($image) ? ($image['url'] ?? $image['contentUrl'] ?? null) : $image;
+        }
+        if (is_array($node['image'] ?? null) && ! array_is_list($node['image'])) {
+            $image = $node['image']['url'] ?? $node['image']['contentUrl'] ?? null;
+        }
+
         return [
             'title' => isset($node['name']) && is_string($node['name']) ? self::clean($node['name']) : null,
             'price' => $price !== null ? self::number($price) : null,
@@ -201,6 +222,7 @@ class ListingParser
             'rooms' => is_numeric($rooms) ? (int) $rooms : null,
             'location' => is_string($address) && $address !== '' ? self::clean($address) : null,
             'listed_at' => is_string($posted) && strtotime($posted) ? date('Y-m-d', strtotime($posted)) : null,
+            'image' => is_string($image) ? self::absolute(trim($image), $url) : null,
         ];
     }
 

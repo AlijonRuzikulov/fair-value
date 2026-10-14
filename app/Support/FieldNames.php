@@ -80,7 +80,22 @@ class FieldNames
             'stat_reports' => __('Reports completed'),
             'stat_clients' => __('Clients'),
             'stat_banks' => __('Partner banks'),
+            'legal_name_ru' => __('Legal name in Russian'),
+            'oked' => __('OKED'),
+            'membership' => __('Membership certificate of the appraisers\' association'),
+            'report_city' => __('City printed on reports'),
+            'sections' => __('Sections'),
+            'document' => __('Document'),
+            'script' => __('Alphabet of the report'),
+            'certificate_date' => __('Certificate issued on'),
+            'certificate_issuer' => __('Certificate issued by'),
+            'report' => __('Report data'),
         ];
+
+        // Fields of the valuation report form are logged as "report.<field>".
+        if (str_starts_with($field, 'report.')) {
+            return __('Report data').': '.str_replace('_', ' ', substr($field, 7));
+        }
 
         return $labels[$field] ?? str_replace('_', ' ', $field);
     }

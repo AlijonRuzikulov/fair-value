@@ -6,7 +6,13 @@
 @endphp
 <x-layouts.admin :title="$item->title" :subtitle="$module->singular()" :nav="$nav" :icon="$module->icon()" :back="route($module->routeName('index'), $module->routeParams($item))">
     <x-slot:actions>
-        <a class="btn" href="{{ route($module->routeName('print'), $item->id) }}" target="_blank"><x-icon name="printer" :size="16" /> {{ __('Print') }}</a>
+        @if ($item instanceof \App\Models\RealEstate)
+            <a class="btn" href="{{ route('admin.real-estates.report', $item->id) }}" target="_blank"><x-icon name="scroll-text" :size="16" /> {{ __('Valuation report') }}</a>
+            @can('edit-valuation', $item)
+                <a class="btn btn-icon" href="{{ route('admin.real-estates.report.edit', $item->id) }}" title="{{ __('Report data') }}" aria-label="{{ __('Report data') }}"><x-icon name="sliders-horizontal" :size="16" /></a>
+            @endcan
+        @endif
+        <a class="btn" href="{{ route($module->routeName('print'), $item->id) }}" target="_blank"><x-icon name="printer" :size="16" /> {{ __('Certificate') }}</a>
         @can('edit-valuation', $item)
             <a class="btn btn-primary" href="{{ route($module->routeName('edit'), $item->id) }}"><x-icon name="pencil" :size="16" /> {{ __('Edit') }}</a>
         @endcan

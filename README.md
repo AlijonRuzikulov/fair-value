@@ -25,6 +25,7 @@ Interfeys uch tilda ishlaydi: **o‘zbekcha (kirill)**, **o‘zbekcha (lotin)** 
 | **Yetkazilgan zarar** | Zararni baholash kalkulyatori: ehtiyot qismlar − eskirish + kichik qismlar + ta’mir ishlari (normo-soat × narx) + bo‘yoq + boshqa + tovar qiymatining yo‘qotilishi. Kataloglar: avtolar ro‘yxati, avto ehtiyot qismlar, kichik ehtiyot qismlar, ta’mir muddati normalari (Excel/CSV’dan import) |
 | **Boshqa mol-mulk** | Biznes, ulushlar, nomoddiy aktivlar, yer huquqi va boshqalar |
 | **Baholash plyus** | Qiyosiy (analoglar bilan), xarajat va daromad yondashuvlari kalkulyatorlari, natijalarni kelishtirish, valyuta konvertori |
+| **Baholash hisoboti** | Ko‘chmas mulk bo‘yicha to‘liq hisobot (muqova, mundarija, ilova xat, vazifa, bozor tahlili, tuzatishlar jadvali va sharhi, muvofiqlashtirish, ilovalar) — kirill yoki lotinda, PDF qilib olinadi |
 | **Qiyosiy yondashuv — analoglar** | Ko‘chmas mulk sahifasida: OLX.uz, Uybor.uz va boshqa saytlardan o‘xshash e’lonlarni topish (sun’iy intellekt) yoki link orqali qo‘shish, tuzatishlar, vaznlar va qiymat hisobi |
 | **Saytdan arizalar** | Saytdan kelgan arizalar, holatini belgilash; xohlasangiz Telegram’ga xabar |
 | **Xodimlar** | Rollar: administrator, baholovchi, operator |
@@ -300,11 +301,14 @@ Ko‘chmas mulk obyektida **“Qiyosiy”** yondashuv belgilanib saqlansa, obyek
    e’lon linklarini yoki saytda filtrlar bilan ochilgan qidiruv sahifasi linkini qo‘yadi.
 2. **O‘qish.** Server har bir e’lon sahifasini ochadi va narx, valyuta, maydon, xonalar, qavatni ajratib
    oladi. Dollardagi narxlar Markaziy bank kursi bo‘yicha so‘mga o‘tkaziladi.
-3. **Tuzatishlar.** Har bir analog uchun taklif qilinadi: savdolashish −5 %, maydon farqi,
-   1-qavat / oxirgi qavat; joylashuv, holat va boshqa tuzatishlarni baholovchi kiritadi.
-   Narxi boshqalardan ±35 % dan ortiq farq qiladigan e’lon avtomatik chetga olinadi.
-4. **Natija.** Tuzatilgan 1 m² narxlari vaznlar bilan o‘rtacha olinadi (kam tuzatish talab qilgan analog
-   ko‘proq hisobga olinadi), obyekt maydoniga ko‘paytiriladi. Tarqoqlik 33 % dan oshsa, ogohlantiriladi.
+3. **Tuzatishlar** (10-son MBS taqqoslash elementlari tartibida, **ketma-ket** qo‘llaniladi):
+   huquqlar, moliyalashtirish, savdolashish (−5 % taklif qilinadi), **bozor shartlari** (dollardagi narx uchun
+   taklif sanasi va baholash sanasidagi Markaziy bank kurslari farqidan avtomatik), joylashuv, maydon,
+   qavat (1-qavat / oxirgi qavat), devor materiali, ta’mir holati (KMK 2.01.16-97 eskirish darajalari bo‘yicha
+   taklif qilinadi), qulayliklar va boshqa. Narxi boshqalardan ±35 % dan ortiq farq qiladigan e’lon chetga olinadi.
+   Har bir analogga taklif sanasi, ta’mir holati, devor materiali va rasm (e’londan avtomatik yoki qo‘lda) kiritiladi.
+4. **Natija.** Tuzatilgan 1 m² narxlari vaznlar bilan o‘rtacha olinadi — vazn **tuzatishlar soniga** (an’anaviy usul)
+   yoki **tuzatishlar miqdoriga** ko‘ra; obyekt maydoniga ko‘paytiriladi. Tarqoqlik 33 % dan oshsa, ogohlantiriladi.
    **“Qiyosiy qiymat sifatida saqlash”** natijani obyektga yozadi.
 
 Avtomatik qidiruv uchun `.env` ga Claude API kalitini yozing ([console.anthropic.com](https://console.anthropic.com)):
@@ -320,6 +324,42 @@ Server faqat ro‘yxatdagi saytlarga murojaat qiladi (`ANALOG_DOMAINS`).
 
 **Muhim:** e’lonlar — sotuvchining so‘ragan narxi; topilgan qiymatlar va tuzatishlarni har doim baholovchi
 tekshiradi. Saytlar tuzilishini o‘zgartirsa, ba’zi maydonlarni qo‘lda to‘ldirishga to‘g‘ri kelishi mumkin.
+
+### To‘liq baholash hisoboti (ko‘chmas mulk)
+
+Ko‘chmas mulk sahifasidagi **“Baholash hisoboti”** tugmasi tizimdagi ma’lumotlardan to‘liq hisobotni
+(A4, sahifalarga bo‘lingan, 25–40 bet) yaratadi — **“Chop etish / PDF saqlash”** bilan PDF qilib olinadi.
+Hisobot **kirill** yoki **lotin** yozuvida chiqadi (bir tugma bilan almashadi). Tarkibi:
+
+- muqova (rekvizitlar, logotip, asosiy ma’lumotlar, QR-kod) va **sahifa raqamlari bilan mundarija**;
+- I. Ilova xat — qiymat raqamda va **so‘z bilan** (“besh yuz o‘n to‘rt million…”), farazlar, imzolar;
+- II. Asosiy atamalar; III. Baholash vazifasi jadvali (mijoz va baholovchi rekvizitlari,
+  **baholash sanasidagi** USD, EUR, RUB kurslari), standartlarga muvofiqlik bayonoti, manbalar;
+- IV. Makroiqtisodiy ko‘rsatkichlar, bozor tahlili va **topilgan e’lonlar bo‘yicha segment statistikasi**;
+- V. Obyekt tavsifi, yer uchastkasi, konstruktiv elementlar; VI. Eng samarali foydalanish tahlili;
+- VII. Yondashuvlar va ularni tanlash asosi; **tuzatishlar jadvali** (har bir taqqoslash elementi va har bir
+  tuzatishdan keyingi 1 m² narxi) va har bir tuzatishga **avtomatik sharh**;
+- VIII. Natijalarni muvofiqlashtirish (mezonlar bo‘yicha ballar, vaznlar, formula), yakuniy qiymat;
+- IX. Sifat to‘g‘risida bayonot; X. Ilovalar: ko‘zdan kechirish dalolatnomasi, analoglar kartochkalari
+  (rasm bilan), obyekt rasmlari (sahifaga 4 tadan), hujjatlar skanerlari va kompaniya hujjatlari.
+
+Har bir sahifada sarlavha, sahifa raqami va hisobotni tekshirish QR-kodi bor.
+
+- **Hisobot ma’lumotlari** (obyekt sahifasidagi ⚙ tugma): hisobot sanasi, qiymat turi, huquqlar,
+  konstruktiv elementlar, yondashuvlarni tanlash sabablari, muvofiqlashtirish ballari, ilovalar.
+  Hammasi oqilona standart qiymatlar bilan to‘ldirilgan — faqat farq qiladiganini o‘zgartirasiz.
+  **“Tayyorlik”** ro‘yxati nima yetishmayotganini ko‘rsatadi.
+- **Hisobot matnlari** (Sozlamalar → Hisobot matnlari, administrator): atamalar, bayonotlar,
+  makroiqtisodiy jadval, metodologiya va boshqa standart bo‘limlar — bir marta tahrirlanadi va barcha
+  hisobotlarda ishlatiladi. Lotin yozuvida yoziladi, kirill hisobot avtomatik tayyorlanadi.
+- **Kompaniya hujjatlari** (Sozlamalar): guvohnoma, a’zolik sertifikati, sug‘urta polisi, baholovchi
+  sertifikati skanerlari — har bir hisobot oxiriga qo‘shiladi. Rus tilidagi nomi, IFUT (XXTUT) va a’zolik
+  sertifikati matni ham shu yerda.
+- **Xodimlar**: baholovchining malaka sertifikati raqami, sanasi va uni bergan organ.
+
+Obyekt rasmlari va hujjatlar (pasport, kadastr ko‘chirmasi) obyekt sahifasiga **rasm** (JPG, PNG) sifatida
+yuklanadi; PDF fayllar hisobotga qo‘shilmaydi. Valyuta kurslari kerakli sana uchun Markaziy bank
+arxividan bir marta yuklab olinadi (`CBU_HISTORY=false` bilan o‘chiriladi).
 
 ### Telegram’ga ariza xabarlari
 

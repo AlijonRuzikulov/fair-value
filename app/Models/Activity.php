@@ -189,7 +189,7 @@ class Activity extends Model
     {
         $label = (string) $this->subject_label;
 
-        return $this->subject_type === null && in_array($this->event, ['system', 'pruned', 'settings'], true) ? __($label) : $label;
+        return $this->subject_type === null ? __($label) : $label;
     }
 
     public function eventLabel(): string

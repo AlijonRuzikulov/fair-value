@@ -1,17 +1,21 @@
 @php
     use App\Models\Analog;
+    use App\Reports\RealEstateReport;
     use App\Support\ComparativeCalculator;
     use App\Support\Format;
     use Illuminate\Support\Facades\Gate;
 
     $analogs = $item->analogs;
-    $result = ComparativeCalculator::calculate((float) $item->total_area, $analogs);
+    $options = RealEstateReport::comparativeOptions($item);
+    $result = ComparativeCalculator::calculate((float) $item->total_area, $analogs, $options);
     $pending = $analogs->filter->isPending();
     $canEdit = Gate::allows('edit-valuation', $item);
     $adjustmentLabels = [
-        'bargain' => __('Bargaining'), 'area' => __('Area'), 'floor' => __('Floor'),
-        'location' => __('Location'), 'condition' => __('Condition'), 'other' => __('Other'),
+        'rights' => __('Rights'), 'financing' => __('Financing'), 'bargain' => __('Bargaining'), 'market' => __('Market conditions'),
+        'location' => __('Location'), 'area' => __('Area'), 'floor' => __('Floor'), 'material' => __('Walls'),
+        'condition' => __('Condition'), 'amenities' => __('Amenities'), 'other' => __('Other'),
     ];
+    $percent = fn ($value) => ($value > 0 ? '+' : '').Format::number($value, 2).' %';
     $sites = implode(', ', config('fairvalue.analogs.domains'));
     $number = fn ($value, $decimals = 0) => $value === null ? '' : Format::number($value, $decimals);
 @endphp
@@ -147,12 +151,36 @@
                                     <td colspan="8"><div class="analog-adj-inner">
                                         <span class="analog-adj-title">{{ __('Adjustments, %') }}:</span>
                                         @foreach ($adjustmentLabels as $key => $label)
-                                            <label class="adj-field">
-                                                <span>{{ $label }}</span>
-                                                <input class="input adj-input" name="{{ $name }}[adjustments][{{ $key }}]" value="{{ rtrim(rtrim(number_format($analog->adjustment($key), 1, '.', ''), '0'), '.') }}" inputmode="decimal" @disabled(! $canEdit)>
-                                            </label>
+                                            @if ($key === 'market' && $analog->currency === 'USD')
+                                                <span class="adj-field" title="{{ __('Worked out from the dollar rates on the offer date and on the valuation date.') }}">
+                                                    <span>{{ $label }}</span>
+                                                    <output class="adj-auto">{{ $row ? $percent($row['steps']['market']['percent']) : '—' }}</output>
+                                                </span>
+                                            @else
+                                                <label class="adj-field">
+                                                    <span>{{ $label }}</span>
+                                                    <input class="input adj-input" name="{{ $name }}[adjustments][{{ $key }}]" value="{{ rtrim(rtrim(number_format($analog->adjustment($key), 2, '.', ''), '0'), '.') }}" inputmode="decimal" @disabled(! $canEdit)>
+                                                </label>
+                                            @endif
                                         @endforeach
-                                        <span class="adj-total">= {{ ($analog->totalAdjustment() > 0 ? '+' : '').Format::number($analog->totalAdjustment(), 1) }} %</span>
+                                        @if ($row)<span class="adj-total" title="{{ __('Adjustments are applied one after another.') }}">= {{ $percent($row['total']) }}</span>@endif
+                                    </div>
+                                    <div class="analog-adj-inner analog-more">
+                                        <label class="adj-field"><span>{{ __('Offer date') }}</span><input class="input w-140" type="date" name="{{ $name }}[listed_at]" value="{{ $analog->listed_at?->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}" @disabled(! $canEdit)></label>
+                                        <label class="adj-field"><span>{{ __('Condition') }}</span><input class="input w-140" name="{{ $name }}[condition]" value="{{ $analog->condition }}" list="analog-conditions" @disabled(! $canEdit)></label>
+                                        <label class="adj-field"><span>{{ __('Walls') }}</span><input class="input w-120" name="{{ $name }}[wall_material]" value="{{ $analog->wall_material }}" list="analog-walls" @disabled(! $canEdit)></label>
+                                        @if ($analog->currency === 'USD' && $analog->usd_rate)<span class="faint">USD {{ Format::number($analog->usd_rate, 2) }}</span>@endif
+                                        <span class="analog-photo">
+                                            @if ($analog->photo_path)
+                                                <a href="{{ route('admin.analogs.photo', $analog) }}" target="_blank"><img src="{{ route('admin.analogs.photo', $analog) }}" alt="{{ __('Photo') }}" loading="lazy"></a>
+                                                @if ($canEdit)<button class="btn btn-sm btn-icon" type="submit" form="analog-photo-delete-{{ $analog->id }}" title="{{ __('Delete photo') }}" aria-label="{{ __('Delete photo') }}"><x-icon name="x" :size="14" /></button>@endif
+                                            @endif
+                                            @if ($canEdit)
+                                                <label class="btn btn-sm"><x-icon name="image" :size="14" /> {{ $analog->photo_path ? __('Replace photo') : __('Add photo') }}
+                                                    <input type="file" name="photo" form="analog-photo-{{ $analog->id }}" accept="image/jpeg,image/png,image/webp" hidden data-submit-on-change>
+                                                </label>
+                                            @endif
+                                        </span>
                                     </div></td>
                                 </tr>
                             @endunless
@@ -160,9 +188,17 @@
                     @endforeach
                 </table>
             </div>
-            <p class="field-hint" style="margin-top: 10px">{{ __('Adjustments are percentages added to the price per m² of the analogue: positive if the analogue is worse than the object, negative if it is better. The suggested values are a starting point — the appraiser checks every one.') }}</p>
+            <p class="field-hint" style="margin-top: 10px">{{ __('Adjustments are percentages applied to the price per m² of the analogue one after another, in the order of the elements of comparison (national standard No. 10): positive if the analogue is worse than the object, negative if it is better. Market conditions of a dollar price come from the exchange rates. The suggested values are a starting point — the appraiser checks every one.') }}</p>
+            <datalist id="analog-conditions"><option value="{{ __('Excellent') }}"><option value="{{ __('Good') }}"><option value="{{ __('Satisfactory') }}"><option value="{{ __('Needs repair') }}"></datalist>
+            <datalist id="analog-walls"><option value="{{ __('Brick') }}"><option value="{{ __('Panel') }}"><option value="{{ __('Monolith') }}"><option value="{{ __('Block') }}"></datalist>
             @if ($canEdit)
                 <div class="analog-actions">
+                    <label class="adj-field analog-weighting"><span>{{ __('Weights of the analogues') }}</span>
+                        <select class="input" name="weighting">
+                            <option value="count" @selected($result['weighting'] === 'count')>{{ __('By the number of adjustments') }}</option>
+                            <option value="size" @selected($result['weighting'] === 'size')>{{ __('By the size of adjustments') }}</option>
+                        </select>
+                    </label>
                     <button class="btn" type="submit"><x-icon name="refresh-cw" :size="16" /> {{ __('Save and recalculate') }}</button>
                 </div>
             @endif
@@ -170,6 +206,10 @@
 
         @foreach ($analogs as $analog)
             <form method="post" action="{{ route('admin.analogs.destroy', $analog) }}" id="analog-delete-{{ $analog->id }}" data-confirm="{{ __('Delete this analogue?') }}" hidden>@csrf @method('delete')</form>
+            <form method="post" action="{{ route('admin.analogs.photo.store', $analog) }}" id="analog-photo-{{ $analog->id }}" enctype="multipart/form-data" hidden>@csrf</form>
+            @if ($analog->photo_path)
+                <form method="post" action="{{ route('admin.analogs.photo.destroy', $analog) }}" id="analog-photo-delete-{{ $analog->id }}" hidden>@csrf @method('delete')</form>
+            @endif
         @endforeach
 
         <div class="analog-summary">

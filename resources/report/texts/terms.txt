@@ -1,0 +1,35 @@
+**Bozor qiymati** — baholash obyekti raqobat sharoitidagi ochiq bozorda, bitim taraflari barcha zarur axborotga ega bo'lgan holda oqilona harakat qilganda va bitim narxiga hech qanday favqulodda holatlar ta'sir ko'rsatmaganda begonalashtirilishi mumkin bo'lgan eng ehtimoliy narx.
+
+**Bartaraf etib bo'ladigan eskirish** — shunday bir eskirish bo'lib, uni bartaraf etish xarajatlari bartaraf etish natijasida ko'chmas mulk obyektiga qo'shiladigan qiymatdan kamroq yoki unga teng.
+
+**Bartaraf etib bo'lmaydigan eskirish** — shunday bir eskirish bo'lib, uni bartaraf etish xarajatlari bartaraf etish natijasida ko'chmas mulk obyektiga qo'shiladigan qiymatdan ko'proqdir.
+
+**Yer uchastkasi** — yer fondining qayd etilgan chegaraga, maydonga, joylashish manziliga, huquqiy rejimga hamda davlat yer kadastrida aks ettiriladigan boshqa xususiyatlariga ega bo'lgan qismi.
+
+**Jismoniy eskirish** — tabiiy eskirish, noto'g'ri foydalanish, konstruktiv nuqsonlar, shuningdek yaxshilash elementlarining mexanik shikastlanishi bilan belgilangan yo'qotish.
+
+**Ixtisoslashtirilgan ko'chmas mulk** — o'z xususiyatiga (konstruktiv xususiyatlari, ixtisosligi, o'lchami, joylashgan yeriga yoki mazkur omillar birikmasiga) ko'ra undan foydalanishning muayyan turi bilan cheklangan foydali xossalarga ega bo'lgan va ochiq bozorda kamdan-kam sotiladigan (korxonaning bir qismi sifatida sotilgan hollar bundan mustasno) ko'chmas mulk.
+
+**Ixtisoslashtirilmagan ko'chmas mulk** — ochiq bozorda sotib olinadigan, sotiladigan va ijaraga beriladigan ko'chmas mulk.
+
+**Iqtisodiy xizmat muddati** — shunday bir davr bo'lib, uning o'tishi mobaynida yaxshilashlar ko'chmas mulk obyektining qiymatiga hissa qo'shadi.
+
+**Yig'ilgan eskirish** — ko'chmas mulk obyektining jismoniy eskirishi, shuningdek funksional va tashqi qadrsizlanishi bilan bog'liq umumiy qiymatning yo'qolishi.
+
+**Tavakkalchilik uchun mukofot** — tavakkalsiz stavka bo'yicha qo'yilmalar bilan taqqoslaganda, ko'chmas mulkka qo'yilmalarga xos bo'lgan tavakkalchilik darajasini aks ettiradigan daromadning qo'shimcha normasi.
+
+**Tashqi (iqtisodiy) eskirish** — ko'chmas mulk obyekti qiymatining mazkur obyektga tashqi omillar ta'siri natijasida pasayishi.
+
+**Funksional eskirish** — yaxshilashlar to'laligicha yoki ayrim elementlariga ko'ra bozor talablariga muvofiq emasligi bilan belgilangan yaxshilashlar qiymatidagi yo'qotish.
+
+**Eng samarali foydalanish** — yer uchastkasi bilan ko'chmas mulk obyektidan eng ehtimoliy, oqilona va ruxsat etilgan foydalanish hisoblanib, quyidagi mezonlarga javob berishi kerak:
+- jismoniy mumkin;
+- qonuniy ruxsat etilgan;
+- moliyaviy jihatdan maqsadga muvofiq;
+- eng yuqori iqtisodiy samarani ta'minlaydi.
+
+**Haqiqiy yosh** — yaxshilashlarning holati va foydali xossalariga muvofiq bo'lgan, iqtisodiy xizmat muddatidan qolgan iqtisodiy xizmat muddatini ayirish yo'li bilan hisoblanadigan yoshi. Foydalanish sharoitlariga qarab haqiqiy yosh amaldagi (xronologik) yoshdan kichik, unga teng yoki undan katta bo'lishi mumkin.
+
+**Analog** — baholash obyektiga asosiy iqtisodiy, moddiy, texnik va boshqa tavsiflari bo'yicha o'xshash bo'lgan, narxi ma'lum bo'lgan bitim yoki taklif obyekti.
+
+**Tuzatish** — analog narxini baholash obyektiga keltirish uchun taqqoslash elementlaridagi farqlarga ko'ra kiritiladigan o'zgartirish.

@@ -81,6 +81,8 @@ class UserController extends Controller
             'role' => ['required', Rule::enum(UserRole::class)],
             'position' => ['nullable', 'string', 'max:255'],
             'certificate_number' => ['nullable', 'string', 'max:60'],
+            'certificate_date' => ['nullable', 'date', 'before_or_equal:today'],
+            'certificate_issuer' => ['nullable', 'string', 'max:255'],
             'is_active' => ['boolean'],
             'password' => [$user ? 'nullable' : 'required', 'confirmed', Password::defaults()],
         ]);

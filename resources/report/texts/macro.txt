@@ -1,0 +1,45 @@
+## Makroiqtisodiy ko'rsatkichlar
+
+Ko'rsatkichlar | O'lchov birligi | 2020 | 2021 | 2022 | 2023 | 2024 | 2025 yil yanvar–sentabr
+Yalpi ichki mahsulot | mlrd so'm | 668 038,0 | 820 536,6 | 995 573,1 | 1 204 485,4 | 1 454 573,9 | 1 303 702,1
+Yalpi ichki mahsulotning o'sish sur'ati | % | 101,6 | 108,0 | 106,0 | 106,3 | 106,5 | 107,6
+Yalpi ichki mahsulot deflyator indeksi | % | 110,6 | 113,7 | 114,5 | 113,8 | 113,3 | 112,2
+Inflyatsiya darajasi (o'tgan yil dekabriga nisbatan) | % | 11,1 | 10,0 | 12,3 | 8,8 | 9,8 | 5,1
+Sanoat mahsuloti | mlrd so'm | 368 740,2 | 456 056,1 | 553 265,0 | 655 821,9 | 885 818,9 | 773 790,8
+Sanoat mahsulotining o'sish sur'ati | % | 100,9 | 108,8 | 105,3 | 106,0 | 106,8 | 106,8
+Qishloq, o'rmon va baliq xo'jaligi | mlrd so'm | 261 892,2 | 317 027,6 | 362 898,0 | 426 030,2 | 462 839,2 | 366 216,0
+Asosiy kapitalga kiritilgan investitsiyalar | mlrd so'm | 210 195,1 | 239 552,6 | 266 240,0 | 356 071,4 | 507 490,2 | 443 613,6
+Investitsiyalarning o'sish sur'ati | % | 95,6 | 102,9 | 100,2 | 123,4 | 131,3 | 115,2
+Qurilish ishlari | mlrd so'm | 88 130,3 | 107 492,7 | 130 790,9 | 202 819,2 | 263 679,2 | 224 532,4
+Qurilish ishlarining o'sish sur'ati | % | 109,5 | 106,8 | 106,6 | 107,0 | 122,8 | 114,2
+Chakana savdo tovar aylanmasi | mlrd so'm | 168 649,0 | 216 694,6 | 270 687,2 | 346 324,8 | 410 068,1 | 316 378,5
+Ko'rsatilgan bozor xizmatlari | mlrd so'm | 219 978,5 | 284 388,1 | 366 891,0 | 649 806,4 | 827 659,5 | 722 166,1
+Tashqi savdo aylanmasi | mln AQSh dollari | 36 256,1 | 42 170,5 | 50 500,3 | 63 528,6 | 67 238,4 | 59 794,7
+Eksport | mln AQSh dollari | 15 102,3 | 16 662,8 | 19 732,6 | 24 869,5 | 27 270,1 | 26 683,6
+Import | mln AQSh dollari | 21 153,8 | 25 507,7 | 30 767,8 | 38 659,1 | 39 968,3 | 33 111,0
+Saldo | mln AQSh dollari | −6 051,5 | −8 844,9 | −11 035,2 | −13 789,6 | −12 698,2 | −6 427,4
+
+Dastlabki ma'lumotlarga ko'ra, 2025 yilning yanvar–sentabr oylarida O'zbekiston Respublikasining yalpi ichki mahsuloti (YaIM) hajmi joriy narxlarda 1 303,7 trln so'mni tashkil etdi va 2024 yilning mos davriga nisbatan real o'sish sur'ati 7,6 % ni tashkil etdi. YaIM deflyator indeksi 112,2 % ni tashkil etdi; uning eng yuqori ko'rsatkichlari sanoatda (113,3 %) va boshqa xizmat tarmoqlarida (115,2 %) qayd etildi.
+
+Iqtisodiyotning barcha tarmoqlarida yaratilgan yalpi qo'shilgan qiymat YaIM umumiy hajmining 95,1 % ini tashkil etdi va 7,7 % ga o'sdi. Qurilish tarmog'ida yaratilgan yalpi qo'shilgan qiymat 92 873,0 mlrd so'mni tashkil etib, 14,2 % ga o'sdi; xizmatlar sohasida 612 179,6 mlrd so'm (8,7 % o'sish). Aholi jon boshiga YaIM 34 483,9 ming so'mni tashkil etdi (real o'sish 5,6 %).
+
+## Hududlar bo'yicha yalpi hududiy mahsulot (2025 yil yanvar–sentabr)
+
+Hudud | Hajmi, mlrd so'm | O'sish sur'ati, %
+O'zbekiston Respublikasi | 1 303 702,1 | 107,6
+Qoraqalpog'iston Respublikasi | 36 814,1 | 106,1
+Andijon viloyati | 74 620,5 | 105,6
+Buxoro viloyati | 59 871,0 | 107,4
+Jizzax viloyati | 37 782,0 | 108,8
+Qashqadaryo viloyati | 69 484,6 | 105,7
+Navoiy viloyati | 108 396,2 | 107,9
+Namangan viloyati | 58 582,9 | 107,2
+Samarqand viloyati | 87 483,9 | 107,7
+Surxondaryo viloyati | 46 926,5 | 106,0
+Sirdaryo viloyati | 24 645,9 | 108,4
+Toshkent viloyati | 126 761,2 | 107,3
+Farg'ona viloyati | 78 896,7 | 108,0
+Xorazm viloyati | 44 142,6 | 107,3
+Toshkent shahri | 252 111,2 | 111,2
+
+Manba: O'zbekiston Respublikasi Prezidenti huzuridagi Statistika agentligi, www.stat.uz.

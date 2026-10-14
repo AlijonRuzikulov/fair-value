@@ -12,6 +12,10 @@
                 <x-field name="bank_name" :label="__('Bank')" :value="$values['bank_name']" span="4" />
                 <x-field name="bank_account" :label="__('Bank account')" :value="$values['bank_account']" span="4" />
                 <x-field name="bank_mfo" :label="__('MFO')" :value="$values['bank_mfo']" span="2" />
+                <x-field name="legal_name_ru" :label="__('Legal name in Russian')" :value="$values['legal_name_ru']" span="6" :hint="__('Printed in the header of valuation reports.')" />
+                <x-field name="oked" :label="__('OKED')" :value="$values['oked']" span="2" />
+                <x-field name="report_city" :label="__('City printed on reports')" :value="$values['report_city']" span="4" />
+                <x-textarea name="membership" :label="__('Membership certificate of the appraisers\' association')" :value="$values['membership']" rows="2" :hint="__('For example: a membership certificate No. … dated … issued by the public association of appraisers. Printed in the report.')" />
             </div>
         </x-card>
 
@@ -48,6 +52,34 @@
             <button class="btn btn-primary" type="submit"><x-icon name="check" :size="16" /> {{ __('Save') }}</button>
         </div>
     </form>
+
+    <x-card :title="__('Documents appended to reports')" icon="file-text">
+        <x-slot:actions>
+            <a class="btn btn-sm" href="{{ route('admin.report-texts.edit') }}"><x-icon name="pencil" :size="14" /> {{ __('Report texts') }}</a>
+        </x-slot:actions>
+        <p class="field-hint">{{ __('Scans of the company\'s registration certificate, membership certificate, insurance policy and appraiser certificates (JPG or PNG). They are added at the end of every valuation report.') }}</p>
+        @if ($documents)
+            <ul class="mini-list" style="margin-top: 12px">
+                @foreach ($documents as $index => $document)
+                    <li>
+                        <span class="mini-icon" style="--c: var(--c-sky)"><x-icon name="image" :size="18" /></span>
+                        <div class="grow"><a href="{{ route('admin.report-documents.show', $index) }}" target="_blank">{{ $document['name'] }}</a></div>
+                        <form method="post" action="{{ route('admin.settings.documents.destroy', $index) }}" data-confirm="{{ __('Delete this file?') }}">
+                            @csrf @method('delete')
+                            <button class="btn btn-sm btn-icon" type="submit" title="{{ __('Delete') }}" aria-label="{{ __('Delete') }}"><x-icon name="trash-2" :size="15" /></button>
+                        </form>
+                    </li>
+                @endforeach
+            </ul>
+        @endif
+        <form method="post" action="{{ route('admin.settings.documents.store') }}" enctype="multipart/form-data" class="doc-upload">
+            @csrf
+            <input class="input" type="file" name="files[]" accept="image/jpeg,image/png,image/webp" multiple required>
+            <button class="btn" type="submit"><x-icon name="upload" :size="16" /> {{ __('Upload') }}</button>
+        </form>
+        @error('files')<p class="field-error">{{ $message }}</p>@enderror
+        @error('files.*')<p class="field-error">{{ $message }}</p>@enderror
+    </x-card>
 
     <x-card :title="__('Exchange rates')" icon="landmark">
         <x-slot:actions>

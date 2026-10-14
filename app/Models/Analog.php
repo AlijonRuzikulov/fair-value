@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
-use App\Support\ComparativeCalculator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * A comparable sale offer ("analogue") of the comparative approach: taken
@@ -20,10 +20,15 @@ class Analog extends Model
     public const FAILED = 'failed';
 
     protected $fillable = [
-        'status', 'source', 'url', 'title', 'price', 'currency', 'usd_rate', 'price_uzs',
-        'area', 'rooms', 'floor', 'floors_total', 'location', 'condition', 'listed_at',
+        'status', 'source', 'url', 'image_url', 'photo_path', 'title', 'price', 'currency', 'usd_rate', 'price_uzs',
+        'area', 'rooms', 'floor', 'floors_total', 'location', 'condition', 'wall_material', 'listed_at',
         'adjustments', 'included', 'note', 'created_by',
     ];
+
+    protected static function booted(): void
+    {
+        static::deleted(fn (Analog $analog) => $analog->photo_path && Storage::disk('local')->delete($analog->photo_path));
+    }
 
     protected function casts(): array
     {
@@ -63,15 +68,10 @@ class Analog extends Model
         return $this->isUsable() ? round((float) $this->price_uzs / (float) $this->area, 2) : null;
     }
 
-    /** Adjustment in percent, by key (see ComparativeCalculator::ADJUSTMENTS). */
+    /** Adjustment set by the appraiser in percent, by key (see ComparativeCalculator::ADJUSTMENTS). */
     public function adjustment(string $key): float
     {
         return (float) ($this->adjustments[$key] ?? 0);
-    }
-
-    public function totalAdjustment(): float
-    {
-        return array_sum(array_map(fn ($key) => $this->adjustment($key), ComparativeCalculator::ADJUSTMENTS));
     }
 
     public function host(): ?string

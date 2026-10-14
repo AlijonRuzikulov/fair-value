@@ -88,6 +88,17 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
         Route::post('{type}/{id}/analogs/apply', 'apply')->whereIn('type', $types)->whereNumber('id')->name('analogs.apply');
         Route::post('analogs/{analog}/fill', 'fill')->middleware('throttle:60,1')->name('analogs.fill');
         Route::delete('analogs/{analog}', 'destroy')->name('analogs.destroy');
+        Route::get('analogs/{analog}/photo', 'showPhoto')->name('analogs.photo');
+        Route::post('analogs/{analog}/photo', 'photo')->middleware('throttle:30,1')->name('analogs.photo.store');
+        Route::delete('analogs/{analog}/photo', 'deletePhoto')->name('analogs.photo.destroy');
+    });
+
+    // Full valuation report of real estate
+    Route::controller(Admin\ValuationReportController::class)->group(function () {
+        Route::get('real-estates/{id}/report', 'show')->whereNumber('id')->name('real-estates.report');
+        Route::get('real-estates/{id}/report/edit', 'edit')->whereNumber('id')->name('real-estates.report.edit');
+        Route::put('real-estates/{id}/report', 'update')->whereNumber('id')->name('real-estates.report.update');
+        Route::get('report-documents/{index}', 'document')->whereNumber('index')->name('report-documents.show');
     });
 
     Route::get('tools', Admin\ToolsController::class)->name('tools');
@@ -111,6 +122,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
         Route::get('settings', [Admin\SettingController::class, 'edit'])->name('settings.edit');
         Route::put('settings', [Admin\SettingController::class, 'update'])->name('settings.update');
         Route::post('settings/currency', [Admin\SettingController::class, 'refreshRates'])->name('settings.currency');
+        Route::post('settings/documents', [Admin\SettingController::class, 'storeDocuments'])->name('settings.documents.store');
+        Route::delete('settings/documents/{index}', [Admin\SettingController::class, 'destroyDocument'])->whereNumber('index')->name('settings.documents.destroy');
+        Route::get('report-texts', [Admin\ReportTextController::class, 'edit'])->name('report-texts.edit');
+        Route::put('report-texts', [Admin\ReportTextController::class, 'update'])->name('report-texts.update');
         Route::get('activity', [Admin\ActivityController::class, 'index'])->name('activity.index');
         Route::get('activity/export', [Admin\ActivityController::class, 'export'])->name('activity.export');
         Route::post('activity/verify', [Admin\ActivityController::class, 'verify'])->middleware('throttle:6,1')->name('activity.verify');
