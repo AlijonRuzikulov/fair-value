@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Activity;
 use App\Models\Setting;
 use App\Services\CurrencyService;
 use App\Support\NumberInput;
@@ -57,7 +58,17 @@ class SettingController extends Controller
             'labor_rate' => ['nullable', 'numeric', 'min:0'],
         ]);
 
+        $changes = [];
+        foreach ($data as $key => $value) {
+            $old = Setting::get($key);
+            if ((string) $old !== (string) $value) {
+                $changes[$key] = ['old' => $old, 'new' => $value];
+            }
+        }
         Setting::put($data);
+        if ($changes) {
+            Activity::record('settings', null, $changes, 'Settings');
+        }
 
         return back()->with('status', __('Settings saved.'));
     }

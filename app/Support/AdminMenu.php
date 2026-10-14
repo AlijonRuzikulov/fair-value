@@ -45,7 +45,8 @@ class AdminMenu
             $items[] = ['section' => __('Management')];
             $items[] = ['key' => 'users', 'label' => __('Employees'), 'icon' => 'user-cog', 'color' => '#38bdf8', 'url' => route('admin.users.index')];
             $items[] = ['key' => 'regions', 'label' => __('Regions and districts'), 'icon' => 'map-pin', 'color' => '#34d399', 'url' => route('admin.regions.index')];
-            $items[] = ['key' => 'activity', 'label' => __('Activity log'), 'icon' => 'history', 'color' => '#fbbf24', 'url' => route('admin.activity.index')];
+            $items[] = ['key' => 'activity', 'label' => __('Audit log'), 'icon' => 'history', 'color' => '#fbbf24', 'url' => route('admin.activity.index')];
+            $items[] = ['key' => 'system', 'label' => __('System status'), 'icon' => 'activity', 'color' => '#f87171', 'url' => route('admin.system.index')];
             $items[] = ['key' => 'settings', 'label' => __('Settings'), 'icon' => 'settings', 'color' => '#94a3b8', 'url' => route('admin.settings.edit')];
         }
 

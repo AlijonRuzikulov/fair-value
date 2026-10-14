@@ -16,9 +16,12 @@ trait LogsActivity
 
     public static function bootLogsActivity(): void
     {
-        static::created(fn (Model $model) => Activity::record('created', $model));
+        static::created(fn (Model $model) => Activity::isMuted() || Activity::record('created', $model));
 
         static::updated(function (Model $model) {
+            if (Activity::isMuted()) {
+                return;
+            }
             $changes = [];
             foreach ($model->getChanges() as $key => $value) {
                 if (in_array($key, static::$activityIgnored, true)) {
@@ -31,7 +34,7 @@ trait LogsActivity
             }
         });
 
-        static::deleted(fn (Model $model) => Activity::record('deleted', $model));
+        static::deleted(fn (Model $model) => Activity::isMuted() || Activity::record('deleted', $model));
     }
 
     public function activities(): MorphMany

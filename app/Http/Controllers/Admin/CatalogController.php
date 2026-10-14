@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Activity;
 use App\Models\CarModel;
 use App\Support\CsvExport;
 use App\Support\CsvImport;
@@ -159,16 +160,25 @@ abstract class CatalogController extends Controller
         $count = 0;
         $failed = 0;
 
-        DB::transaction(function () use ($rows, &$count, &$failed) {
-            foreach ($rows as $row) {
-                try {
-                    $this->importRow($row);
-                    $count++;
-                } catch (\InvalidArgumentException) {
-                    $failed++;
+        // One summary in the audit log instead of a record per imported row.
+        Activity::muted(function () use ($rows, &$count, &$failed) {
+            DB::transaction(function () use ($rows, &$count, &$failed) {
+                foreach ($rows as $row) {
+                    try {
+                        $this->importRow($row);
+                        $count++;
+                    } catch (\InvalidArgumentException) {
+                        $failed++;
+                    }
                 }
-            }
+            });
         });
+        Activity::record('imported', null, [
+            'list' => $this->slug(),
+            'file' => $request->file('file')->getClientOriginalName(),
+            'rows' => $count,
+            'skipped' => $failed,
+        ], $this->title());
 
         $message = __(':count rows imported.', ['count' => $count]);
         if ($failed) {

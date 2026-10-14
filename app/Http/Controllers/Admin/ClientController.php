@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\ClientType;
 use App\Http\Controllers\Controller;
+use App\Models\Activity;
 use App\Models\Client;
 use App\Models\Region;
 use App\Support\CsvExport;
@@ -74,8 +75,9 @@ class ClientController extends Controller
         $client->load([
             'region', 'district', 'attachments.uploader',
             'realEstates', 'assets', 'vehicles', 'otherAssets', 'damageCases',
-            'activities' => fn ($q) => $q->with('user')->limit(15),
+            'activities' => fn ($q) => $q->with('user')->where('event', '!=', 'viewed')->limit(15),
         ]);
+        Activity::recordView($client);
 
         $objects = collect()
             ->concat($client->realEstates)->concat($client->assets)->concat($client->vehicles)

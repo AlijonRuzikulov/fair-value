@@ -16,6 +16,7 @@ class EnsureUserIsActive
     public function handle(Request $request, Closure $next): Response
     {
         if ($request->user() && ! $request->user()->is_active) {
+            $request->attributes->set('audit.logout_reason', 'deactivated');
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();

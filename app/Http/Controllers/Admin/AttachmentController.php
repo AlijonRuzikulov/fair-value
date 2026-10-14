@@ -51,7 +51,7 @@ class AttachmentController extends Controller
             ]);
         }
 
-        Activity::record('updated', $owner, ['attachments' => ['old' => null, 'new' => count($request->file('files'))]]);
+        Activity::record('uploaded', $owner, ['files' => array_map(fn ($file) => $file->getClientOriginalName(), $request->file('files'))]);
 
         return back()->with('status', trans_choice('{1} File uploaded.|[2,*] :count files uploaded.', count($request->file('files'))));
     }
@@ -62,6 +62,7 @@ class AttachmentController extends Controller
 
         // Images and PDFs open in the browser, other files are downloaded.
         $inline = ! $request->boolean('download') && ($attachment->isImage() || $attachment->mime === 'application/pdf');
+        Activity::record('downloaded', $attachment->attachable, ['file' => $attachment->name]);
 
         return $inline
             ? Storage::disk('local')->response($attachment->path, $attachment->name)
@@ -72,6 +73,7 @@ class AttachmentController extends Controller
     {
         Gate::authorize('delete-records');
         $attachment->delete();
+        Activity::record('file_deleted', $attachment->attachable, ['file' => $attachment->name]);
 
         return back()->with('status', __('File deleted.'));
     }

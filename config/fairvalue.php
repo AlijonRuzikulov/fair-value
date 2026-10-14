@@ -120,6 +120,19 @@ return [
         'outlier' => 0.35,           // further than ±35 % from the median → left out
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Audit log
+    |--------------------------------------------------------------------------
+    |
+    | Records older than this are removed every night (php artisan audit:prune).
+    |
+    */
+
+    'audit' => [
+        'retention_days' => (int) env('AUDIT_RETENTION_DAYS', 1095),
+    ],
+
     'uploads' => [
         'max_kb' => 20480,
         'mimes' => 'pdf,doc,docx,xls,xlsx,jpg,jpeg,png,webp,heic,zip,rar,txt',

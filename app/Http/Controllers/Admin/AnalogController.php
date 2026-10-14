@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\ValuationApproach;
 use App\Http\Controllers\Controller;
+use App\Models\Activity;
 use App\Models\Analog;
 use App\Services\Analogs\AnalogFinder;
 use App\Services\Analogs\PageFetcher;
@@ -38,6 +39,7 @@ class AnalogController extends Controller
             set_time_limit(150);
             try {
                 $added = $this->finder->search($object);
+                Activity::record('analogs', $object, ['mode' => 'search', 'added' => $added]);
             } catch (Throwable $e) {
                 report($e);
 
@@ -52,6 +54,7 @@ class AnalogController extends Controller
         if ($mode === 'manual') {
             $data = $this->manualData($request);
             $this->finder->addManual($object, $data);
+            Activity::record('analogs', $object, ['mode' => 'manual', 'title' => $data['title']]);
 
             return $this->back($type, $object)->with('status', __('The analogue has been added.'));
         }
@@ -60,6 +63,7 @@ class AnalogController extends Controller
         preg_match_all('#https?://[^\s<>"\']+#u', $request->input('links'), $m);
         $rejected = array_filter($m[0], fn ($url) => ! PageFetcher::allowed($url));
         $added = $this->finder->addLinks($object, $m[0]);
+        Activity::record('analogs', $object, ['mode' => 'links', 'added' => $added]);
 
         $response = $this->back($type, $object);
         if ($rejected) {

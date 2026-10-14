@@ -3,13 +3,11 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\Activity;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
@@ -22,21 +20,20 @@ class LoginController extends Controller
 
     public function login(Request $request): RedirectResponse
     {
+        $request->merge(['email' => mb_strtolower(trim((string) $request->input('email')))]);
         $credentials = $request->validate([
             'email' => ['required', 'email'],
             'password' => ['required', 'string'],
         ]);
 
+        // Successful and failed attempts are written to the audit log by the auth event listeners.
         if (! Auth::attempt([...$credentials, 'is_active' => true], $request->boolean('remember'))) {
-            Log::warning('Failed sign-in', ['email' => $credentials['email'], 'ip' => $request->ip()]);
-
             throw ValidationException::withMessages(['email' => __('Incorrect e-mail or password.')]);
         }
 
         $request->session()->regenerate();
         $request->user()->forceFill(['last_login_at' => now()])->saveQuietly();
         $request->session()->put('initial_password', $this->usesInitialPassword($request->user()));
-        Activity::record('login', $request->user(), label: $request->user()->name);
 
         return redirect()->intended(route('admin.dashboard'));
     }

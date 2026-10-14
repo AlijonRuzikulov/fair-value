@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Models\Activity;
 use Illuminate\Database\Eloquent\Builder;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -16,6 +17,13 @@ class CsvExport
      */
     public static function download(string $filename, Builder $query, array $columns): StreamedResponse
     {
+        // Every export is written to the audit log: what, how many rows, with which filters.
+        Activity::record('exported', null, [
+            'file' => $filename,
+            'rows' => (clone $query)->count(),
+            'filters' => array_filter(request()->except(['page']), fn ($v) => $v !== null && $v !== ''),
+        ], $filename);
+
         return response()->streamDownload(function () use ($query, $columns) {
             $out = fopen('php://output', 'w');
             fwrite($out, "\xEF\xBB\xBF");

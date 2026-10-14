@@ -60,6 +60,8 @@ class PagesTest extends TestCase
             ['/admin/users/create'],
             ['/admin/settings'],
             ['/admin/activity'],
+            ['/admin/activity?category=auth&q=a&ip=1&from=2026-01-01&to=2026-12-31'],
+            ['/admin/system'],
             ['/admin/regions'],
             ['/admin/profile'],
         ];

@@ -46,7 +46,7 @@ return [
     'image' => ':attribute расм бўлиши керак.',
     'in' => 'Танланган :attribute нотўғри.',
     'integer' => ':attribute бутун сон бўлиши керак.',
-    'ip' => ':attribute тўғри ИП манзил бўлиши керак.',
+    'ip' => ':attribute тўғри IP манзил бўлиши керак.',
     'json' => ':attribute тўғри ЖСОН сатри бўлиши керак.',
     'lt' => [
         'numeric' => ':attribute :value дан кичик бўлиши керак.',

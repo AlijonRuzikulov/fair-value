@@ -8,6 +8,7 @@ use App\Enums\ValuationApproach;
 use App\Enums\ValuationPurpose;
 use App\Enums\ValuationStatus;
 use App\Http\Controllers\Controller;
+use App\Models\Activity;
 use App\Models\Client;
 use App\Models\District;
 use App\Models\Region;
@@ -197,9 +198,10 @@ abstract class ValuationController extends Controller
         $item = $this->find($id);
         $item->load([
             'region', 'district', 'appraiser', 'creator', 'clients',
-            'attachments.uploader', 'activities' => fn ($q) => $q->with('user')->limit(15),
+            'attachments.uploader', 'activities' => fn ($q) => $q->with('user')->where('event', '!=', 'viewed')->limit(15),
             ...$this->extraRelations(),
         ]);
+        Activity::recordView($item);
 
         return view('admin.objects.show', [
             'item' => $item,
@@ -253,6 +255,7 @@ abstract class ValuationController extends Controller
     {
         $item = $this->find($id);
         $item->load(['region', 'district', 'appraiser', 'clients', ...$this->extraRelations()]);
+        Activity::record('printed', $item);
 
         return view('admin.objects.print', ['item' => $item, 'module' => $this]);
     }

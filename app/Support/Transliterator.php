@@ -53,6 +53,7 @@ class Transliterator
         'Chevrolet', 'Daewoo', 'Nexia', 'Cobalt', 'Spark', 'Gentra', 'Lacetti', 'Malibu', 'Damas', 'Labo',
         'Matiz', 'Tracker', 'Onix', 'Captiva', 'Equinox', 'Tahoe', 'Isuzu', 'MAN', 'BYD', 'Kia', 'Hyundai',
         'Toyota', 'Lada', 'GM', 'Cyrl', 'Latn', 'TEO', 'IT', 'HTML', 'CBU', 'Google', 'Yandex', 'MChJ', 'LLC',
+        'HTTPS', 'https', 'IP', 'README', 'cron', 'SQLite', 'MySQL',
     ];
 
     /** Two-letter combinations first, then single letters. */
@@ -72,9 +73,10 @@ class Transliterator
         $text = str_replace(['‘', '’', 'ʻ', 'ʼ', '`', '´'], "'", $text);
 
         // Protect HTML tags, :placeholders, URLs, e-mails, {braces}, the word
-        // "e-mail" and codes such as "FV-7K3M-9Q2X".
+        // "e-mail", codes such as "FV-7K3M-9Q2X", settings such as
+        // "APP_DEBUG=false", the ".env" file and folders such as "storage/".
         return preg_replace_callback(
-            '/(<[^>]+>|:[a-z_]+|https?:\/\/\S+|\S+@\S+|\{[^}]*\}|&[a-z]+;|\b[Ee]-mail\b|\b(?=[A-Z0-9-]*\d)[A-Z0-9]+(?:-[A-Z0-9]+)+\b)|([A-Za-z\']+)/u',
+            '/(<[^>]+>|:[a-z_]+|https?:\/\/\S+|\S+@\S+|\{[^}]*\}|&[a-z]+;|\b[Ee]-mail\b|\b(?=[A-Z0-9-]*\d)[A-Z0-9]+(?:-[A-Z0-9]+)+\b|\b[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+(?:=[a-z0-9]+)?\b|\.env\b|\b[a-z]+\/(?:[a-z]+\/)*(?=[\s),.]|$))|([A-Za-z\']+)/u',
             fn ($m) => $m[1] !== '' ? $m[1] : self::word($m[2]),
             $text
         );
@@ -84,6 +86,10 @@ class Transliterator
     {
         if (in_array($word, self::KEEP, true) || trim($word, "'") === '') {
             return $word;
+        }
+        // A kept name with an Uzbek suffix: Telegram’ga → Telegram’га.
+        if (preg_match("/^([A-Za-z]+)'([a-z]+)$/", $word, $m) && in_array($m[1], self::KEEP, true)) {
+            return $m[1].'’'.self::word($m[2]);
         }
         // Roman numerals like "II", "XX" stay Latin.
         if (preg_match('/^[IVX]{2,}$/', $word)) {

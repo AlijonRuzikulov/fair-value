@@ -25,6 +25,10 @@ class TransliteratorTest extends TestCase
             ['Fair Value baholash', 'Fair Value баҳолаш'],
             ['masalan FV-7K3M-9Q2X', 'масалан FV-7K3M-9Q2X'],
             ['E-mail manzili', 'E-mail манзили'],
+            ['Saytda APP_DEBUG=false qo‘ying.', 'Сайтда APP_DEBUG=false қўйинг.'],
+            ['.env dagi ADMIN_PASSWORD', '.env даги ADMIN_PASSWORD'],
+            ['storage/ va bootstrap/cache/ papkalari', 'storage/ ва bootstrap/cache/ папкалари'],
+            ['Telegram’ga xabar (IP :ip)', 'Telegram’га хабар (IP :ip)'],
         ];
     }
 

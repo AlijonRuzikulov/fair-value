@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Activity;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -19,6 +20,7 @@ class ProfileController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $user = $request->user();
+        $request->merge(['email' => mb_strtolower(trim((string) $request->input('email')))]);
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -40,7 +42,18 @@ class ProfileController extends Controller
             $request->session()->forget('initial_password');
         }
 
-        $user->update($data);
+        $user->fill($data);
+        $changed = array_diff(array_keys($user->getDirty()), ['password', 'updated_at']);
+        $passwordChanged = $user->isDirty('password');
+        $before = array_intersect_key($user->getOriginal(), array_flip($changed));
+        $user->save();
+
+        if ($changed) {
+            Activity::record('updated', $user, collect($changed)->mapWithKeys(fn ($key) => [$key => ['old' => $before[$key] ?? null, 'new' => $user->{$key}]])->all(), $user->name);
+        }
+        if ($passwordChanged) {
+            Activity::record('password_changed', $user, null, $user->name);
+        }
 
         return back()->with('status', __('Profile updated.'));
     }

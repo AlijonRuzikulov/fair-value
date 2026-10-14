@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\LeadStatus;
 use App\Http\Controllers\Controller;
+use App\Models\Activity;
 use App\Models\Lead;
 use App\Support\Services;
 use Illuminate\Database\Eloquent\Builder;
@@ -42,7 +43,8 @@ class LeadController extends Controller
 
     public function show(Lead $lead): View
     {
-        $lead->load(['handler', 'activities' => fn ($q) => $q->with('user')->limit(10)]);
+        $lead->load(['handler', 'activities' => fn ($q) => $q->with('user')->where('event', '!=', 'viewed')->limit(10)]);
+        Activity::recordView($lead);
 
         return view('admin.leads.show', ['lead' => $lead, 'services' => Services::titles()]);
     }

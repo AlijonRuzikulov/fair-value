@@ -29,7 +29,8 @@ Interfeys uch tilda ishlaydi: **o‘zbekcha (kirill)**, **o‘zbekcha (lotin)** 
 | **Saytdan arizalar** | Saytdan kelgan arizalar, holatini belgilash; xohlasangiz Telegram’ga xabar |
 | **Xodimlar** | Rollar: administrator, baholovchi, operator |
 | **Viloyat va tumanlar** | O‘zbekistonning 14 ta hududi va 200+ tumani (uch tilda) |
-| **Faoliyat jurnali** | Kim, qachon, nimani yaratdi / o‘zgartirdi / o‘chirdi |
+| **Audit jurnali** | Kim, qachon, qaysi IP va qurilmadan: tizimga kirdi / chiqdi / kira olmadi, nimani kiritdi, o‘zgartirdi, o‘chirdi, ko‘rdi, yuklab oldi, chop etdi, Excel’ga chiqardi. Yozuvlar zanjir bilan himoyalangan — o‘zgartirilsa darhol bilinadi |
+| **Tizim holati** | Server, baza, disk, rejali vazifalar, xatolar, xavfsizlik sozlamalari tekshiruvi; hozir tizimda kimlar borligi (seansni masofadan yopish mumkin) |
 | **Sozlamalar** | Kompaniya ma’lumotlari, kontaktlar, litsenziya, bosh sahifadagi raqamlar |
 
 Har bir baholash obyekti uchun:
@@ -203,9 +204,10 @@ server {
 
 SSL: `sudo certbot --nginx -d fairvalue.uz -d www.fairvalue.uz`.
 
-### Cron (valyuta kurslari)
+### Cron (valyuta kurslari, audit tekshiruvi)
 
-Kurslar har 3 soatda yangilanishi uchun cron qo‘shing (hosting panelidagi “Cron” bo‘limi):
+Kurslar har 3 soatda yangilanishi, audit jurnali har kecha tekshirilishi va eski yozuvlar
+tozalanishi uchun cron qo‘shing (hosting panelidagi “Cron” bo‘limi):
 
 ```cron
 * * * * * cd /home/USER/fair-value && php artisan schedule:run >> /dev/null 2>&1
@@ -244,7 +246,49 @@ soatiga 50 ta bilan cheklangan; parol almashtirilsa boshqa qurilmalardagi seansl
 barcha formalar CSRF tokeni bilan himoyalangan; brauzerga himoya sarlavhalari (CSP,
 X-Frame-Options va boshqalar) yuboriladi; yuklangan hujjatlar faqat tizimga kirgan xodimlarga
 ochiladi; yakunlangan hisobotni faqat baholovchi yoki administrator o‘zgartira oladi;
-xodimlarning harakatlari **Faoliyat jurnali**ga yoziladi.
+xodimlarning harakatlari **Audit jurnali**ga yoziladi (pastga qarang).
+
+### Audit jurnali va tizim monitoringi
+
+**Audit jurnali** (admin panel → Audit jurnali, faqat administrator uchun) har bir yozuvda:
+vaqt, xodim, IP manzil, brauzer/qurilma, sahifa manzili va nima o‘zgargani (eski → yangi qiymat).
+Yozuvlar to‘rt guruhga bo‘lingan:
+
+| Guruh | Nima yoziladi |
+|---|---|
+| **Kirish va chiqish** | Tizimga kirish (“eslab qolish” bilan yoki yo‘q), chiqish, noto‘g‘ri parol yoki noma’lum login bilan urinish, ko‘p urinishdan keyin bloklash, seansning majburan yopilishi (xodim nofaol qilinganda, parol almashtirilganda, administrator yopganda), parol almashtirish |
+| **Kiritilgan ma’lumotlar** | Yaratish, o‘zgartirish (har bir maydonning eski va yangi qiymati), o‘chirish, Excel/CSV’dan import, hujjat yuklash va o‘chirish, sozlamalar, analoglar qidiruvi |
+| **Olingan ma’lumotlar** | Obyekt, mijoz yoki ariza kartasini ko‘rish, ma’lumotnomani chop etish, hujjatni yuklab olish, Excel’ga eksport (qaysi filtr bilan, nechta qator), saytda hisobotni tekshirish |
+| **Tizim** | Valyuta kurslari xatolari, jurnal tekshiruvi, eski yozuvlarni tozalash |
+
+Parollar jurnalga hech qachon yozilmaydi. Jurnalni filtrlash (guruh, xodim, hodisa, IP, sana)
+va Excel’ga yuklab olish mumkin.
+
+**Himoya.** Har bir yozuv oldingisining SHA-256 xeshiga bog‘langan (zanjir). Bazada biror
+yozuv o‘zgartirilsa yoki o‘rtadan o‘chirilsa, tekshiruv buni aniq qaysi yozuvdan buzilganini
+ko‘rsatadi. Tekshirish: jurnal sahifasidagi **Butunlikni tekshirish** tugmasi yoki
+
+```bash
+php artisan audit:verify     # har kecha 03:10 da avtomatik ham ishlaydi
+php artisan audit:prune      # AUDIT_RETENTION_DAYS kundan eski yozuvlarni o‘chiradi (03:20 da avtomatik)
+```
+
+Jurnal saqlanish muddati `.env` dagi `AUDIT_RETENTION_DAYS` (standart 1095 kun = 3 yil, kamida 30).
+
+**Tizim holati** sahifasi: baza, disk, `storage/` yozish huquqi, cron ishlayaptimi, valyuta
+kurslari, so‘nggi 24 soatdagi xatolar, jurnal butunligi va xavfsizlik sozlamalari
+(`APP_DEBUG`, `APP_ENV`, https, cookie, `DEMO_MODE`, boshlang‘ich parol) — har biri yashil /
+sariq / qizil. Shu yerda hozir tizimda kimlar borligi (qurilma, IP, oxirgi faollik) ko‘rinadi va
+istalgan seansni masofadan yopish mumkin; so‘nggi xatolar va xavfsizlik hodisalari ham shu yerda.
+
+**Telegram ogohlantirishlari** (`TELEGRAM_BOT_TOKEN` va `TELEGRAM_CHAT_ID` kiritilgan bo‘lsa):
+hisob bloklanganda, 15 daqiqada 10 tadan ko‘p noto‘g‘ri parol kiritilganda, 10 daqiqada
+10 tadan ko‘p server xatosi bo‘lganda va jurnal butunligi buzilganda darhol xabar keladi.
+
+Cheklov: zanjir yozuvlar o‘zgartirilganini yoki o‘rtadan o‘chirilganini aniqlaydi, lekin
+serverga to‘liq kirgan odam oxirgi yozuvlarni butunlay o‘chirib yuborsa, buni faqat zaxira
+nusxa bilan solishtirib bilish mumkin. Shuning uchun bazaning kunlik zaxira nusxasini boshqa
+joyda saqlang.
 
 ### Qiyosiy yondashuv: analoglarni avtomatik topish
 

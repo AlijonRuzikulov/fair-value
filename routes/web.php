@@ -111,7 +111,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
         Route::get('settings', [Admin\SettingController::class, 'edit'])->name('settings.edit');
         Route::put('settings', [Admin\SettingController::class, 'update'])->name('settings.update');
         Route::post('settings/currency', [Admin\SettingController::class, 'refreshRates'])->name('settings.currency');
-        Route::get('activity', Admin\ActivityController::class)->name('activity.index');
+        Route::get('activity', [Admin\ActivityController::class, 'index'])->name('activity.index');
+        Route::get('activity/export', [Admin\ActivityController::class, 'export'])->name('activity.export');
+        Route::post('activity/verify', [Admin\ActivityController::class, 'verify'])->middleware('throttle:6,1')->name('activity.verify');
+        Route::get('system', [Admin\SystemController::class, 'index'])->name('system.index');
+        Route::delete('system/sessions/{session}', [Admin\SystemController::class, 'endSession'])->name('system.sessions.destroy');
         Route::get('regions', [Admin\RegionController::class, 'index'])->name('regions.index');
         Route::post('regions', [Admin\RegionController::class, 'store'])->name('regions.store');
         Route::put('regions/{region}', [Admin\RegionController::class, 'update'])->name('regions.update');

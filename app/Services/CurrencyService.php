@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Activity;
 use App\Models\CurrencyRate;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -110,6 +111,9 @@ class CurrencyService
                 app(CurrencyService::class)->fetch();
             } catch (Throwable $e) {
                 Log::warning('Currency rates could not be fetched: '.$e->getMessage());
+                if (Cache::add('audit:currency-failed', true, now()->addHours(6))) {
+                    Activity::record('system', null, ['task' => 'currency', 'error' => mb_substr($e->getMessage(), 0, 300)], 'Exchange rates were not downloaded');
+                }
             }
         })->afterResponse();
     }

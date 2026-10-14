@@ -73,6 +73,7 @@ class UserController extends Controller
 
     private function validated(Request $request, ?User $user = null): array
     {
+        $request->merge(['email' => mb_strtolower(trim((string) $request->input('email')))]);
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user)],

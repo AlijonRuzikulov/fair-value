@@ -1116,6 +1116,43 @@ a.page-link:hover { background: var(--neutral-soft); }
   .analog-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+/* --- Audit log and system status -------------------------------------- */
+
+.audit-integrity { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 14px; background: #ecfdf5; color: #047857; font-weight: 600; }
+.audit-integrity small { display: block; font-weight: 500; opacity: .8; font-size: 12px; }
+.audit-integrity.is-bad { background: #fff1f2; color: #be123c; }
+.audit-badge { display: inline-flex; padding: 3px 9px; border-radius: 99px; font-size: 12px; font-weight: 700; white-space: nowrap; background: var(--brand-soft); color: var(--brand-ink); }
+.audit-auth { background: #e0f2fe; color: #0369a1; }
+.audit-data { background: #ecfdf5; color: #047857; }
+.audit-access { background: #f5f3ff; color: #6d28d9; }
+.audit-system { background: #f1f5f9; color: #475569; }
+.audit-ev-login_failed, .audit-ev-login_locked, .audit-ev-deleted, .audit-ev-file_deleted { background: #fff1f2; color: #be123c; }
+.audit-ev-session_ended, .audit-ev-password_changed { background: #fff7ed; color: #c2410c; }
+.audit-table td { vertical-align: top; }
+.audit-record { max-width: 260px; }
+.audit-details { max-width: 380px; font-size: 13px; }
+.audit-details summary { cursor: pointer; color: var(--ink-2); }
+.audit-details dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; margin: 8px 0 0; }
+.audit-details dt { color: var(--muted); font-weight: 600; }
+.audit-details dd { margin: 0; word-break: break-word; }
+.audit-details s { color: var(--muted); }
+.audit-kv { display: grid; gap: 2px; color: var(--ink-2); word-break: break-word; }
+.audit-kv b { font-weight: 600; color: var(--muted); }
+.audit-where { min-width: 150px; }
+.check-list-sys { list-style: none; margin: 0; padding: 0; }
+.check-list-sys li { display: flex; align-items: flex-start; gap: 12px; padding: 12px 20px; border-top: 1px solid var(--line); }
+.check-list-sys li:first-child { border-top: 0; }
+.check-list-sys .grow { flex: 1; min-width: 0; }
+.check-list-sys strong { display: block; }
+.check-list-sys small { display: block; margin-top: 2px; color: var(--muted); font-size: 12.5px; }
+.check-list-sys .sys-value { font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; max-width: 50%; word-break: break-word; }
+.sys-ok > .icon { color: #10b981; }
+.sys-warn > .icon { color: #f59e0b; }
+.sys-fail > .icon { color: #e11d48; }
+.sys-fail .sys-value { color: #be123c; }
+.sys-stats tr.is-alert td { color: #be123c; font-weight: 700; }
+.sys-errors small { word-break: break-all; }
+
 /* --- Auth ------------------------------------------------------------- */
 
 .auth {

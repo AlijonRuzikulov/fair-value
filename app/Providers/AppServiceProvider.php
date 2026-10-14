@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Enums\LeadStatus;
 use App\Enums\UserRole;
 use App\Enums\ValuationStatus;
+use App\Models\Activity;
 use App\Models\CarModel;
 use App\Models\Client;
 use App\Models\Lead;
@@ -14,13 +15,21 @@ use App\Models\SparePart;
 use App\Models\User;
 use App\Services\Analogs\ClaudeListingAi;
 use App\Services\Analogs\ListingAi;
+use App\Services\Audit\SecurityAlert;
 use App\Services\CurrencyService;
 use App\Support\Registry;
+use Illuminate\Auth\Events\CurrentDeviceLogout;
+use Illuminate\Auth\Events\Failed;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
@@ -33,6 +42,35 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Register any application services.
      */
+    /** Signing in and out goes to the audit log, whichever way it happens. */
+    private function auditSignIns(): void
+    {
+        Event::listen(Login::class, fn (Login $e) => Activity::record('login', $e->user, $e->remember ? ['remember' => true] : null, $e->user->name, $e->user));
+
+        Event::listen(Logout::class, function (Logout $e) {
+            if (! $e->user) {
+                return;
+            }
+            $reason = request()->attributes->get('audit.logout_reason');
+            Activity::record($reason ? 'session_ended' : 'logout', $e->user, $reason ? ['reason' => $reason] : null, $e->user->name, $e->user);
+        });
+
+        // The password was changed elsewhere: this device is signed out.
+        Event::listen(CurrentDeviceLogout::class, fn (CurrentDeviceLogout $e) => $e->user
+            && Activity::record('session_ended', $e->user, ['reason' => 'password_changed'], $e->user->name, $e->user));
+
+        Event::listen(Failed::class, function (Failed $e) {
+            $email = mb_substr(mb_strtolower((string) ($e->credentials['email'] ?? '')), 0, 255);
+            Activity::record('login_failed', $e->user, ['reason' => $e->user ? 'wrong_password' : 'unknown_email'], $email, email: $email);
+
+            $window = 'audit:failed:'.intdiv(time(), 900);
+            Cache::add($window, 0, now()->addMinutes(20));
+            if (Cache::increment($window) >= 10) {
+                SecurityAlert::send('failed-burst', __('Many failed sign-in attempts in the last 15 minutes. Check the audit log.'));
+            }
+        });
+    }
+
     public function register(): void
     {
         $this->app->bind(ListingAi::class, ClaudeListingAi::class);
@@ -80,12 +118,23 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('login', function (Request $request) {
             $email = mb_strtolower((string) $request->input('email'));
 
+            $blocked = function (Request $request, array $headers) use ($email) {
+                if (Cache::add('audit:locked:'.$email.'|'.$request->ip(), true, now()->addMinute())) {
+                    Activity::record('login_locked', User::where('email', $email)->first(), ['ip' => $request->ip()], $email, email: $email);
+                    SecurityAlert::send('locked:'.$email, __('Sign-in to :email was blocked after repeated wrong passwords (IP :ip).', ['email' => $email, 'ip' => $request->ip()]));
+                }
+
+                throw new ThrottleRequestsException(__('Too many attempts. Try again in a minute.'), null, $headers);
+            };
+
             return [
-                Limit::perMinute(5)->by('login:'.$email.'|'.$request->ip()),
-                Limit::perHour(50)->by('login:'.$email),
-                Limit::perMinute(20)->by('login-ip:'.$request->ip()),
+                Limit::perMinute(5)->by('login:'.$email.'|'.$request->ip())->response($blocked),
+                Limit::perHour(50)->by('login:'.$email)->response($blocked),
+                Limit::perMinute(20)->by('login-ip:'.$request->ip())->response($blocked),
             ];
         });
+
+        $this->auditSignIns();
 
         Password::defaults(fn () => Password::min(10)->letters()->numbers());
 
