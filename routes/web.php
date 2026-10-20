@@ -102,6 +102,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
         Route::put('real-estates/{id}/report', 'update')->whereNumber('id')->name('real-estates.report.update');
         Route::get('report-documents/{index}', 'document')->whereNumber('index')->name('report-documents.show');
     });
+    // Cost and income approaches of real estate
+    Route::controller(Admin\ApproachController::class)->group(function () {
+        Route::put('real-estates/{id}/approaches/cost', 'cost')->whereNumber('id')->name('real-estates.approaches.cost');
+        Route::put('real-estates/{id}/approaches/income', 'income')->whereNumber('id')->name('real-estates.approaches.income');
+    });
     Route::controller(Admin\DocumentReadController::class)->group(function () {
         Route::post('real-estates/{id}/documents/read', 'read')->whereNumber('id')->middleware('throttle:10,1')->name('real-estates.documents.read');
         Route::get('real-estates/{id}/documents/review', 'review')->whereNumber('id')->name('real-estates.documents.review');

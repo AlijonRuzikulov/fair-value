@@ -1519,3 +1519,13 @@ summary.btn::-webkit-details-marker { display: none; }
 .approval-history { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); display: grid; gap: 8px; }
 .approval-history-head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 13px; }
 .table-compact td { padding: 6px 8px; font-size: 12.5px; vertical-align: top; }
+
+/* Cost and income approaches on the object page */
+.w-70 { width: 70px; }
+.w-90 { width: 90px; }
+.cost-table td { padding: 6px 4px; }
+.cost-table .input { height: 34px; padding: 4px 8px; }
+.cost-table td:first-child .input { min-width: 150px; }
+.approach-buttons { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; justify-content: flex-end; }
+.approach-results { margin-top: 14px; }
+.table-compact tr.total td { font-weight: 800; background: #f8fafc; }

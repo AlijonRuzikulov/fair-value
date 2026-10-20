@@ -143,6 +143,8 @@
         </aside>
     </div>
 
+    @includeIf('admin.'.$module->slugName().'._approaches-wrap')
+
     @if ($analogType = array_search($item::class, \App\Services\Analogs\AnalogFinder::OBJECTS, true))
         <div style="margin-top: 20px">
             @include('admin.objects._analogs', ['analogType' => $analogType, 'aiAvailable' => app(\App\Services\Analogs\ListingAi::class)->available()])

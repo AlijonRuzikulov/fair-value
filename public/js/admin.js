@@ -650,4 +650,32 @@
       lng.value = '';
     });
   });
+
+  /* ---------- Rows added and removed (buildings of the cost approach) -- */
+
+  $$('form').forEach(function (form) {
+    var table = $('[data-rows]', form);
+    if (!table) return;
+    var body = table.tBodies[0];
+    var add = $('[data-row-add]', form);
+    function renumber(row, index) {
+      $$('[name]', row).forEach(function (input) { input.name = input.name.replace(/\[\d+\]/, '[' + index + ']'); });
+    }
+    if (add) add.addEventListener('click', function () {
+      var last = body.rows[body.rows.length - 1];
+      if (!last) return;
+      var row = last.cloneNode(true);
+      $$('input', row).forEach(function (input) { if (input.type === 'checkbox') input.checked = false; else input.value = ''; });
+      renumber(row, Date.now());
+      body.appendChild(row);
+      $('input', row).focus();
+    });
+    body.addEventListener('click', function (e) {
+      var button = e.target.closest('[data-row-remove]');
+      if (!button) return;
+      var row = button.closest('[data-row]');
+      if (body.rows.length > 1) row.remove();
+      else $$('input', row).forEach(function (input) { if (input.type === 'checkbox') input.checked = false; else input.value = ''; });
+    });
+  });
 })();

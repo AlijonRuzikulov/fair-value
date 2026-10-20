@@ -262,3 +262,4 @@ a { color: var(--accent); word-break: break-all; }
 .location-map { margin: 0 0 4mm; break-inside: avoid; }
 .location-map .static-map { margin: 0 auto; }
 .location-map figcaption { margin-top: 1.5mm; text-align: center; font: 600 8pt 'Manrope', Arial, sans-serif; color: var(--muted); }
+.grid tr.total td { background: #f8fafc; font-weight: 700; }

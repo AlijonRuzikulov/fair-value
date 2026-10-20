@@ -490,6 +490,41 @@
 @foreach ([ValuationApproach::Cost, ValuationApproach::Income] as $approach)
     @if (in_array($approach, $applied, true))
         <h3 class="sub">{{ $t($approachNames[$approach->value]) }}</h3>
+        @if ($approach === ValuationApproach::Cost && $costApproach && $costApproach['rows'])
+            <p>{{ $t("Xarajat yondashuvida baholash obyektining qiymati binolarni qayta tiklash (o'rnini bosish) qiymatidan jismoniy, funksional va tashqi eskirishni chegirib, yer uchastkasiga bo'lgan huquq qiymatini qo'shish yo'li bilan aniqlandi. Jismoniy eskirish bino yoshi va iqtisodiy xizmat muddati nisbati bo'yicha (yoki ko'zdan kechirish natijasida baholangan holda) hisoblandi; quruvchi foydasi") }} {{ $num($costApproach['profit'], 0) }} %.</p>
+            <table class="grid">
+                <thead><tr><th>{{ $t('Bino (inshoot)') }}</th><th class="num">{{ $t('Maydon / hajm') }}</th><th class="num">{{ $t("Birlik narxi, so'm") }}</th><th class="num">{{ $t("Qayta tiklash qiymati, so'm") }}</th><th class="num">{{ $t('Yoshi / xizmat muddati') }}</th><th class="num">{{ $t('Jismoniy eskirish, %') }}</th><th class="num">{{ $t('Funksional / tashqi, %') }}</th><th class="num">{{ $t("Qiymati, so'm") }}</th></tr></thead>
+                <tbody>
+                    @foreach ($costApproach['rows'] as $row)
+                        <tr>
+                            <td>{{ $t($row['name'] ?: 'Bino') }}@if ($row['light'])<br><small>{{ $t('yengil konstruktiv element') }}</small>@endif</td>
+                            <td class="num">{{ $num($row['quantity']) }} {{ $row['unit'] === 'm3' ? 'm³' : 'm²' }}</td>
+                            <td class="num">{{ $num($row['rate'], 0) }}</td>
+                            <td class="num">{{ $num($row['replacement'], 0) }}</td>
+                            <td class="num">{{ $row['age'] !== null ? $row['age'] : '—' }} / {{ $row['life'] }}</td>
+                            <td class="num">{{ $num($row['physical']) }}</td>
+                            <td class="num">{{ $num($row['functional']) }} / {{ $num($row['external']) }}</td>
+                            <td class="num">{{ $num($row['value'], 0) }}</td>
+                        </tr>
+                    @endforeach
+                    @if ($costApproach['land'] > 0)<tr><td colspan="7">{{ $t("Yer uchastkasiga bo'lgan huquq qiymati") }}</td><td class="num">{{ $num($costApproach['land'], 0) }}</td></tr>@endif
+                    <tr class="total"><td colspan="7"><b>{{ $t("Xarajat yondashuvi bo'yicha qiymat (yaxlitlangan)") }}</b></td><td class="num"><b>{{ $num($costApproach['value'], 0) }}</b></td></tr>
+                </tbody>
+            </table>
+        @elseif ($approach === ValuationApproach::Income && $incomeApproach && $incomeApproach['value'])
+            <p>{{ $t("Daromad yondashuvida to'g'ridan-to'g'ri kapitallashtirish usuli qo'llanildi: obyektdan bir yilda olinishi mumkin bo'lgan sof operatsion daromad kapitallashtirish stavkasiga bo'lindi.") }}</p>
+            <table class="facts">
+                <tr><td>{{ $t('Ijaraga beriladigan maydon') }}</td><td>{{ $num($incomeApproach['area']) }} {{ $t('kv. m') }}</td></tr>
+                <tr><td>{{ $t("1 m² uchun oylik ijara haqi") }}</td><td>{{ $sum($incomeApproach['rent']) }}</td></tr>
+                <tr><td>{{ $t('Potensial yalpi daromad (yiliga)') }}</td><td>{{ $sum($incomeApproach['pgi']) }}</td></tr>
+                <tr><td>{{ $t("Bo'sh turish va yo'qotishlar") }}</td><td>{{ $num($incomeApproach['vacancy']) }} %</td></tr>
+                <tr><td>{{ $t('Samarali yalpi daromad') }}</td><td>{{ $sum($incomeApproach['egi']) }}</td></tr>
+                <tr><td>{{ $t('Operatsion xarajatlar') }}</td><td>{{ $num($incomeApproach['opex']) }} %</td></tr>
+                <tr><td>{{ $t('Sof operatsion daromad') }}</td><td>{{ $sum($incomeApproach['noi']) }}</td></tr>
+                <tr><td>{{ $t('Kapitallashtirish stavkasi') }}</td><td>{{ $num($incomeApproach['cap']) }} %</td></tr>
+                <tr><td><b>{{ $t("Daromad yondashuvi bo'yicha qiymat") }}</b></td><td><b>{{ $sum($incomeApproach['value']) }}</b></td></tr>
+            </table>
+        @endif
         <p>{{ $t($approachNames[$approach->value].' bo‘yicha aniqlangan qiymat') }}: <b>{{ $sum($item->{$approach->column()}) }}</b>.</p>
     @endif
 @endforeach

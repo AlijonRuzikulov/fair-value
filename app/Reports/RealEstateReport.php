@@ -13,6 +13,8 @@ use App\Models\RealEstate;
 use App\Models\Setting;
 use App\Services\CurrencyService;
 use App\Support\ComparativeCalculator;
+use App\Support\CostApproach;
+use App\Support\IncomeApproach;
 use App\Support\NumberToWords;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
@@ -369,6 +371,8 @@ final class RealEstateReport
             'final' => $final,
             'finalWords' => $final !== null ? NumberToWords::uz((int) round($final)) : null,
             'communications' => $communications,
+            'costApproach' => isset($object->report['cost']) ? CostApproach::calculate((array) $object->report['cost'], (int) Carbon::parse($valuationDate)->format('Y')) : null,
+            'incomeApproach' => isset($object->report['income']) ? IncomeApproach::calculate((array) $object->report['income']) : null,
             'photos' => $attachments->where('report_role', 'photo')->values(),
             'documents' => $attachments->where('report_role', 'document')->values(),
             'companyDocuments' => $f['company_documents'] ? self::companyDocuments() : [],

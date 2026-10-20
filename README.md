@@ -437,6 +437,18 @@ Sozlamalarda. Bitta hujjatni chiqarish: manzil oxiriga `?doc=contract` (`act`, `
   fayl turi nomidan aniqlanadi va o‘zgartiriladi. Yonbosh olingan rasm va skanerlar **chapga/o‘ngga aylantiriladi**
   (hisobotga ham aylangan holda chiqadi). Telefonda “Qo‘shish” kamerani ochadi.
 
+### Xarajat va daromad yondashuvlari
+
+Yondashuv tanlangan bo‘lsa, obyekt sahifasida hisob-kitob kartasi chiqadi:
+
+- **Xarajat yondashuvi** — **bir nechta bino** (asosiy bino, ayvon, omborxona…): maydon yoki hajm × birlik qayta
+  tiklash narxi, quruvchi foydasi; jismoniy eskirish yoshi va xizmat muddatiga ko‘ra (80 yil, **yengil konstruktiv
+  element** — 40 yil) yoki qo‘lda; funksional va tashqi eskirish; yer qiymati qo‘shiladi.
+- **Daromad yondashuvi** — to‘g‘ridan-to‘g‘ri kapitallashtirish: maydon × oylik ijara × 12, bo‘sh turish va
+  operatsion xarajatlar chegiriladi, sof daromad kapitallashtirish stavkasiga bo‘linadi.
+
+Natija yondashuv qiymatiga yoziladi va hisobotning 7-bo‘limida jadval bilan chiqadi.
+
 ### Holat va tasdiqlash
 
 Obyekt sahifasidagi **“Holat va tasdiqlash”** paneli: baholovchi hisobotni **tasdiqlashga yuboradi**
