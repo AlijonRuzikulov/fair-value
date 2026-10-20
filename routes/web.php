@@ -102,6 +102,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
         Route::put('real-estates/{id}/report', 'update')->whereNumber('id')->name('real-estates.report.update');
         Route::get('report-documents/{index}', 'document')->whereNumber('index')->name('report-documents.show');
     });
+    // Map tiles, downloaded once and kept on this site
+    Route::get('map/tiles/{z}/{x}/{y}.png', [Admin\MapTileController::class, 'show'])
+        ->whereNumber(['z', 'x', 'y'])->middleware('throttle:1200,1')->name('map.tile');
+
     // Cost and income approaches of real estate
     Route::controller(Admin\ApproachController::class)->group(function () {
         Route::put('real-estates/{id}/approaches/cost', 'cost')->whereNumber('id')->name('real-estates.approaches.cost');

@@ -34,7 +34,7 @@ class SecurityHeaders
                 "default-src 'self'",
                 "script-src 'self' 'nonce-{$nonce}'",
                 "style-src 'self' 'unsafe-inline'",
-                "img-src 'self' data:".self::tileOrigin(),
+                "img-src 'self' data:",
                 "font-src 'self'",
                 "connect-src 'self'",
                 "object-src 'none'",
@@ -55,13 +55,5 @@ class SecurityHeaders
         }
 
         return $response;
-    }
-
-    /** The map tile server, which serves images to the pages with a map. */
-    private static function tileOrigin(): string
-    {
-        $parts = parse_url((string) config('fairvalue.map.tiles'));
-
-        return isset($parts['scheme'], $parts['host']) ? ' '.$parts['scheme'].'://'.str_replace(['{s}', '{', '}'], ['*', '', ''], $parts['host']) : '';
     }
 }

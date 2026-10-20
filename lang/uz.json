@@ -1062,6 +1062,7 @@
     "The format must contain {n} or {nnnn} once.": "Formatda {n} yoki {nnnn} bir marta bo‘lishi kerak.",
     "the kind is told by the file name and can be changed": "turi fayl nomidan aniqlanadi va uni o‘zgartirish mumkin",
     "The location could not be determined. Allow access to the location or mark the point on the map.": "Joylashuvni aniqlab bo‘lmadi. Joylashuvga ruxsat bering yoki nuqtani xaritada belgilang.",
+    "The map background could not be loaded (the map server did not answer). The point can still be marked or its coordinates typed.": "Xarita fonini yuklab bo‘lmadi (xarita serveri javob bermadi). Nuqtani baribir belgilash yoki koordinatalarni yozish mumkin.",
     "The owner linked to the object is updated: :name.": "Obyektga bog‘langan mulk egasi yangilanadi: :name.",
     "The page could not be opened (code :code).": "Sahifa ochilmadi (kod :code).",
     "The page could not be opened (too many redirects).": "Sahifa ochilmadi (yo‘naltirishlar juda ko‘p).",

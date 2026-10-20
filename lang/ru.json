@@ -1062,6 +1062,7 @@
     "The format must contain {n} or {nnnn} once.": "Формат должен один раз содержать {n} или {nnnn}.",
     "the kind is told by the file name and can be changed": "вид определяется по имени файла, его можно изменить",
     "The location could not be determined. Allow access to the location or mark the point on the map.": "Не удалось определить местоположение. Разрешите доступ к геолокации или отметьте точку на карте.",
+    "The map background could not be loaded (the map server did not answer). The point can still be marked or its coordinates typed.": "Не удалось загрузить фон карты (сервер карт не ответил). Точку всё равно можно отметить или ввести координаты.",
     "The owner linked to the object is updated: :name.": "Будут обновлены данные собственника объекта: :name.",
     "The page could not be opened (code :code).": "Страница не открылась (код :code).",
     "The page could not be opened (too many redirects).": "Страница не открылась (слишком много перенаправлений).",

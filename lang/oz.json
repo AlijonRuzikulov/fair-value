@@ -1062,6 +1062,7 @@
     "The format must contain {n} or {nnnn} once.": "Форматда {n} ёки {nnnn} бир марта бўлиши керак.",
     "the kind is told by the file name and can be changed": "тури файл номидан аниқланади ва уни ўзгартириш мумкин",
     "The location could not be determined. Allow access to the location or mark the point on the map.": "Жойлашувни аниқлаб бўлмади. Жойлашувга рухсат беринг ёки нуқтани харитада белгиланг.",
+    "The map background could not be loaded (the map server did not answer). The point can still be marked or its coordinates typed.": "Харита фонини юклаб бўлмади (харита сервери жавоб бермади). Нуқтани барибир белгилаш ёки координаталарни ёзиш мумкин.",
     "The owner linked to the object is updated: :name.": "Объектга боғланган мулк эгаси янгиланади: :name.",
     "The page could not be opened (code :code).": "Саҳифа очилмади (код :code).",
     "The page could not be opened (too many redirects).": "Саҳифа очилмади (йўналтиришлар жуда кўп).",

@@ -41,4 +41,5 @@ if [ -n "${CODESPACE_NAME:-}" ] && command -v gh > /dev/null; then
 fi
 
 echo "Fair Value: open the PORTS tab → port 8000 (globe icon). Admin panel: /admin (the login is shown on the sign-in page)"
-exec php artisan serve --host=0.0.0.0 --port=8000
+# Several workers: the map tiles and the pages are served at the same time.
+PHP_CLI_SERVER_WORKERS=4 exec php artisan serve --host=0.0.0.0 --port=8000 --no-reload

@@ -101,7 +101,7 @@ class LocationAndNumbersTest extends TestCase
         $this->assertSame('61.52', $flat->built_up_area);
 
         $this->get('/admin/real-estates/'.$flat->id)->assertOk()
-            ->assertSee('https://tile.openstreetmap.org/16/45379/24495.png', false)
+            ->assertSee('/admin/map/tiles/16/45379/24495.png', false)
             ->assertSee('yandex.uz/maps/?pt=69.2797,41.3111', false)
             ->assertSee('Feruza massivi')->assertSee(Format::money(830176946.46))
             ->assertSee(Format::money(1000000));  // the debt
@@ -111,7 +111,7 @@ class LocationAndNumbersTest extends TestCase
 
         $this->get('/admin/real-estates/'.$flat->id.'/report?script=latn')->assertOk()
             ->assertSee('Geografik koordinatalari')->assertSee('41.311100, 69.279700')
-            ->assertSee('Qurilish osti maydoni')->assertSee('mo‘ljal', false)->assertSee('tile.openstreetmap.org', false);
+            ->assertSee('Qurilish osti maydoni')->assertSee('mo‘ljal', false)->assertSee('/admin/map/tiles/16/', false);
     }
 
     public function test_coordinates_come_in_pairs_and_within_range(): void
@@ -131,7 +131,7 @@ class LocationAndNumbersTest extends TestCase
 
         config(['app.debug' => false]);
         $response = $this->actingAs($this->user)->get('/admin');
-        $this->assertStringContainsString("img-src 'self' data: https://tile.openstreetmap.org", $response->headers->get('Content-Security-Policy'));
+        $this->assertStringContainsString("img-src 'self' data:;", $response->headers->get('Content-Security-Policy'), 'Tiles come from this site, not from the tile server.');
         $this->assertStringContainsString('geolocation=(self)', $response->headers->get('Permissions-Policy'));
     }
 }

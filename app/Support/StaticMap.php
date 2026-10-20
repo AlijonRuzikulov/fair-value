@@ -4,7 +4,8 @@ namespace App\Support;
 
 /**
  * A map picture made of tiles placed around a point: works without
- * JavaScript, so it is printed in reports exactly as it is shown.
+ * JavaScript, so it is printed in reports exactly as it is shown. The
+ * tiles come from this site (see MapTileController).
  */
 class StaticMap
 {
@@ -24,14 +25,13 @@ class StaticMap
 
         $left = (int) round($x - $width / 2);
         $top = (int) round($y - $height / 2);
-        $template = (string) config('fairvalue.map.tiles');
 
         $tiles = [];
         for ($ty = intdiv(max(0, $top), self::TILE); $ty * self::TILE < $top + $height && $ty < $count; $ty++) {
             for ($tx = (int) floor($left / self::TILE); $tx * self::TILE < $left + $width; $tx++) {
                 $wrapped = (($tx % $count) + $count) % $count;
                 $tiles[] = [
-                    'url' => strtr($template, ['{z}' => $zoom, '{x}' => $wrapped, '{y}' => $ty, '{s}' => 'abc'[($wrapped + $ty) % 3]]),
+                    'url' => route('admin.map.tile', ['z' => $zoom, 'x' => $wrapped, 'y' => $ty]),
                     'left' => $tx * self::TILE - $left,
                     'top' => $ty * self::TILE - $top,
                 ];

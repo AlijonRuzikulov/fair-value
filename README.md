@@ -424,8 +424,10 @@ Sozlamalarda. Bitta hujjatni chiqarish: manzil oxiriga `?doc=contract` (`act`, `
 
 - **Xaritada joylashuv** (ko‘chmas mulk): tahrirlash sahifasida xaritani bosib yoki “Mening joylashuvim”
   (telefonda) bilan nuqta belgilanadi; Google/Yandex’dan nusxa olingan koordinatalarni “Kenglik”ka qo‘yish mumkin.
-  Obyekt sahifasida va hisobotda (5.2-band) xarita chiqadi. Xarita OpenStreetMap’dan olinadi
-  (`.env`: `MAP_TILES`, `MAP_ATTRIBUTION`).
+  Obyekt sahifasida va hisobotda (5.2-band) xarita chiqadi. Xarita fonlarini **server** OpenStreetMap’dan bir marta
+  yuklab, 30 kun saqlaydi (`storage/app/map-tiles`); brauzer ularni saytning o‘zidan oladi. Boshqa xarita xizmati
+  (masalan, kalitli MapTiler) kerak bo‘lsa — `.env` dagi `MAP_TILES` (kalit URL ichida yoziladi va faqat serverda
+  turadi) va `MAP_ATTRIBUTION`.
 - **Mo‘ljal (massiv, mahalla)**, **kadastr yoki balans qiymati**, **qurilish osti maydoni** maydonlari.
 - **Avtomatik raqamlash:** yangi obyektga navbatdagi shartnoma raqami va bugungi sana beriladi; hisobot raqami
   yakunlanganda beriladi. Format — Sozlamalarda: `{n}-{yy}` → 668-26, `20/{n}-{yy}` → 20/551-26,

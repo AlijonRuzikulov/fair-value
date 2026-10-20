@@ -598,7 +598,12 @@
     var map = L.map($('[data-map-canvas]', box), { scrollWheelZoom: false })
       .setView(hasPoint() ? [parseFloat(lat.value), parseFloat(lng.value)] : center, hasPoint() ? 16 : 11);
     map.attributionControl.setPrefix('Leaflet');
-    L.tileLayer(box.dataset.tiles, { maxZoom: 19, attribution: box.dataset.attribution }).addTo(map);
+    var tiles = L.tileLayer(box.dataset.tiles, { maxZoom: 19, attribution: box.dataset.attribution }).addTo(map);
+    // The map background could not be loaded: the point can still be marked, and the reason is told once.
+    tiles.once('tileerror', function () {
+      var note = $('[data-map-error]', box);
+      if (note) note.hidden = false;
+    });
     var icon = L.divIcon({ className: 'map-pin', html: '<span></span>', iconSize: [28, 40], iconAnchor: [14, 40] });
     var marker = null;
 
