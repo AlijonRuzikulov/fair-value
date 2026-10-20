@@ -135,6 +135,42 @@ class ValuationReportTest extends TestCase
             ->assertDontSee('Yalpi ichki mahsulot');
     }
 
+    public function test_the_inspection_act_is_saved_weighted_and_printed(): void
+    {
+        $this->actingAs($this->appraiser);
+        // Inputs of the cost approach, saved on the object page, outlive a save of the report form.
+        $this->flat->update(['report' => ['cost' => ['buildings' => [['name' => 'Asosiy bino', 'quantity' => 55.21, 'rate' => 5_000_000]], 'profit' => 10, 'land' => 0]]]);
+        $this->get('/admin/real-estates/'.$this->flat->id.'/report/edit')->assertOk()->assertSee('name="act[elements][walls][wear]"', false);
+
+        $this->put('/admin/real-estates/'.$this->flat->id.'/report', [
+            'script' => ReportScript::LATIN, 'report_date' => '2026-10-12',
+            'act' => [
+                'participants' => 'Mulk egasi Xodjayeva X.M.',
+                'defects' => 'Hammomda suvoq yorilgan.',
+                'elements' => [
+                    'foundation' => ['wear' => '10'],                                  // condition from the wear
+                    'walls' => ['condition' => 'Qoniqarli', 'wear' => '25,5'],
+                    'utilities' => ['condition' => 'Qoniqarsiz', 'share' => '20', 'wear' => '45', 'description' => 'Elektr, gaz, suv'],
+                ],
+            ],
+        ])->assertSessionHasNoErrors();
+
+        $report = $this->flat->fresh()->report;
+        $this->assertEquals(25.5, $report['act']['elements']['walls']['wear']);
+        $this->assertEquals(20, $report['act']['elements']['utilities']['share']);
+        $this->assertEquals(4, $report['act']['elements']['foundation']['share'], 'An empty share is the typical one.');
+        $this->assertSame('Asosiy bino', $report['cost']['buildings'][0]['name']);
+
+        // (4 × 10 + 26 × 25.5 + 20 × 45) / (4 + 26 + 20) = 32.06…
+        $page = $this->get('/admin/real-estates/'.$this->flat->id.'/report')->assertOk();
+        $page->assertSee('Mulk egasi Xodjayeva X.M.')->assertSee('Hammomda suvoq yorilgan.')
+            ->assertSee('Elektr, gaz, suv')->assertSee('Qoniqarsiz')->assertSee('25,5')
+            ->assertSee('Binoning jismoniy eskirishi (elementlar ulushi bo‘yicha vaznli o‘rtacha)', false)->assertSee('32,1');
+
+        $this->put('/admin/real-estates/'.$this->flat->id.'/report', ['script' => 'latn', 'report_date' => '2026-10-12', 'act' => ['elements' => ['walls' => ['wear' => '101']]]])
+            ->assertSessionHasErrors('act.elements.walls.wear');
+    }
+
     public function test_operators_cannot_change_the_report_of_a_completed_valuation(): void
     {
         $operator = User::factory()->operator()->create();

@@ -70,10 +70,6 @@ tr.off td { color: var(--muted); }
 .facts td { padding: 1.8mm 2.4mm; }
 .facts td:first-child { width: 38%; background: var(--soft); color: var(--text); }
 .grid td, .grid th { font-size: 8.4pt; }
-.act { table-layout: fixed; }
-.act th, .act td { font-size: 7.4pt; padding: 1.2mm 1.2mm; overflow-wrap: anywhere; hyphens: auto; }
-.act th:first-child, .act td:first-child { width: 16%; }
-.act .num { white-space: normal; }
 
 /* Letterhead of the cover letter */
 .letterhead { display: flex; align-items: center; justify-content: space-between; gap: 6mm; padding-bottom: 3mm; }

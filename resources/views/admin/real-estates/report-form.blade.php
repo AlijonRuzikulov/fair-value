@@ -197,6 +197,56 @@
                         @endforeach
                     </div>
 
+                    @php $act = array_replace_recursive(\App\Reports\InspectionAct::defaults(), (array) ($values['act'] ?? [])); @endphp
+                    <h3 class="sub-title">{{ __('Inspection act') }}</h3>
+                    <p class="field-hint" style="margin-bottom: 10px">{{ __('The technical condition and the physical wear of each structural element as seen at the inspection. The wear of the building is the average weighted by the shares of the elements in its cost (typical shares of a brick building; correct them for other buildings).') }}</p>
+                    <div class="form-grid">
+                        <x-field name="act[participants]" :label="__('Present at the inspection')" :value="$act['participants']" span="12" :placeholder="__('e.g. the owner Xodjayeva X.M., the appraiser Saydaliyev A.I.')" />
+                    </div>
+                    <div class="table-wrap">
+                        <table class="table act-table" data-act data-conditions='@json(collect(\App\Reports\InspectionAct::CONDITIONS)->map(fn ($c) => [$c[0], $c[1]]))'>
+                            <thead>
+                                <tr><th>{{ __('Structural element') }}</th><th>{{ __('Description') }}</th><th>{{ __('Technical condition') }}</th><th class="num">{{ __('Share, %') }}</th><th class="num">{{ __('Wear, %') }}</th></tr>
+                            </thead>
+                            <tbody>
+                                @foreach (\App\Reports\InspectionAct::ELEMENTS as $key => [, , $describedBy, $elementName])
+                                    @php $element = $act['elements'][$key] ?? []; @endphp
+                                    <tr data-act-row>
+                                        <td>{{ __($elementName) }}</td>
+                                        <td>
+                                            @if ($describedBy)
+                                                <span class="muted">{{ ($values[$describedBy] ?? null) ?: '—' }}</span>
+                                            @else
+                                                <input class="input" name="act[elements][{{ $key }}][description]" value="{{ old("act.elements.$key.description", $element['description'] ?? null) }}" aria-label="{{ __('Description') }}">
+                                            @endif
+                                        </td>
+                                        <td>
+                                            <select class="input" name="act[elements][{{ $key }}][condition]" aria-label="{{ __('Technical condition') }}" data-act-condition>
+                                                <option value="">—</option>
+                                                @foreach (\App\Reports\InspectionAct::CONDITIONS as $condition => [$from, $to, $label])
+                                                    <option value="{{ $condition }}" @selected(old("act.elements.$key.condition", ($element['condition'] ?? null) ?: (isset($element['wear']) ? \App\Reports\InspectionAct::conditionFor((float) $element['wear']) : null)) === $condition)>{{ __($label) }}</option>
+                                                @endforeach
+                                            </select>
+                                        </td>
+                                        <td class="num"><input class="input" name="act[elements][{{ $key }}][share]" value="{{ old("act.elements.$key.share", \App\Support\Format::number($element['share'] ?? 0, fmod((float) ($element['share'] ?? 0), 1.0) ? 1 : 0)) }}" inputmode="decimal" aria-label="{{ __('Share, %') }}" data-act-share></td>
+                                        <td class="num"><input class="input" name="act[elements][{{ $key }}][wear]" value="{{ old("act.elements.$key.wear", isset($element['wear']) ? \App\Support\Format::number($element['wear'], fmod((float) $element['wear'], 1.0) ? 1 : 0) : null) }}" inputmode="decimal" aria-label="{{ __('Wear, %') }}" data-act-wear></td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                            <tfoot>
+                                <tr><td colspan="3"><strong>{{ __('Physical wear of the building (weighted)') }}</strong></td><td class="num" data-act-shares></td><td class="num"><strong data-act-total>—</strong></td></tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    <p class="field-hint" style="margin-top: 6px">{{ __('Wear by condition') }}: @foreach (\App\Reports\InspectionAct::CONDITIONS as [$from, $to, $label]){{ __($label) }} {{ $from }}–{{ $to }} %@if (! $loop->last), @endif @endforeach</p>
+                    @error('act.elements.*')<p class="field-error">{{ $message }}</p>@enderror
+                    <div class="form-grid" style="margin-top: 12px">
+                        <div class="field span-12">
+                            <label for="f-act-defects">{{ __('Defects found') }}</label>
+                            <textarea class="input" id="f-act-defects" name="act[defects]" rows="2" placeholder="{{ __('e.g. cracks in the plaster of the bathroom, the roof leaks above the staircase') }}">{{ old('act.defects', $act['defects']) }}</textarea>
+                        </div>
+                    </div>
+
                     <h3 class="sub-title">{{ __('Photos and scans in the report') }}</h3>
                     @if ($images->isEmpty())
                         <p class="field-hint">{{ __('Upload photos of the object in step 1 — they are added to the report.') }}</p>

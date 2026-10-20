@@ -584,21 +584,35 @@
     <tr><td>{{ $t("Ko'zdan kechirilgan sana") }}</td><td>{{ $date($item->inspection_date) }}</td></tr>
     <tr><td>{{ $t('Mulk egasi') }}</td><td>{{ $s->v($owner?->title) }}</td></tr>
     <tr><td>{{ $t('Baholovchi') }}</td><td>{{ $s->v($appraiser?->name) }}</td></tr>
+    @if ($act['participants'])<tr><td>{{ $t("Ko'zdan kechirishda ishtirok etganlar") }}</td><td>{{ $t($act['participants']) }}</td></tr>@endif
 </table>
 <p>{{ $t($location.' manzilida joylashgan') }}@if ($item->cadastral_number), {{ $t('kadastr raqami') }} {{ $item->cadastral_number }}@endif {{ $t("bo'lgan ko'chmas mulkni ko'zdan kechirish jarayonida quyidagilar aniqlandi:") }}</p>
-<table class="grid act">
-    <thead><tr>
-        <th>{{ $t('Nomi') }}</th><th class="c">{{ $t('Yili') }}</th><th class="c">{{ $t('Qavat-liligi') }}</th><th class="c">{{ $t('Qavati') }}</th><th class="num">{{ $t('Maydoni, m²') }}</th>
-        <th>{{ $t('Poydevor') }}</th><th>{{ $t('Devorlar') }}</th><th>{{ $t('Tom yopma') }}</th><th>{{ $t('Pol') }}</th><th>{{ $t('Tom qoplamasi') }}</th><th>{{ $t('Deraza va eshiklar') }}</th>
-    </tr></thead>
+<table class="grid">
+    <thead><tr><th>{{ $t('Nomi') }}</th><th class="c">{{ $t('Qurilgan yili') }}</th><th class="c">{{ $t('Qavatliligi / qavati') }}</th><th class="num">{{ $t('Umumiy maydoni, m²') }}</th><th class="c">{{ $t('Qurilish tugallanganligi') }}</th></tr></thead>
     <tbody>
-        <tr>
-            <td>{{ $t($item->name) }}</td><td class="c">{{ $s->v($item->year_built) }}</td><td class="c">{{ $s->v($item->floors_total) }}</td><td class="c">{{ $s->v($item->floor) }}</td><td class="num">{{ $num($item->total_area) }}</td>
-            <td>{{ $t($f['foundation']) }}</td><td>{{ $f['walls'] ? $t($f['walls']) : '—' }}</td><td>{{ $t($f['roof_slab']) }}</td><td>{{ $t($f['floor_type']) }}</td><td>{{ $t($f['roof_cover']) }}</td><td>{{ $t($f['windows_doors']) }}</td>
-        </tr>
-        <tr><td colspan="11"><b>{{ $t('Muhandislik kommunikatsiyalari') }}:</b> {{ $communications ? $t(implode(', ', $communications)) : '—' }}. <b>{{ $t("Ta'mir holati") }}:</b> {{ $f['repair'] ? $t($f['repair']) : '—' }}.</td></tr>
+        <tr><td>{{ $t($item->name) }}</td><td class="c">{{ $s->v($item->year_built) }}</td><td class="c">{{ $s->v($item->floors_total) }} / {{ $s->v($item->floor) }}</td><td class="num">{{ $num($item->total_area) }}</td><td class="c">{{ $num($f['completion'], 0) }} %</td></tr>
     </tbody>
 </table>
+<table class="grid">
+    <thead><tr><th class="c">№</th><th>{{ $t('Konstruktiv element') }}</th><th>{{ $t('Tavsifi') }}</th><th>{{ $t('Texnik holati') }}</th><th class="num">{{ $t('Ulushi, %') }}</th><th class="num">{{ $t('Eskirish, %') }}</th></tr></thead>
+    <tbody>
+        @foreach ($act['rows'] as $row)
+            <tr>
+                <td class="c">{{ $loop->iteration }}</td>
+                <td>{{ $t($row['title']) }}</td>
+                <td>{{ $row['description'] ? $t($row['description']) : '—' }}</td>
+                <td>{{ $row['condition'] ? $t($row['condition']) : '—' }}</td>
+                <td class="num">{{ $num($row['share'], fmod($row['share'], 1.0) ? 1 : 0) }}</td>
+                <td class="num">{{ $row['wear'] !== null ? $num($row['wear'], fmod($row['wear'], 1.0) ? 1 : 0) : '—' }}</td>
+            </tr>
+        @endforeach
+        @if ($act['wear'] !== null)
+            <tr class="total"><td colspan="5">{{ $t("Binoning jismoniy eskirishi (elementlar ulushi bo'yicha vaznli o'rtacha)") }}</td><td class="num">{{ $num($act['wear'], 1) }}</td></tr>
+        @endif
+    </tbody>
+</table>
+<p><b>{{ $t('Muhandislik kommunikatsiyalari') }}:</b> {{ $communications ? $t(implode(', ', $communications)) : '—' }}. <b>{{ $t("Ta'mir holati") }}:</b> {{ $f['repair'] ? $t($f['repair']) : '—' }}.</p>
+@if ($act['defects'])<p><b>{{ $t('Aniqlangan kamchiliklar') }}:</b> {{ $t($act['defects']) }}</p>@endif
 @include('admin.report._signatures', ['director' => false, 'appraiserSign' => true, 'ownerSign' => $owner])
 
 @if ($hasGrid)

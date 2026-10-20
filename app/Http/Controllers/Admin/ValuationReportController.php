@@ -7,6 +7,7 @@ use App\Enums\ValuationApproach;
 use App\Http\Controllers\Controller;
 use App\Models\Activity;
 use App\Models\RealEstate;
+use App\Reports\InspectionAct;
 use App\Reports\RealEstateReport;
 use App\Reports\ReportScript;
 use App\Services\CurrencyService;
@@ -69,20 +70,38 @@ class ValuationReportController extends Controller
             'scores.*.*' => ['nullable', 'integer', 'min:0', 'max:10'],
             'attachments' => ['nullable', 'array'],
             'attachments.*' => ['in:photo,document,skip'],
+            'act' => ['nullable', 'array'],
+            'act.participants' => ['nullable', 'string', 'max:500'],
+            'act.defects' => ['nullable', 'string', 'max:3000'],
+            'act.elements' => ['nullable', 'array'],
+            'act.elements.*.condition' => ['nullable', Rule::in(array_keys(InspectionAct::CONDITIONS))],
+            'act.elements.*.share' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'act.elements.*.wear' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'act.elements.*.description' => ['nullable', 'string', 'max:300'],
         ];
         foreach (RealEstateReport::FORM as $fields) {
             foreach ($fields as $field => $type) {
                 $rules[$field] ??= ['nullable', 'string', 'max:'.($type === 'textarea' ? 3000 : 500)];
             }
         }
+        $decimal = fn ($value) => str_replace([' ', ','], ['', '.'], (string) $value) ?: null;
         $request->merge([
-            'building_volume' => str_replace([' ', ','], ['', '.'], (string) $request->input('building_volume')) ?: null,
-            'completion' => str_replace([' ', ','], ['', '.'], (string) $request->input('completion')) ?: null,
+            'building_volume' => $decimal($request->input('building_volume')),
+            'completion' => $decimal($request->input('completion')),
         ]);
+        if (is_array($request->input('act.elements'))) {
+            $request->merge(['act' => [...(array) $request->input('act'), 'elements' => array_map(
+                fn ($element) => is_array($element) ? ['share' => $decimal($element['share'] ?? null), 'wear' => $decimal($element['wear'] ?? null)] + $element : $element,
+                $request->input('act.elements'),
+            )]]);
+        }
         $data = $request->validate($rules);
 
         $defaults = RealEstateReport::defaults($item);
-        $report = array_intersect_key((array) $item->report, ['weighting' => true]);
+        // What this form writes is written anew; the rest (the weighting of the analogues,
+        // the inputs of the cost and income approaches…) is kept as it is.
+        $managed = [...array_merge(...array_map('array_keys', array_values(RealEstateReport::FORM))), 'scores', 'attachments', 'company_documents', 'include_macro', 'include_methodology', 'act'];
+        $report = array_diff_key((array) $item->report, array_flip($managed));
         foreach (RealEstateReport::FORM as $fields) {
             foreach (array_keys($fields) as $field) {
                 $value = is_string($data[$field] ?? null) ? trim($data[$field]) : ($data[$field] ?? null);
@@ -107,6 +126,14 @@ class ValuationReportController extends Controller
         $report['attachments'] = array_filter((array) ($data['attachments'] ?? []), fn ($role, $id) => in_array((int) $id, $ids, true), ARRAY_FILTER_USE_BOTH);
         foreach (['company_documents', 'include_macro', 'include_methodology'] as $flag) {
             $report[$flag] = $request->boolean($flag);
+        }
+        if (isset($data['act'])) {
+            $act = $this->act($data['act']);
+            if ($act !== InspectionAct::defaults()) {
+                $report['act'] = $act;
+            }
+        } elseif (isset($item->report['act'])) {
+            $report['act'] = $item->report['act'];
         }
 
         // Fields of the object itself (logged as ordinary changes of the object).
@@ -170,6 +197,24 @@ class ValuationReportController extends Controller
         Activity::record('printed', $item, ['document' => 'report', 'script' => $data['s']->script]);
 
         return response($html);
+    }
+
+    /** The act of inspection as entered, in the order of the elements; an empty share is the typical one. */
+    private function act(array $input): array
+    {
+        $text = fn ($value) => is_string($value) && trim($value) !== '' ? trim($value) : null;
+        $act = ['participants' => $text($input['participants'] ?? null), 'defects' => $text($input['defects'] ?? null), 'elements' => []];
+        foreach (InspectionAct::ELEMENTS as $key => [, $share, $field]) {
+            $element = (array) ($input['elements'][$key] ?? []);
+            $act['elements'][$key] = [
+                'condition' => $text($element['condition'] ?? null),
+                'share' => isset($element['share']) && $element['share'] !== null ? (float) $element['share'] : (float) $share,
+                'wear' => isset($element['wear']) && $element['wear'] !== null ? (float) $element['wear'] : null,
+                'description' => $field === null ? $text($element['description'] ?? null) : null,
+            ];
+        }
+
+        return $act;
     }
 
     /**

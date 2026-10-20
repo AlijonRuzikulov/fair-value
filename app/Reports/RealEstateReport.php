@@ -203,6 +203,7 @@ final class RealEstateReport
             'company_documents' => true,
             'include_macro' => true,
             'include_methodology' => true,
+            'act' => InspectionAct::defaults(),
         ];
     }
 
@@ -373,6 +374,7 @@ final class RealEstateReport
             'final' => $final,
             'finalWords' => $final !== null ? NumberToWords::uz((int) round($final)) : null,
             'communications' => $communications,
+            'act' => InspectionAct::build($f),
             'costApproach' => isset($object->report['cost']) ? CostApproach::calculate((array) $object->report['cost'], (int) Carbon::parse($valuationDate)->format('Y')) : null,
             'incomeApproach' => isset($object->report['income']) ? IncomeApproach::calculate((array) $object->report['income']) : null,
             'photos' => $attachments->where('report_role', 'photo')->values(),

@@ -742,6 +742,49 @@
     });
   });
 
+  /* ---------- Inspection act: wear of the elements and of the building - */
+
+  $$('[data-act]').forEach(function (table) {
+    var ranges = JSON.parse(table.dataset.conditions || '{}');
+    var number = function (input) { var v = parseFloat(String(input.value).replace(/\s/g, '').replace(',', '.')); return isNaN(v) ? null : v; };
+    var format = function (v) { return (Math.round(v * 10) / 10).toString().replace('.', ','); };
+
+    function total() {
+      var shares = 0, sum = 0, all = 0;
+      $$('[data-act-row]', table).forEach(function (row) {
+        var share = number($('[data-act-share]', row)) || 0;
+        var wear = number($('[data-act-wear]', row));
+        all += share;
+        if (wear !== null && share > 0) { shares += share; sum += share * wear; }
+      });
+      $('[data-act-shares]', table).textContent = format(all) + ' %';
+      $('[data-act-total]', table).textContent = shares > 0 ? format(sum / shares) + ' %' : '—';
+    }
+
+    $$('[data-act-row]', table).forEach(function (row) {
+      var condition = $('[data-act-condition]', row);
+      var wear = $('[data-act-wear]', row);
+      // A condition without a wear gives the middle of its range; a wear picks its condition.
+      condition.addEventListener('change', function () {
+        var range = ranges[condition.value];
+        if (range && number(wear) === null) wear.value = format((range[0] + range[1]) / 2);
+        total();
+      });
+      wear.addEventListener('input', function () {
+        var v = number(wear);
+        if (v !== null) {
+          Object.keys(ranges).some(function (name) {
+            if (v <= ranges[name][1]) { condition.value = name; return true; }
+            return false;
+          });
+        }
+        total();
+      });
+      $('[data-act-share]', row).addEventListener('input', total);
+    });
+    total();
+  });
+
   // PDF buttons: the file is made on the server in a few seconds; a second click would start another.
   $$('[data-pdf]').forEach(function (button) {
     button.addEventListener('click', function () {

@@ -52,6 +52,10 @@
                 </table>
             </div>
             @foreach ($errors->get('buildings.*') as $messages)<p class="field-error">{{ $messages[0] }}</p>@endforeach
+            @php $actWear = \App\Reports\InspectionAct::build(\App\Reports\RealEstateReport::values($item))['wear']; @endphp
+            @if ($actWear !== null)
+                <p class="field-hint" style="margin-top: 8px"><x-icon name="clipboard-check" :size="14" /> {{ __('Physical wear by the inspection act: :wear %. It can be written into "Physical wear, %" instead of the wear by age.', ['wear' => Format::number($actWear, 1)]) }}</p>
+            @endif
 
             <div class="form-grid" style="margin-top: 12px">
                 <x-field name="profit" :label="__('Developer profit, %')" :value="$costInput['profit'] ?? 0" span="3" suffix="%" :disabled="! $canEdit" />

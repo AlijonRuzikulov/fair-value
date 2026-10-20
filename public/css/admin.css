@@ -528,6 +528,14 @@ h1, h2, h3, h4, p { margin: 0; }
 .map-result { display: block; width: 100%; padding: 7px 10px; border: 0; border-radius: 7px; background: none; text-align: left; font: inherit; font-size: 13px; color: var(--ink); cursor: pointer; }
 .map-result:hover, .map-result:focus-visible { background: var(--neutral-soft); }
 .map-tiles-grey { filter: grayscale(1) contrast(1.05); }
+.act-table { table-layout: fixed; min-width: 560px; }
+.act-table th:nth-child(1) { width: 22%; }
+.act-table th:nth-child(2) { width: 24%; }
+.act-table th:nth-child(3) { width: 28%; }
+.act-table th:nth-child(4), .act-table th:nth-child(5) { width: 13%; }
+.act-table td { vertical-align: middle; }
+.act-table .input { width: 100%; min-width: 0; }
+.act-table tfoot td { border-top: 1px solid var(--line); }
 
 /* --- Badges & chips ---------------------------------------------------- */
 
