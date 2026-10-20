@@ -111,7 +111,9 @@ class LocationAndNumbersTest extends TestCase
 
         $this->get('/admin/real-estates/'.$flat->id.'/report?script=latn')->assertOk()
             ->assertSee('Geografik koordinatalari')->assertSee('41.311100, 69.279700')
-            ->assertSee('Qurilish osti maydoni')->assertSee('mo‘ljal', false)->assertSee('/admin/map/tiles/16/', false);
+            ->assertSee('Qurilish osti maydoni')->assertSee('mo‘ljal', false)->assertSee('/admin/map/tiles/16/', false)
+            // Paged.js waits for every image; a lazy tile outside the screen never loads and the report hangs.
+            ->assertSee('loading="eager"', false)->assertDontSee('loading="lazy"', false);
     }
 
     public function test_coordinates_come_in_pairs_and_within_range(): void
