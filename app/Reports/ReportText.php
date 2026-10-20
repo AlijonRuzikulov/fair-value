@@ -12,7 +12,8 @@ use Illuminate\Support\HtmlString;
  *
  * Markup: a blank line starts a new paragraph; "- " starts a list item;
  * "## " a heading; "> " a centred formula; lines with " | " make a table
- * (the first line is the header); **bold**.
+ * (the first line is the header); **bold**; a line "[diagramma: …]" draws a
+ * chart from the tables above it (see ReportChart).
  */
 final class ReportText
 {
@@ -56,6 +57,7 @@ final class ReportText
     {
         $text = str_replace(["\r\n", "\r"], "\n", trim($text));
         $html = [];
+        $tables = [];
 
         foreach (preg_split("/\n\\s*\n/", $text) as $block) {
             $lines = array_values(array_filter(array_map('rtrim', explode("\n", $block)), fn ($l) => trim($l) !== ''));
@@ -64,7 +66,14 @@ final class ReportText
             }
 
             if (count($lines) > 1 && count(array_filter($lines, fn ($l) => str_contains($l, ' | '))) === count($lines)) {
-                $html[] = self::table($lines, $script);
+                $tables[] = array_map(fn ($line) => array_map('trim', explode('|', trim($line, " |\t"))), $lines);
+                $html[] = self::table(end($tables), $script);
+
+                continue;
+            }
+
+            if (count($lines) === 1 && preg_match('/^\[(?:diagramma|диаграмма):\s*(.+)\]$/iu', trim($lines[0]), $chart)) {
+                $html[] = ReportChart::render($chart[1], $tables, $script) ?? '';
 
                 continue;
             }
@@ -108,10 +117,9 @@ final class ReportText
         return new HtmlString(implode("\n", $html));
     }
 
-    /** @param list<string> $lines */
-    private static function table(array $lines, ReportScript $script): string
+    /** @param list<list<string>> $rows the header first */
+    private static function table(array $rows, ReportScript $script): string
     {
-        $rows = array_map(fn ($line) => array_map('trim', explode('|', trim($line, " |\t"))), $lines);
         $head = array_shift($rows);
         $width = count($head);
         $numeric = fn (string $cell) => (bool) preg_match('/^[−\-+]?[\d\s.,]+%?$/u', $cell);

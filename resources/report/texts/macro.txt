@@ -19,6 +19,14 @@ Eksport | mln AQSh dollari | 15 102,3 | 16 662,8 | 19 732,6 | 24 869,5 | 27 270,
 Import | mln AQSh dollari | 21 153,8 | 25 507,7 | 30 767,8 | 38 659,1 | 39 968,3 | 33 111,0
 Saldo | mln AQSh dollari | −6 051,5 | −8 844,9 | −11 035,2 | −13 789,6 | −12 698,2 | −6 427,4
 
+[diagramma: Yalpi ichki mahsulot]
+
+[diagramma: Inflyatsiya darajasi (o'tgan yil dekabriga nisbatan)]
+
+[diagramma: Asosiy kapitalga kiritilgan investitsiyalar; Qurilish ishlari = Investitsiyalar va qurilish ishlari, mlrd so'm]
+
+[diagramma: Eksport; Import = Tashqi savdo, mln AQSh dollari]
+
 Dastlabki ma'lumotlarga ko'ra, 2025 yilning yanvar–sentabr oylarida O'zbekiston Respublikasining yalpi ichki mahsuloti (YaIM) hajmi joriy narxlarda 1 303,7 trln so'mni tashkil etdi va 2024 yilning mos davriga nisbatan real o'sish sur'ati 7,6 % ni tashkil etdi. YaIM deflyator indeksi 112,2 % ni tashkil etdi; uning eng yuqori ko'rsatkichlari sanoatda (113,3 %) va boshqa xizmat tarmoqlarida (115,2 %) qayd etildi.
 
 Iqtisodiyotning barcha tarmoqlarida yaratilgan yalpi qo'shilgan qiymat YaIM umumiy hajmining 95,1 % ini tashkil etdi va 7,7 % ga o'sdi. Qurilish tarmog'ida yaratilgan yalpi qo'shilgan qiymat 92 873,0 mlrd so'mni tashkil etib, 14,2 % ga o'sdi; xizmatlar sohasida 612 179,6 mlrd so'm (8,7 % o'sish). Aholi jon boshiga YaIM 34 483,9 ming so'mni tashkil etdi (real o'sish 5,6 %).
@@ -41,5 +49,7 @@ Toshkent viloyati | 126 761,2 | 107,3
 Farg'ona viloyati | 78 896,7 | 108,0
 Xorazm viloyati | 44 142,6 | 107,3
 Toshkent shahri | 252 111,2 | 111,2
+
+[diagramma: Hajmi, mlrd so'm = Hududlar bo'yicha yalpi hududiy mahsulot hajmi, mlrd so'm]
 
 Manba: O'zbekiston Respublikasi Prezidenti huzuridagi Statistika agentligi, www.stat.uz.

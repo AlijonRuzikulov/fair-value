@@ -7,6 +7,7 @@
             <div>
                 <p>{{ __('These sections are the same in every report. Write them in Uzbek (Latin) — the Cyrillic report is made automatically.') }}</p>
                 <p class="muted">{{ __('A blank line starts a new paragraph; "- " a list item; "## " a heading; "> " a centred formula; lines with " | " make a table (the first line is the header); **bold**.') }}</p>
+                <p class="muted">{{ __('A line "[diagramma: row; row]" draws a chart of these table rows over the columns; "[diagramma: column]" draws the rows of that column as bars; "= Title" after the names sets the title.') }}</p>
             </div>
         </div>
 

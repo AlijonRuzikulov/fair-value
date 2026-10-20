@@ -24,6 +24,7 @@
     ":name is an independent valuation company. We help people, companies and banks make decisions based on the real value of property.": ":name — мустақил баҳолаш компанияси. Биз фуқаролар, корхоналар ва банкларга мол-мулкнинг ҳақиқий қиймати асосида қарор қабул қилишда ёрдам берамиз.",
     "A blank line starts a new paragraph; \"- \" a list item; \"## \" a heading; \"> \" a centred formula; lines with \" | \" make a table (the first line is the header); **bold**.": "Бўш қатор — янги хатбоши; «- » — рўйхат банди; «## » — сарлавҳа; «> » — марказдаги формула; « | » бор қаторлар — жадвал (биринчи қатор — сарлавҳа); **қалин**.",
     "A client with the same PINFL or passport was found and is linked as the owner: :name.": "ЖШШИР ёки паспорти бир хил мижоз топилди ва мулк эгаси сифатида боғланади: :name.",
+    "A line \"[diagramma: row; row]\" draws a chart of these table rows over the columns; \"[diagramma: column]\" draws the rows of that column as bars; \"= Title\" after the names sets the title.": "«[диаграмма: қатор; қатор]» қатори — жадвалнинг шу қаторлари устунлар бўйича диаграмма бўлиб чизилади; «[диаграмма: устун]» — шу устундаги қаторлар горизонтал устунлар бўлиб чизилади; номлардан кейин «= Сарлавҳа» диаграмма сарлавҳасини беради.",
     "A new client is created and linked as the owner.": "Янги мижоз яратилади ва мулк эгаси сифатида боғланади.",
     "A record before this one was deleted.": "Бундан олдинги ёзув ўчирилган.",
     "A valuation you can rely on": "Ишонса бўладиган баҳолаш",

@@ -166,6 +166,11 @@ tr.off td { color: var(--muted); }
 .bar.off i { background: #c9ced6; }
 .bar b { text-align: right; font-variant-numeric: tabular-nums; font-weight: 400; }
 
+/* Charts drawn from the tables of the report texts */
+.chart { margin: 3mm 0 5mm; break-inside: avoid; }
+.chart figcaption { margin-bottom: 2mm; font-family: var(--sans); font-size: 8.8pt; font-weight: 700; color: var(--ink); }
+.chart svg { display: block; width: 100%; height: auto; font-variant-numeric: tabular-nums; }
+
 /* Adjustment grid */
 .adj td, .adj th { font-size: 7.6pt; padding: 1.1mm 1.6mm; }
 .adj .group td { border-top: .45mm solid var(--grid); }

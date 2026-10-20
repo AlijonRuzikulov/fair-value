@@ -24,6 +24,7 @@
     ":name is an independent valuation company. We help people, companies and banks make decisions based on the real value of property.": ":name — независимая оценочная компания. Мы помогаем людям, компаниям и банкам принимать решения на основе реальной стоимости имущества.",
     "A blank line starts a new paragraph; \"- \" a list item; \"## \" a heading; \"> \" a centred formula; lines with \" | \" make a table (the first line is the header); **bold**.": "Пустая строка — новый абзац; «- » — пункт списка; «## » — заголовок; «> » — формула по центру; строки с « | » — таблица (первая строка — заголовок); **жирный**.",
     "A client with the same PINFL or passport was found and is linked as the owner: :name.": "Найден клиент с тем же ПИНФЛ или паспортом, он будет привязан как собственник: :name.",
+    "A line \"[diagramma: row; row]\" draws a chart of these table rows over the columns; \"[diagramma: column]\" draws the rows of that column as bars; \"= Title\" after the names sets the title.": "Строка «[diagramma: строка; строка]» рисует диаграмму этих строк таблицы по столбцам; «[diagramma: столбец]» — строки этого столбца горизонтальными полосами; «= Заголовок» после названий задаёт заголовок диаграммы.",
     "A new client is created and linked as the owner.": "Будет создан новый клиент и привязан как собственник.",
     "A record before this one was deleted.": "Предыдущая запись удалена.",
     "A valuation you can rely on": "Оценка, на которую можно положиться",

@@ -24,6 +24,7 @@
     ":name is an independent valuation company. We help people, companies and banks make decisions based on the real value of property.": ":name — mustaqil baholash kompaniyasi. Biz fuqarolar, korxonalar va banklarga mol-mulkning haqiqiy qiymati asosida qaror qabul qilishda yordam beramiz.",
     "A blank line starts a new paragraph; \"- \" a list item; \"## \" a heading; \"> \" a centred formula; lines with \" | \" make a table (the first line is the header); **bold**.": "Bo‘sh qator — yangi xatboshi; «- » — ro‘yxat bandi; «## » — sarlavha; «> » — markazdagi formula; « | » bor qatorlar — jadval (birinchi qator — sarlavha); **qalin**.",
     "A client with the same PINFL or passport was found and is linked as the owner: :name.": "JShShIR yoki pasporti bir xil mijoz topildi va mulk egasi sifatida bog‘lanadi: :name.",
+    "A line \"[diagramma: row; row]\" draws a chart of these table rows over the columns; \"[diagramma: column]\" draws the rows of that column as bars; \"= Title\" after the names sets the title.": "«[diagramma: qator; qator]» qatori — jadvalning shu qatorlari ustunlar bo‘yicha diagramma bo‘lib chiziladi; «[diagramma: ustun]» — shu ustundagi qatorlar gorizontal ustunlar bo‘lib chiziladi; nomlardan keyin «= Sarlavha» diagramma sarlavhasini beradi.",
     "A new client is created and linked as the owner.": "Yangi mijoz yaratiladi va mulk egasi sifatida bog‘lanadi.",
     "A record before this one was deleted.": "Bundan oldingi yozuv o‘chirilgan.",
     "A valuation you can rely on": "Ishonsa bo‘ladigan baholash",
