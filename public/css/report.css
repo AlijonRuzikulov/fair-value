@@ -30,6 +30,8 @@
   --hair: #dde1e7;
   --rule: #9aa3b0;
   --soft: #f3f5f8;
+  --grid: #8d96a3;
+  --head: #e3eaf3;
   --brand: #1b3a5c;
   --accent: #1b3a5c;
   --sans: 'PT Sans', Arial, sans-serif;
@@ -42,7 +44,7 @@ body { margin: 0; font-family: var(--serif); font-size: 10.5pt; line-height: 1.5
 
 /* Headings: a section starts a page; its number in small sans, its title in serif */
 h1, h2, h3, h4 { color: var(--brand); break-after: avoid; text-wrap: balance; }
-h2.section { display: flex; align-items: baseline; gap: 3.5mm; margin: 0 0 5mm; font-family: var(--serif); font-size: 16pt; line-height: 1.25; font-weight: 700; break-before: page; }
+h2.section { display: flex; align-items: baseline; gap: 3.5mm; margin: 0 0 5mm; padding: 2.4mm 4mm; background: var(--head); border-left: 1.4mm solid var(--brand); font-family: var(--serif); font-size: 15pt; line-height: 1.25; font-weight: 700; break-before: page; }
 h2.section .sec-no { flex: none; font-family: var(--sans); font-size: 11pt; font-weight: 700; color: var(--brand); }
 h2.section.keep { break-before: auto; margin-top: 7mm; }
 h3 { margin: 5mm 0 2.5mm; font-family: var(--serif); font-size: 11pt; }
@@ -56,20 +58,17 @@ li { margin-bottom: 1mm; text-align: justify; }
 .nowrap { white-space: nowrap; }
 .small { font-size: 8pt; }
 
-/* Tables: horizontal rules only, a tinted header, figures to the right */
+/* Tables: every cell ruled, a tinted header, figures to the right */
 table { width: 100%; border-collapse: collapse; margin: 0 0 4mm; font-family: var(--sans); font-size: 8.8pt; line-height: 1.35; font-variant-numeric: tabular-nums; }
-th, td { border: 0; border-bottom: .25mm solid var(--hair); padding: 1.5mm 2mm; vertical-align: top; text-align: left; }
-th { background: var(--soft); color: var(--ink); font-weight: 700; border-top: .3mm solid var(--rule); border-bottom: .3mm solid var(--rule); }
-tbody tr:last-child td { border-bottom: .3mm solid var(--rule); }
+th, td { border: .25mm solid var(--grid); padding: 1.5mm 2mm; vertical-align: top; text-align: left; }
+th { background: var(--head); color: var(--ink); font-weight: 700; vertical-align: middle; }
 tr { break-inside: avoid; }
 td.num, th.num { text-align: right; white-space: nowrap; }
 td.c, th.c { text-align: center; }
 tr.total td { background: var(--soft); font-weight: 700; }
 tr.off td { color: var(--muted); }
-.facts td { padding: 1.8mm 2mm 1.8mm 0; border-bottom: 0; border-top: .25mm solid var(--line); }
-.facts tr:last-child td { border-bottom: .25mm solid var(--line); }
-.facts td:first-child { width: 38%; color: var(--muted); }
-.facts th { background: none; border-left: 0; border-right: 0; padding-left: 0; }
+.facts td { padding: 1.8mm 2.4mm; }
+.facts td:first-child { width: 38%; background: var(--soft); color: var(--text); }
 .grid td, .grid th { font-size: 8.4pt; }
 .act { table-layout: fixed; }
 .act th, .act td { font-size: 7.4pt; padding: 1.2mm 1.2mm; overflow-wrap: anywhere; hyphens: auto; }
@@ -100,9 +99,8 @@ tr.off td { color: var(--muted); }
 .cover-photo { position: relative; flex: 1 1 0; min-height: 34mm; margin: 7mm 0 0; border: .25mm solid var(--line); background: #eef1f5; }
 .cover-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
 .cover-facts { margin: 6mm 0; font-size: 9.4pt; }
-.cover-facts td { padding: 2mm 0; border-bottom: 0; border-top: .25mm solid var(--line); }
-.cover-facts tr:last-child td { border-bottom: .25mm solid var(--line); }
-.cover-facts td:first-child { width: 34%; color: var(--muted); }
+.cover-facts td { padding: 2mm 2.4mm; }
+.cover-facts td:first-child { width: 34%; background: var(--soft); color: var(--text); }
 .cover-spacer { flex: 1; }
 .cover-value { display: flex; align-items: stretch; gap: 6mm; }
 .cover-value .box { flex: 1; padding: 4.5mm 5.5mm; border: .55mm solid var(--brand); display: flex; flex-direction: column; gap: 1.2mm; }
@@ -157,9 +155,9 @@ tr.off td { color: var(--muted); }
 .stamp { font-family: var(--sans); font-size: 8pt; color: var(--muted); margin-top: 3mm; }
 
 /* Market */
-.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin: 3mm 0 4mm; font-family: var(--sans); border-top: .3mm solid var(--rule); border-bottom: .3mm solid var(--rule); break-inside: avoid; }
-.stat { padding: 2.5mm 3mm; border-left: .25mm solid var(--hair); }
-.stat:first-child { border-left: 0; padding-left: 0; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin: 3mm 0 4mm; font-family: var(--sans); border: .25mm solid var(--grid); break-inside: avoid; }
+.stat { padding: 2.5mm 3mm; border-left: .25mm solid var(--grid); }
+.stat:first-child { border-left: 0; }
 .stat span { display: block; font-size: 7.6pt; color: var(--muted); }
 .stat strong { font-size: 10.5pt; color: var(--ink); }
 .bars { font-family: var(--sans); font-size: 8pt; margin-bottom: 4mm; break-inside: avoid; }
@@ -170,7 +168,7 @@ tr.off td { color: var(--muted); }
 
 /* Adjustment grid */
 .adj td, .adj th { font-size: 7.6pt; padding: 1.1mm 1.6mm; }
-.adj .group td { border-top: .3mm solid var(--rule); }
+.adj .group td { border-top: .45mm solid var(--grid); }
 .adj .el { font-weight: 700; color: var(--ink); width: 22%; }
 .adj .what { color: var(--muted); width: 16%; }
 .adj .pct { color: var(--brand); font-weight: 700; }
@@ -190,9 +188,8 @@ tr.off td { color: var(--muted); }
 .analog-card img { width: 62mm; height: 46mm; object-fit: cover; background: #eef1f5; }
 .analog-card .nophoto { width: 62mm; height: 46mm; background: #eef1f5; border: .25mm solid var(--line); display: flex; align-items: center; justify-content: center; color: var(--muted); font-family: var(--sans); font-size: 8pt; }
 .analog-card table { margin: 0; font-size: 8pt; }
-.analog-card td { border-bottom: .2mm solid var(--hair); padding: 1mm 1.5mm; word-break: break-word; }
-.analog-card td:first-child { width: 36%; color: var(--muted); }
-.analog-card tbody tr:last-child td { border-bottom: .2mm solid var(--hair); }
+.analog-card td { padding: 1mm 1.5mm; word-break: break-word; }
+.analog-card td:first-child { width: 36%; background: var(--soft); color: var(--text); }
 .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5mm 4mm; }
 .photo-grid figure { margin: 0; break-inside: avoid; }
 .photo-grid img { width: 100%; height: 108mm; object-fit: cover; display: block; border: .25mm solid var(--line); }
