@@ -62,6 +62,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
     foreach ($objects as $uri => $controller) {
         Route::get("{$uri}/export", [$controller, 'export'])->name("{$uri}.export");
         Route::get("{$uri}/{id}/print", [$controller, 'print'])->whereNumber('id')->name("{$uri}.print");
+        Route::get("{$uri}/{id}/contract", [$controller, 'contract'])->whereNumber('id')->name("{$uri}.contract");
         Route::resource($uri, $controller)->parameters([$uri => 'id']);
     }
 

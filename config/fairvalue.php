@@ -50,6 +50,11 @@ return [
         'oked' => '',
         'membership' => '',
         'report_city' => 'Toshkent',
+        // Printed on service contracts and invoices.
+        'insurance_policy' => '',
+        'chief_accountant' => '',
+        // VAT rate in percent; 0 when the company is not a VAT payer.
+        'vat_rate' => '0',
         // Alphabet of new reports: latn or cyrl (each object can still choose).
         'report_script' => 'latn',
         // Numbers on the home page; empty ones are not shown.

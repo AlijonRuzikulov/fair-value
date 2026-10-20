@@ -16,7 +16,10 @@ use Illuminate\Support\HtmlString;
  */
 final class ReportText
 {
-    public const KEYS = ['terms', 'compliance', 'sources', 'macro', 'market', 'hbu', 'methodology', 'reconciliation', 'quality', 'assumptions'];
+    public const KEYS = ['terms', 'compliance', 'sources', 'macro', 'market', 'hbu', 'methodology', 'reconciliation', 'quality', 'assumptions', 'contract'];
+
+    /** Words in braces that the contract text may use; they are replaced with the data of the valuation. */
+    public const CONTRACT_PLACEHOLDERS = ['object', 'address', 'purpose', 'value_type', 'fee', 'fee_words', 'vat', 'insurance', 'membership', 'deadline', 'customer', 'company', 'city'];
 
     /** @return array<string, string> section key → title shown on the editing page */
     public static function titles(): array
@@ -32,6 +35,7 @@ final class ReportText
             'methodology' => __('Valuation approaches and methods'),
             'reconciliation' => __('Reconciliation of the results'),
             'quality' => __('Statement on the quality of the report'),
+            'contract' => __('Service contract: terms'),
         ];
     }
 

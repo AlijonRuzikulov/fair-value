@@ -23,6 +23,9 @@
                         <span class="badge">{{ __('Default text') }}</span>
                     @endif
                 </x-slot:actions>
+                @if ($key === 'contract')
+                    <p class="field-hint" style="margin-bottom: 8px">{{ __('Printed in the service contract after the parties. These words in braces are replaced with the data of the valuation:') }} @foreach (\App\Reports\ReportText::CONTRACT_PLACEHOLDERS as $placeholder)<code>{{ '{'.$placeholder.'}' }}</code>@if (! $loop->last), @endif @endforeach</p>
+                @endif
                 <textarea class="input report-text" name="{{ $key }}" rows="{{ min(24, max(6, substr_count($text['value'], "\n") + 2)) }}" spellcheck="false">{{ old($key, $text['value']) }}</textarea>
                 @error($key)<p class="field-error">{{ $message }}</p>@enderror
             </x-card>

@@ -1,0 +1,86 @@
+## 1. Shartnoma mazmuni
+
+1.1. Ushbu shartnoma shartlariga asosan Buyurtmachi topshiriq beradi va xizmat haqini to'laydi, Bajaruvchi esa Buyurtmachining mol-mulki qiymatini aniqlash bo'yicha ishlar (xizmatlar) majmuini bajaradi.
+
+1.2. Baholash obyekti: {object}.
+
+1.3. Baholash obyektining manzili: {address}.
+
+1.4. Baholash maqsadi: {purpose}.
+
+1.5. Aniqlanadigan qiymat turi: {value_type}.
+
+1.6. Baholash bo'yicha vazifa ushbu shartnomaga ilova qilinadi va uning ajralmas qismi hisoblanadi.
+
+## 2. Baholash faoliyatiga huquq va sug'urta
+
+2.1. Bajaruvchi baholash faoliyatini quyidagi hujjat asosida amalga oshiradi: {membership}.
+
+2.2. Baholovchilarning kasbiy faoliyati bo'yicha javobgarligi sug'urtalangan: {insurance}.
+
+## 3. Shartnomaning qiymati
+
+3.1. Ushbu shartnoma bo'yicha bajariladigan ishlarning umumiy qiymati {fee} ({fee_words}) so'mni ({vat}) tashkil qiladi.
+
+3.2. Ishlarning qiymati shartnomaviy bo'lib, shartnomaning amal qilish muddatida o'zgarmaydi.
+
+## 4. To'lov shartlari
+
+4.1. Buyurtmachi shartnoma imzolangandan keyin 3 (uch) bank kuni ichida xizmat haqining 100 foizini oldindan to'laydi. Ko'rsatilgan muddatda to'lov amalga oshirilmasa, shartnoma bekor qilingan hisoblanadi.
+
+4.2. Bajaruvchi Buyurtmachiga baholash hisobotini va taraflar imzolaydigan ikki nusxadagi ishni topshirish-qabul qilish dalolatnomasini topshiradi.
+
+4.3. Buyurtmachi (uning vakili) besh kalendar kuni ichida dalolatnomaning ikki nusxasini imzolaydi yoki ishlarni qabul qilishdan bosh tortish sababini yozma ravishda asoslab, shartnomaning 6.2.1-bandiga ko'ra hisobotni Bajaruvchiga qaytaradi.
+
+## 5. Ishlarni bajarish muddati
+
+5.1. Ishlar oldindan to'lov Bajaruvchining hisob raqamiga kelib tushgan kundan boshlanadi.
+
+5.2. Ishlarni bajarish muddati: {deadline}. Bajaruvchi ishlarni muddatidan oldin bajarishga haqli.
+
+## 6. Taraflarning huquq va majburiyatlari
+
+6.1. Buyurtmachi:
+
+- ushbu shartnomaning 3.1-bandida ko'rsatilgan xizmat haqini to'lashi va ishlarni 4.2–4.3-bandlarga muvofiq qabul qilishi;
+- baholash uchun zarur bo'lgan hujjatlar va boshqa axborotni o'z vaqtida taqdim etishi shart.
+
+6.2. Buyurtmachi:
+
+- 6.2.1. Bajaruvchi baholash standartlari va baholash faoliyatiga oid normativ-huquqiy hujjatlar talablariga rioya qilmasa, ishlarni qabul qilishdan bosh tortishga;
+- 6.2.2. Bajaruvchi ishlarni belgilangan muddatlarda boshlamasa, shartnomadan voz kechishga haqli. Bunda bajarilgan ishlar qismi ikki tomonlama dalolatnoma asosida yakunlanadi.
+
+6.3. Bajaruvchi baholash ishlarini baholash standartlari va normativ-huquqiy hujjatlar talablariga muvofiq, belgilangan muddatlarda bajarishi shart.
+
+6.4. Bajaruvchi:
+
+- o'z hisobidan mustaqil ekspertlarni jalb qilishga;
+- Buyurtmachidan baholash obyekti bo'yicha qo'shimcha ma'lumot va aniqliklar olishga, hujjatlar bilan tanishishga;
+- baholash yondashuvlarini mustaqil ravishda tanlashga;
+- Buyurtmachi shartnoma talablarini buzsa yoki zarur axborotni taqdim eta olmasa, baholashdan voz kechishga haqli.
+
+## 7. Taraflarning javobgarligi
+
+7.1. Ishlarni bajarish muddati buzilgani uchun Bajaruvchi Buyurtmachiga kechiktirilgan har bir kun uchun ishlar qiymatining 0,2 foizi miqdorida, biroq shartnoma summasining 50 foizidan oshmagan miqdorda penya to'laydi.
+
+7.2. Bajarilgan ishlar haqi o'z vaqtida to'lanmagani uchun Buyurtmachi Bajaruvchiga kechiktirilgan har bir kun uchun 0,2 foiz miqdorida, biroq shartnoma summasining 50 foizidan oshmagan miqdorda penya to'laydi.
+
+7.3. Penya to'lash taraflarni majburiyatlarni bajarishdan va yetkazilgan zararni qoplashdan ozod qilmaydi.
+
+7.4. Bajaruvchi Buyurtmachi taqdim etgan axborotning to'g'riligi uchun, shuningdek, zarur ma'lumotlar o'z vaqtida taqdim etilmagani sababli ishlar kechikkani uchun javobgar emas.
+
+7.5. Taraflar fors-major holatlari (tabiiy ofatlar, urushlar, qonun hujjatlarining o'zgarishi va hokazo) tufayli majburiyatlarni bajarmaganlik uchun javobgar emas.
+
+## 8. Alohida shartlar
+
+8.1. Shartnomani bajarish jarayonida olingan barcha axborot maxfiy hisoblanadi va uchinchi shaxslarga oshkor qilinmaydi.
+
+8.2. Kelishmovchiliklar muzokaralar yo'li bilan hal qilinadi. Kelishuvga erishilmasa, nizolar O'zbekiston Respublikasi Fuqarolik kodeksi va "Xo'jalik yurituvchi subyektlar faoliyatining shartnomaviy-huquqiy bazasi to'g'risida"gi Qonunga muvofiq hal qilinadi.
+
+8.3. Shartnoma taraflarning o'zaro kelishuvi bilan o'zgartirilishi yoki bekor qilinishi mumkin.
+
+8.4. Shartnoma ikki nusxada tuzilib, har bir tarafga bittadan beriladi.
+
+## 9. Shartnomaning amal qilish muddati
+
+9.1. Shartnoma taraflar imzolagan kundan boshlab 3 (uch) oy davomida, majburiyatlar to'liq bajarilgunga qadar amal qiladi.

@@ -15,6 +15,9 @@
                 <x-field name="legal_name_ru" :label="__('Legal name in Russian')" :value="$values['legal_name_ru']" span="6" :hint="__('Printed in the header of valuation reports.')" />
                 <x-field name="oked" :label="__('OKED')" :value="$values['oked']" span="2" />
                 <x-field name="report_city" :label="__('City printed on reports')" :value="$values['report_city']" span="4" />
+                <x-field name="insurance_policy" :label="__('Insurance policy of the appraisers')" :value="$values['insurance_policy']" span="8" :hint="__('For example: policy No. … issued by … on …. Printed in service contracts.')" />
+                <x-field name="vat_rate" :label="__('VAT rate, %')" :value="$values['vat_rate']" span="2" :hint="__('0 — not a VAT payer.')" />
+                <x-field name="chief_accountant" :label="__('Chief accountant')" :value="$values['chief_accountant']" span="2" />
                 <x-select name="report_script" :label="__('Alphabet of reports')" :options="['latn' => 'O‘zbekcha (lotin)', 'cyrl' => 'Ўзбекча (кирилл)']" :value="$values['report_script']" span="4" :hint="__('Used for new reports; each report can still be switched.')" />
                 <x-textarea name="membership" :label="__('Membership certificate of the appraisers\' association')" :value="$values['membership']" rows="2" span="8" :hint="__('For example: a membership certificate No. … dated … issued by the public association of appraisers. Printed in the report.')" />
             </div>

@@ -13,6 +13,7 @@
             @endcan
         @endif
         <a class="btn" href="{{ route($module->routeName('print'), $item->id) }}" target="_blank"><x-icon name="printer" :size="16" /> {{ __('Certificate') }}</a>
+        <a class="btn" href="{{ route($module->routeName('contract'), $item->id) }}" target="_blank"><x-icon name="file-pen-line" :size="16" /> {{ __('Contract and invoice') }}</a>
         @can('edit-valuation', $item)
             <a class="btn btn-primary" href="{{ route($module->routeName('edit'), $item->id) }}"><x-icon name="pencil" :size="16" /> {{ __('Edit') }}</a>
         @endcan

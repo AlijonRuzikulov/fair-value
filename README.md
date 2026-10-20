@@ -398,6 +398,22 @@ ishlatilmaydi. Bu imkoniyatni butunlay o‘chirish uchun `.env` ga `AI_DOCUMENTS
 ma’lumotlar qo‘lda kiritiladi. Analoglar qidiruvida esa faqat ochiq e’lonlar va obyekt tavsifi yuboriladi. Valyuta kurslari kerakli sana uchun Markaziy bank
 arxividan bir marta yuklab olinadi (`CBU_HISTORY=false` bilan o‘chiriladi).
 
+### Shartnoma, dalolatnoma, hisob-faktura va vazifa
+
+Har bir obyekt sahifasidagi **“Shartnoma va hisob-faktura”** tugmasi buyurtmachi bilan imzolanadigan
+hujjatlarni tayyorlaydi (A4, “Chop etish / PDF saqlash”):
+
+- **baholash xizmatini ko‘rsatish shartnomasi** — raqam, sana, taraflar, xizmat haqi raqam va so‘z bilan,
+  ikkala tarafning rekvizitlari va imzolari;
+- **ishni topshirish-qabul qilish dalolatnomasi** — hisobot raqami, manzil, baholash summasi (so‘z bilan);
+- **hisob varaq-faktura** — QQS bilan yoki QQSsiz (Sozlamalar → “QQS stavkasi”; 0 — QQS to‘lovchisi emas);
+- **baholash bo‘yicha vazifa** — shartnomaga ilova.
+
+Kirill yoki lotinda, imzo chiziqlari yoki QR-kodlar bilan chiqadi (yuqoridagi tugmalar). Shartnoma shartlari
+**Sozlamalar → Hisobot matnlari → “Xizmat ko‘rsatish shartnomasi”** da tahrirlanadi; `{object}`, `{fee}`,
+`{customer}` kabi so‘zlar obyekt ma’lumotlari bilan almashtiriladi. Sug‘urta polisi va bosh hisobchi —
+Sozlamalarda. Bitta hujjatni chiqarish: manzil oxiriga `?doc=contract` (`act`, `invoice`, `assignment`).
+
 ### Telegram’ga ariza xabarlari
 
 1. [@BotFather](https://t.me/BotFather) orqali bot yarating va tokenni oling.

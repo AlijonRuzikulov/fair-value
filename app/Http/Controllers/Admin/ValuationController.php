@@ -11,8 +11,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Activity;
 use App\Models\Client;
 use App\Models\District;
+use App\Models\RealEstate;
 use App\Models\Region;
+use App\Models\Setting;
 use App\Models\User;
+use App\Reports\ContractPack;
+use App\Reports\RealEstateReport;
+use App\Reports\ReportScript;
 use App\Services\Analogs\AnalogFinder;
 use App\Services\Analogs\ListingAi;
 use App\Services\CurrencyService;
@@ -23,6 +28,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -258,6 +264,45 @@ abstract class ValuationController extends Controller
         Activity::record('printed', $item);
 
         return view('admin.objects.print', ['item' => $item, 'module' => $this]);
+    }
+
+    /**
+     * The service contract, the act of acceptance, the invoice and the
+     * valuation assignment, ready to print (or to save as PDF).
+     */
+    public function contract(Request $request, string $id): Response
+    {
+        $item = $this->find($id);
+        $script = in_array($request->query('script'), [ReportScript::LATIN, ReportScript::CYRILLIC], true)
+            ? $request->query('script')
+            : ($item instanceof RealEstate ? RealEstateReport::values($item)['script'] : (Setting::get('report_script') === ReportScript::CYRILLIC ? ReportScript::CYRILLIC : ReportScript::LATIN));
+        $qr = $request->boolean('qr');
+        $only = in_array($request->query('doc'), ContractPack::DOCUMENTS, true) ? [$request->query('doc')] : ContractPack::DOCUMENTS;
+
+        $link = fn (array $changes) => route($this->routeName('contract'), [$item->id, ...array_filter(['script' => $script, 'qr' => $qr ? 1 : null, 'doc' => count($only) === 1 ? $only[0] : null]), ...$changes]);
+        $toolbar = [
+            'preparing' => __('Preparing the documents…'),
+            'print' => __('Print / save as PDF'),
+            'scripts' => [
+                ['label' => 'Lotin', 'url' => $link(['script' => ReportScript::LATIN]), 'active' => $script === ReportScript::LATIN],
+                ['label' => 'Кирилл', 'url' => $link(['script' => ReportScript::CYRILLIC]), 'active' => $script === ReportScript::CYRILLIC],
+                ['label' => __('With signature lines'), 'url' => $link(['qr' => null]), 'active' => ! $qr],
+                ['label' => __('With QR codes'), 'url' => $link(['qr' => 1]), 'active' => $qr],
+            ],
+            'back' => ['label' => __('Back'), 'url' => route($this->routeName('show'), $item->id)],
+        ];
+
+        // The documents are in Uzbek whatever language the panel is in.
+        $locale = app()->getLocale();
+        app()->setLocale('uz');
+        try {
+            $html = view('admin.report.contract', ContractPack::build($item, ReportScript::make($script), $qr, $only) + ['toolbar' => $toolbar])->render();
+        } finally {
+            app()->setLocale($locale);
+        }
+        Activity::record('printed', $item, ['document' => 'contract', 'script' => $script]);
+
+        return response($html);
     }
 
     public function export(Request $request): StreamedResponse
