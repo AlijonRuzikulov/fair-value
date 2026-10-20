@@ -56,6 +56,8 @@ return [
         // Numbering of contracts and reports: {n} or {nnnn} (0001), {yy}, {yyyy}.
         'contract_number_format' => '{n}-{yy}',
         'report_number_format' => '{yyyy}/{nnnn}',
+        // 1: reports are completed only when the director (an administrator) approves them.
+        'require_approval' => '0',
         // VAT rate in percent; 0 when the company is not a VAT payer.
         'vat_rate' => '0',
         // Alphabet of new reports: latn or cyrl (each object can still choose).

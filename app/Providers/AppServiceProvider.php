@@ -115,6 +115,8 @@ class AppServiceProvider extends ServiceProvider
         // Completed reports can be checked on the website, so only appraisers
         // and administrators complete them or change them afterwards.
         Gate::define('finalize-valuations', fn (User $user) => $user->role !== UserRole::Operator);
+        // The director (an administrator) approves reports when the company requires approval.
+        Gate::define('approve-valuations', fn (User $user) => $user->role === UserRole::Admin);
         Gate::define('edit-valuation', fn (User $user, Model $item) => $item->status !== ValuationStatus::Completed || $user->can('finalize-valuations'));
 
         // Password guessing: per account and address, per account, and per address.

@@ -15,6 +15,7 @@ use App\Models\RealEstate;
 use App\Models\Region;
 use App\Models\Setting;
 use App\Models\User;
+use App\Models\ValuationStep;
 use App\Reports\ContractPack;
 use App\Reports\RealEstateReport;
 use App\Reports\ReportScript;
@@ -204,7 +205,7 @@ abstract class ValuationController extends Controller
     {
         $item = $this->find($id);
         $item->load([
-            'region', 'district', 'appraiser', 'creator', 'clients',
+            'region', 'district', 'appraiser', 'creator', 'clients', 'steps.user',
             'attachments.uploader', 'activities' => fn ($q) => $q->with('user')->where('event', '!=', 'viewed')->limit(15),
             ...$this->extraRelations(),
         ]);
@@ -437,7 +438,7 @@ abstract class ValuationController extends Controller
             'paid_amount' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
             'report_number' => ['nullable', 'string', 'max:60'],
             'status' => ['required', Rule::enum(ValuationStatus::class)
-                ->when($request->user()->cannot('finalize-valuations'), fn ($rule) => $rule->except([ValuationStatus::Completed]))],
+                ->when(! self::canComplete($request->user(), $item), fn ($rule) => $rule->except([ValuationStatus::Completed]))],
             // An active appraiser or administrator (or the one already assigned).
             'appraiser_id' => ['nullable', 'integer', Rule::exists('users', 'id')->where(fn ($query) => $query
                 ->where(fn ($q) => $q->where('is_active', true)->whereIn('role', [UserRole::Admin->value, UserRole::Appraiser->value]))
@@ -448,6 +449,61 @@ abstract class ValuationController extends Controller
             'persons.*.role' => ['nullable', Rule::enum(PersonRole::class)],
             ...$this->rules($request, $item),
         ], [], $this->attributeNames());
+    }
+
+    /**
+     * Who may mark a valuation completed on the form: appraisers, or only the
+     * director when the company requires approval. A completed one stays so.
+     */
+    public static function canComplete(User $user, ?Model $item): bool
+    {
+        if ($item?->status === ValuationStatus::Completed) {
+            return true;
+        }
+
+        return $user->can(Setting::get('require_approval') ? 'approve-valuations' : 'finalize-valuations');
+    }
+
+    /**
+     * A step of the approval: the appraiser submits the report, the director
+     * approves or returns it, reopens it for revaluation; cancelling; the
+     * customer signing the act.
+     */
+    public function workflow(Request $request, string $id): RedirectResponse
+    {
+        $item = $this->find($id);
+        $action = (string) $request->input('action');
+        $data = $request->validate([
+            'action' => ['required', Rule::in(ValuationStep::ACTIONS)],
+            'comment' => [Rule::requiredIf(in_array($action, ['returned', 'reopened', 'cancelled'], true)), 'nullable', 'string', 'max:2000'],
+        ], [], ['comment' => __('Comment')]);
+
+        $status = $item->status;
+        [$gate, $possible, $next] = match ($action) {
+            'submitted' => ['finalize-valuations', in_array($status, [ValuationStatus::New, ValuationStatus::InProgress], true), ValuationStatus::Review],
+            'approved' => ['approve-valuations', $status === ValuationStatus::Review, ValuationStatus::Completed],
+            'returned' => ['approve-valuations', $status === ValuationStatus::Review, ValuationStatus::InProgress],
+            'reopened' => ['approve-valuations', $status === ValuationStatus::Completed, ValuationStatus::InProgress],
+            'cancelled' => ['finalize-valuations', ! in_array($status, [ValuationStatus::Completed, ValuationStatus::Cancelled], true), ValuationStatus::Cancelled],
+            'accepted' => ['finalize-valuations', $status === ValuationStatus::Completed && ! $item->currentStep('accepted'), null],
+        };
+        Gate::authorize($gate);
+        if (! $possible) {
+            return back()->with('error', __('This step is not possible in the present state of the valuation.'));
+        }
+        if ($action === 'submitted' && $item->market_value === null) {
+            return back()->with('error', __('Enter the market value before submitting the report for approval.'));
+        }
+
+        DB::transaction(function () use ($item, $request, $data, $action, $next) {
+            $item->steps()->create(['action' => $action, 'user_id' => $request->user()->id, 'comment' => $data['comment'] ?? null]);
+            if ($next) {
+                $item->update(['status' => $next]);
+            }
+        });
+        Activity::record('workflow', $item, array_filter(['action' => ValuationStep::label($action), 'comment' => $data['comment'] ?? null]));
+
+        return back()->with('status', ValuationStep::label($action).'.');
     }
 
     /** Human readable field names for validation messages. */

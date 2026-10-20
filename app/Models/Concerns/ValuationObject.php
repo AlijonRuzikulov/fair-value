@@ -12,8 +12,10 @@ use App\Models\Client;
 use App\Models\District;
 use App\Models\Region;
 use App\Models\User;
+use App\Models\ValuationStep;
 use App\Support\DocumentNumber;
 use App\Support\VerifyCode;
+use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -107,6 +109,29 @@ trait ValuationObject
     public function attachments(): MorphMany
     {
         return $this->morphMany(Attachment::class, 'attachable')->latest('id');
+    }
+
+    /** Steps of the approval, in the order they were taken. */
+    public function steps(): MorphMany
+    {
+        return $this->morphMany(ValuationStep::class, 'stepable')->orderBy('id');
+    }
+
+    /** The latest step of this kind since the valuation was last reopened or returned. */
+    public function currentStep(string $action): ?ValuationStep
+    {
+        $steps = $this->steps;
+        $reset = $steps->whereIn('action', ['returned', 'reopened', 'cancelled'])->max('id') ?? 0;
+
+        return $steps->where('action', $action)->where('id', '>', $action === 'accepted' ? 0 : $reset)->last();
+    }
+
+    /** Time from the start of the valuation to its approval (or until now). */
+    public function timeSpent(): string
+    {
+        $end = $this->currentStep('approved')?->created_at ?? $this->completed_at ?? now();
+
+        return $this->created_at ? $this->created_at->diffForHumans($end, ['syntax' => CarbonInterface::DIFF_ABSOLUTE, 'parts' => 2]) : '—';
     }
 
     /** Sale offers of the comparative approach. */

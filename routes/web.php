@@ -63,6 +63,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
         Route::get("{$uri}/export", [$controller, 'export'])->name("{$uri}.export");
         Route::get("{$uri}/{id}/print", [$controller, 'print'])->whereNumber('id')->name("{$uri}.print");
         Route::get("{$uri}/{id}/contract", [$controller, 'contract'])->whereNumber('id')->name("{$uri}.contract");
+        Route::post("{$uri}/{id}/workflow", [$controller, 'workflow'])->whereNumber('id')->name("{$uri}.workflow");
         Route::resource($uri, $controller)->parameters([$uri => 'id']);
     }
 

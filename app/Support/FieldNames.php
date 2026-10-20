@@ -88,6 +88,7 @@ class FieldNames
             'insurance_policy' => __('Insurance policy of the appraisers'),
             'chief_accountant' => __('Chief accountant'),
             'vat_rate' => __('VAT rate, %'),
+            'require_approval' => __('Completion of reports'),
             'contract_number_format' => __('Format of contract numbers'),
             'report_number_format' => __('Format of report numbers'),
             'paid_amount' => __('Paid'),

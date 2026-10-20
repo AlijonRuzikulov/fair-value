@@ -1503,3 +1503,19 @@ summary.btn::-webkit-details-marker { display: none; }
 .comm-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border: 1px solid var(--line); border-radius: 999px; font-size: 12px; cursor: pointer; background: #fff; }
 .comm-chip:has(input:checked) { border-color: var(--brand); background: var(--brand-soft); color: var(--brand-ink); }
 .comm-chip input { margin: 0; accent-color: var(--brand); }
+
+/* Approval of a valuation */
+.approval { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.approval li { display: flex; gap: 10px; align-items: flex-start; }
+.approval li strong { display: block; font-size: 13.5px; }
+.approval li small { color: var(--muted); font-size: 12px; }
+.approval-mark { flex: none; width: 26px; height: 26px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: #f1f5f9; color: var(--muted); }
+.approval li.is-done .approval-mark { background: var(--success-soft); color: var(--success); }
+.approval-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.approval-more { margin-top: 12px; font-size: 13px; }
+.approval-more summary { cursor: pointer; color: var(--muted); font-weight: 600; }
+.approval-reason { display: flex; gap: 6px; margin-top: 8px; }
+.approval-reason .input { flex: 1; min-width: 0; height: 32px; }
+.approval-history { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--line); display: grid; gap: 8px; }
+.approval-history-head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: 13px; }
+.table-compact td { padding: 6px 8px; font-size: 12.5px; vertical-align: top; }

@@ -437,6 +437,16 @@ Sozlamalarda. Bitta hujjatni chiqarish: manzil oxiriga `?doc=contract` (`act`, `
   fayl turi nomidan aniqlanadi va o‘zgartiriladi. Yonbosh olingan rasm va skanerlar **chapga/o‘ngga aylantiriladi**
   (hisobotga ham aylangan holda chiqadi). Telefonda “Qo‘shish” kamerani ochadi.
 
+### Holat va tasdiqlash
+
+Obyekt sahifasidagi **“Holat va tasdiqlash”** paneli: baholovchi hisobotni **tasdiqlashga yuboradi**
+(holati — “Tasdiqlashda”), direktor (administrator) **tasdiqlaydi** yoki izoh bilan **tuzatishga qaytaradi**;
+tasdiqlangach hisobot raqami beriladi. Keyin **dalolatnoma imzolandi** deb belgilanadi. Tasdiqlangan hisobotni
+direktor sabab ko‘rsatib **qayta baholashga** ochishi, baholashni esa sabab bilan **bekor qilish** mumkin.
+Har bir qadam (kim, qachon, izoh) tarixda va audit jurnalida saqlanadi; **sarflangan vaqt** ko‘rsatiladi.
+Sozlamalar → “Hisobotni yakunlash”: “Direktor tasdiqlaydi” tanlansa, hisobotni faqat administrator yakunlaydi.
+ЭЦП (E-IMZO) bilan imzolash hozircha yo‘q — tasdiqlash tizimga kirgan foydalanuvchi nomidan qayd etiladi.
+
 ### Telegram’ga ariza xabarlari
 
 1. [@BotFather](https://t.me/BotFather) orqali bot yarating va tokenni oling.

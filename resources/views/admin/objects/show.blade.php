@@ -86,6 +86,8 @@
                 </div>
             </div>
 
+            @include('admin.objects._workflow')
+
             @if ($module->usesApproaches())
                 <x-card :title="__('Approaches')" icon="scale">
                     @if ($values->isEmpty())
