@@ -342,6 +342,10 @@ Server faqat ro‘yxatdagi saytlarga murojaat qiladi (`ANALOG_DOMAINS`).
 **Muhim:** e’lonlar — sotuvchining so‘ragan narxi; topilgan qiymatlar va tuzatishlarni har doim baholovchi
 tekshiradi. Saytlar tuzilishini o‘zgartirsa, ba’zi maydonlarni qo‘lda to‘ldirishga to‘g‘ri kelishi mumkin.
 
+**Sayt serverga sahifani bermasa** (masalan, olx.uz “kod 403” qaytaradi — saytning bot himoyasi): analog qatoridagi
+**“E’lon matnini qo‘yish”** ni oching, e’lonni brauzerda ochib `Ctrl+A`, `Ctrl+C` qiling va matnni qo‘ying — narx va
+valyuta, maydon, qavat, xonalar, sana, joylashuv, ta’mir va devor materiali matndan o‘qiladi (AI kaliti bo‘lsa, AI ham o‘qiydi).
+
 **Vaznlar** uch usulda: tuzatishlar soniga ko‘ra, tuzatishlar soniga ko‘ra **butun o‘n foizlarda** (30 / 40 / 30 %)
 va tuzatishlar miqdoriga ko‘ra. **Qulayliklar** tuzatishi analogning muhandislik kommunikatsiyalaridan avtomatik
 hisoblanadi: obyektda bor, analogda yo‘q har bir kommunikatsiya uchun +1 % (`fairvalue.analogs.communication_step`).

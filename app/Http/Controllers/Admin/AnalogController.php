@@ -91,6 +91,23 @@ class AnalogController extends Controller
         return response()->json(['status' => $analog->fresh()?->status]);
     }
 
+    /**
+     * Reads the text of a listing pasted by the appraiser: for sites that do
+     * not let the server open their pages.
+     */
+    public function pasted(Request $request, Analog $analog): RedirectResponse
+    {
+        Gate::authorize('edit-valuation', $analog->object);
+        $data = $request->validate(['text' => ['required', 'string', 'max:60000']], [], ['text' => __('Text of the listing')]);
+        set_time_limit(120);
+
+        $this->finder->fillFromText($analog, $data['text']);
+        $analog->refresh();
+
+        return $this->back(self::typeOf($analog), $analog->object)
+            ->with($analog->isUsable() ? 'status' : 'error', $analog->isUsable() ? __('The listing has been read from the text.') : __('The price or the area was not found in the text — fill them in.'));
+    }
+
     /** Saves corrected values, adjustments and the choice of analogues. */
     public function update(Request $request, string $type, string $id): RedirectResponse
     {

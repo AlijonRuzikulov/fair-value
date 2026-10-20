@@ -170,17 +170,60 @@ class ListingParser
             unset($found['area']);
         }
 
+        // The first price with a currency is the price of the listing (similar offers come later on the page).
+        if (preg_match('/(\d[\d\s\x{00A0}\x{202F}]{2,}(?:[.,]\d+)?)\s*(у\.\s?е\.?|y\.\s?e\.?|\$|USD|сум|сўм|so[\'‘’ʻ]?m|UZS)(?![a-zа-яё])/iu', $text, $m)
+            || preg_match('/(\$|USD)\s*(\d[\d\s\x{00A0}\x{202F}]{2,}(?:[.,]\d+)?)/iu', $text, $m)) {
+            [$amount, $unit] = is_numeric(str_replace([' ', "\u{00A0}", "\u{202F}", ',', '.'], '', $m[1])) ? [$m[1], $m[2]] : [$m[2], $m[1]];
+            $price = self::number($amount);
+            $currency = self::currency(str_replace(' ', '', $unit)) ?? (preg_match('/^(у|y)/iu', $unit) ? 'USD' : 'UZS');
+            if ($price !== null && $price >= 100) {
+                $found['price'] = $price;
+                $found['currency'] = $currency;
+            }
+        }
+
+        if ($date = self::date($text)) {
+            $found['listed_at'] = $date;
+        }
+
         $labels = [
+            'location' => '(?:Местоположение|Расположение|Joylashuv|Manzil|Жойлашув|Манзил)',
             'wall_material' => '(?:Материал стен|Тип строения|Qurilish turi|Devor materiali|Қурилиш тури|Девор материали)',
             'condition' => '(?:Ремонт|Состояние|Ta\'mir|Ta‘mir|Taʼmir|Holati|Таъмир|Ҳолати)',
         ];
         foreach ($labels as $key => $label) {
-            if (preg_match('/(?:^|\n)\s*'.$label.'\s*:\s*([^\n:]{2,40})(?:\n|$)/iu', $text, $m)) {
+            // "Ремонт: Евроремонт" on one line, or the label and the value on two lines (pasted page text).
+            if (preg_match('/(?:^|\n)\s*'.$label.'\s*:\s*([^\n:]{2,80})(?:\n|$)/iu', $text, $m)
+                || preg_match('/(?:^|\n)\s*'.$label.'\s*:?\s*\n\s*([^\n:]{2,80})(?:\n|$)/iu', $text, $m)) {
                 $found[$key] = self::clean($m[1]);
             }
         }
 
         return $found;
+    }
+
+    /** The date a listing was published: "Опубликовано 12 августа 2026 г.", "12-avgust 2026", "Сегодня в 10:15". */
+    public static function date(string $text): ?string
+    {
+        $months = [
+            'январ' => 1, 'феврал' => 2, 'март' => 3, 'апрел' => 4, 'ма[яй]' => 5, 'июн' => 6, 'июл' => 7, 'август' => 8, 'сентябр' => 9, 'октябр' => 10, 'ноябр' => 11, 'декабр' => 12,
+            'yanvar' => 1, 'fevral' => 2, 'mart' => 3, 'aprel' => 4, 'may' => 5, 'iyun' => 6, 'iyul' => 7, 'avgust' => 8, 'sentyabr' => 9, 'oktyabr' => 10, 'noyabr' => 11, 'dekabr' => 12,
+        ];
+        foreach ($months as $stem => $month) {
+            if (preg_match('/(\d{1,2})\s*[-–]?\s*'.$stem.'[а-яa-z]*\.?\s+(20\d{2})/iu', $text, $m) && checkdate($month, (int) $m[1], (int) $m[2])) {
+                $date = sprintf('%04d-%02d-%02d', $m[2], $month, $m[1]);
+
+                return $date <= date('Y-m-d') ? $date : null;
+            }
+        }
+        if (preg_match('/(?:Сегодня|Bugun|Бугун)\s*(?:в|soat)?\s*\d{1,2}:\d{2}/iu', $text)) {
+            return date('Y-m-d');
+        }
+        if (preg_match('/(?:Вчера|Kecha|Кеча)\s*(?:в|soat)?\s*\d{1,2}:\d{2}/iu', $text)) {
+            return date('Y-m-d', strtotime('-1 day'));
+        }
+
+        return null;
     }
 
     private function fromSchema(array $node, string $url): array

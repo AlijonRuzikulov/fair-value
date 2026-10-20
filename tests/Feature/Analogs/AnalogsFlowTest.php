@@ -135,6 +135,39 @@ class AnalogsFlowTest extends TestCase
         $this->assertNotNull($analog->fresh()->note);
     }
 
+    public function test_a_site_that_refuses_the_server_is_read_from_the_pasted_text(): void
+    {
+        $this->withoutAi();
+        Http::fake(['www.olx.uz/*' => Http::response('Forbidden', 403)]);
+        CurrencyRate::create(['code' => 'USD', 'nominal' => 1, 'rate' => 11889.95, 'diff' => 0, 'rate_date' => '2026-08-13']);
+        $analog = $this->flat->analogs()->create(['status' => Analog::PENDING, 'url' => 'https://www.olx.uz/d/obyavlenie/kvartira-ID3abc.html']);
+
+        $this->actingAs($this->user)->postJson('/admin/analogs/'.$analog->id.'/fill')->assertJson(['status' => 'failed']);
+        $this->assertStringContainsString('403', $analog->fresh()->note);
+        $this->withSession(['locale' => 'uz'])->get('/admin/real-estates/'.$this->flat->id)->assertSee('E’lon matnini qo‘yish', false);
+
+        $text = "Продается 2-комнатная квартира, Turon MFY\nОпубликовано 13 августа 2026 г.\n77 000 у.е.\nДоговорная\nЭтаж: 1\nЭтажность дома: 4\n"
+            ."Общая площадь: 61.52 м²\nКоличество комнат: 2\nРемонт: Евроремонт\nМестоположение\nТашкент, Мирзо-Улугбекский район\nПохожие объявления\n63 000 у.е.";
+        $this->post('/admin/analogs/'.$analog->id.'/text', ['text' => $text])->assertRedirect()->assertSessionHas('status');
+
+        $analog->refresh();
+        $this->assertSame(Analog::READY, $analog->status);
+        $this->assertSame('77000.00', $analog->price);
+        $this->assertSame('USD', $analog->currency);
+        $this->assertSame('11889.95', $analog->usd_rate, 'The dollar rate of the day the offer was published.');
+        $this->assertSame('61.52', $analog->area);
+        $this->assertSame([1, 4, 2], [$analog->floor, $analog->floors_total, $analog->rooms]);
+        $this->assertSame('2026-08-13', $analog->listed_at->toDateString());
+        $this->assertSame('Ташкент, Мирзо-Улугбекский район', $analog->location);
+        $this->assertSame('Евроремонт', $analog->condition);
+        $this->assertSame(-5.0, (float) $analog->adjustments['bargain'], 'Adjustments are suggested as for a read page.');
+        $this->assertSame('https://www.olx.uz/d/obyavlenie/kvartira-ID3abc.html', $analog->url);
+
+        $this->post('/admin/analogs/'.$analog->id.'/text', ['text' => 'Hech narsa yo‘q'])->assertSessionHas('error');
+        $this->flat->update(['status' => ValuationStatus::Completed]);
+        $this->actingAs(User::factory()->operator()->create())->post('/admin/analogs/'.$analog->id.'/text', ['text' => $text])->assertForbidden();
+    }
+
     public function test_a_page_of_search_results_adds_the_closest_offers(): void
     {
         $listing = fn (string $id, float $area, int $rooms, float $price) => [

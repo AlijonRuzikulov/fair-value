@@ -115,6 +115,14 @@
                                         <span class="badge badge-warning">{{ __('Not read') }}</span>
                                     @endif
                                     @if ($analog->note)<span class="analog-note">{{ $analog->note }}</span>@endif
+                                    @if ($canEdit && ! $analog->isPending() && $analog->url)
+                                        <details class="analog-paste" @if ($analog->status === Analog::FAILED) open @endif>
+                                            <summary>{{ __('Paste the text of the listing') }}</summary>
+                                            <p class="field-hint">{{ __('Open the listing in your browser, press Ctrl+A and Ctrl+C (on a phone: select all and copy) and paste it here — the price, area, floor and the rest are read from the text.') }}</p>
+                                            <textarea class="input" name="text" rows="4" form="analog-text-{{ $analog->id }}" maxlength="60000" required aria-label="{{ __('Paste the text of the listing') }}"></textarea>
+                                            <button class="btn btn-sm btn-primary" type="submit" form="analog-text-{{ $analog->id }}"><x-icon name="file-search" :size="14" /> {{ __('Read the text') }}</button>
+                                        </details>
+                                    @endif
                                 </td>
                                 @if ($analog->isPending())
                                     <td colspan="6" class="faint">—</td>
@@ -219,6 +227,7 @@
         @foreach ($analogs as $analog)
             <form method="post" action="{{ route('admin.analogs.destroy', $analog) }}" id="analog-delete-{{ $analog->id }}" data-confirm="{{ __('Delete this analogue?') }}" hidden>@csrf @method('delete')</form>
             <form method="post" action="{{ route('admin.analogs.photo.store', $analog) }}" id="analog-photo-{{ $analog->id }}" enctype="multipart/form-data" hidden>@csrf</form>
+            <form method="post" action="{{ route('admin.analogs.text', $analog) }}" id="analog-text-{{ $analog->id }}" hidden>@csrf</form>
             @if ($analog->photo_path)
                 <form method="post" action="{{ route('admin.analogs.photo.destroy', $analog) }}" id="analog-photo-delete-{{ $analog->id }}" hidden>@csrf @method('delete')</form>
             @endif

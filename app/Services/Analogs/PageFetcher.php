@@ -48,11 +48,22 @@ class PageFetcher
                 throw new InvalidArgumentException(__('Only links to these sites are accepted: :sites.', ['sites' => implode(', ', config('fairvalue.analogs.domains'))]));
             }
 
+            // The headers a browser sends; some sites refuse requests that look like robots.
             $response = Http::withHeaders([
-                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36',
-                'Accept' => 'text/html,application/xhtml+xml',
-                'Accept-Language' => 'uz,ru;q=0.9,en;q=0.5',
-            ])->withOptions(['allow_redirects' => false])->timeout(15)->get($url);
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                'Accept-Language' => 'ru-RU,ru;q=0.9,uz;q=0.8,en;q=0.7',
+                'Accept-Encoding' => 'gzip, deflate',
+                'Cache-Control' => 'no-cache',
+                'Upgrade-Insecure-Requests' => '1',
+                'Sec-Fetch-Dest' => 'document',
+                'Sec-Fetch-Mode' => 'navigate',
+                'Sec-Fetch-Site' => 'none',
+                'Sec-Fetch-User' => '?1',
+                'sec-ch-ua' => '"Chromium";v="130", "Google Chrome";v="130", "Not?A_Brand";v="99"',
+                'sec-ch-ua-mobile' => '?0',
+                'sec-ch-ua-platform' => '"Windows"',
+            ])->withOptions(['allow_redirects' => false, 'decode_content' => true])->timeout(15)->get($url);
 
             if ($response->redirect()) {
                 $location = (string) $response->header('Location');
@@ -61,6 +72,9 @@ class PageFetcher
                 continue;
             }
 
+            if (in_array($response->status(), [401, 403, 429, 451], true)) {
+                throw new RuntimeException(__('The site did not let the server open the page (code :code). Paste the text of the listing below.', ['code' => $response->status()]));
+            }
             if (! $response->successful()) {
                 throw new RuntimeException(__('The page could not be opened (code :code).', ['code' => $response->status()]));
             }

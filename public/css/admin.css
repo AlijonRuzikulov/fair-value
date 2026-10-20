@@ -1529,3 +1529,7 @@ summary.btn::-webkit-details-marker { display: none; }
 .approach-buttons { display: flex; flex-wrap: wrap; gap: 8px; align-items: end; justify-content: flex-end; }
 .approach-results { margin-top: 14px; }
 .table-compact tr.total td { font-weight: 800; background: #f8fafc; }
+.analog-paste { margin-top: 6px; font-size: 12.5px; }
+.analog-paste summary { cursor: pointer; color: var(--brand-ink); font-weight: 600; }
+.analog-paste[open] { display: grid; gap: 6px; padding: 8px; border: 1px dashed var(--line); border-radius: 10px; background: #fff; }
+.analog-paste textarea { min-width: 220px; font-size: 12.5px; }

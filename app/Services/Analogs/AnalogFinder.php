@@ -140,6 +140,40 @@ class AnalogFinder
         return $filled;
     }
 
+    /**
+     * Fills an analogue from the text of its listing, copied from the
+     * browser by the appraiser (when the site does not open for the server).
+     */
+    public function fillFromText(Analog $analog, string $text): Analog
+    {
+        $object = $analog->object;
+        $text = mb_substr(trim(str_replace(["\r\n", "\r"], "\n", $text)), 0, 40000);
+        $lines = array_values(array_filter(array_map('trim', explode("\n", $text)), fn ($l) => mb_strlen($l) >= 8));
+
+        $listing = ListingParser::merge(ListingParser::empty($analog->url), ListingParser::fromText($text));
+        $listing['title'] ??= $analog->title ?: (isset($lines[0]) ? mb_substr($lines[0], 0, 250) : null);
+
+        if ($this->ai->available()) {
+            try {
+                $found = $this->ai->extract('URL: '.$analog->url."\n\nPage text (copied from the browser):\n".$text);
+                if ($found) {
+                    $found[0]['url'] = null;
+                    // The AI reads the text as a whole; the labelled values fill what it missed.
+                    $listing = ListingParser::merge(array_filter($found[0], fn ($v) => $v !== null), $listing);
+                }
+            } catch (Throwable $e) {
+                report($e);
+            }
+        }
+        $listing['url'] = $analog->url;
+
+        $this->apply($object, $analog, $listing);
+        $analog->save();
+        $this->leaveOutOutliers($object, collect([$analog]));
+
+        return $analog;
+    }
+
     /** @return list<array<string, mixed>> */
     private function read(string $html, string $url): array
     {

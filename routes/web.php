@@ -89,6 +89,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
         Route::put('{type}/{id}/analogs', 'update')->whereIn('type', $types)->whereNumber('id')->name('analogs.update');
         Route::post('{type}/{id}/analogs/apply', 'apply')->whereIn('type', $types)->whereNumber('id')->name('analogs.apply');
         Route::post('analogs/{analog}/fill', 'fill')->middleware('throttle:60,1')->name('analogs.fill');
+        Route::post('analogs/{analog}/text', 'pasted')->middleware('throttle:30,1')->name('analogs.text');
         Route::delete('analogs/{analog}', 'destroy')->name('analogs.destroy');
         Route::get('analogs/{analog}/photo', 'showPhoto')->name('analogs.photo');
         Route::post('analogs/{analog}/photo', 'photo')->middleware('throttle:30,1')->name('analogs.photo.store');
