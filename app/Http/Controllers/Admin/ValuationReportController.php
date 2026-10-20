@@ -10,6 +10,7 @@ use App\Models\RealEstate;
 use App\Reports\InspectionAct;
 use App\Reports\RealEstateReport;
 use App\Reports\ReportScript;
+use App\Reports\Survey;
 use App\Services\CurrencyService;
 use App\Services\Documents\DocumentAi;
 use App\Services\Pdf\PdfPrinter;
@@ -78,6 +79,8 @@ class ValuationReportController extends Controller
             'act.elements.*.share' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'act.elements.*.wear' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'act.elements.*.description' => ['nullable', 'string', 'max:300'],
+            'survey' => ['nullable', 'array'],
+            'survey.*' => ['nullable', 'string', 'max:1000'],
         ];
         foreach (RealEstateReport::FORM as $fields) {
             foreach ($fields as $field => $type) {
@@ -100,7 +103,7 @@ class ValuationReportController extends Controller
         $defaults = RealEstateReport::defaults($item);
         // What this form writes is written anew; the rest (the weighting of the analogues,
         // the inputs of the cost and income approaches…) is kept as it is.
-        $managed = [...array_merge(...array_map('array_keys', array_values(RealEstateReport::FORM))), 'scores', 'attachments', 'company_documents', 'include_macro', 'include_methodology', 'act'];
+        $managed = [...array_merge(...array_map('array_keys', array_values(RealEstateReport::FORM))), 'scores', 'attachments', 'company_documents', 'include_macro', 'include_methodology', 'act', 'survey'];
         $report = array_diff_key((array) $item->report, array_flip($managed));
         foreach (RealEstateReport::FORM as $fields) {
             foreach (array_keys($fields) as $field) {
@@ -134,6 +137,22 @@ class ValuationReportController extends Controller
             }
         } elseif (isset($item->report['act'])) {
             $report['act'] = $item->report['act'];
+        }
+        // The customer's answers; the known ones (documents, contact) are kept only when they were changed.
+        if ($request->has('survey')) {
+            $known = Survey::defaults($item);
+            $survey = [];
+            foreach (Survey::keys($item) as $key) {
+                $answer = trim((string) ($data['survey'][$key] ?? ''));
+                if ($answer !== '' && $answer !== ($known[$key] ?? null)) {
+                    $survey[$key] = $answer;
+                }
+            }
+            if ($survey) {
+                $report['survey'] = $survey;
+            }
+        } elseif (isset($item->report['survey'])) {
+            $report['survey'] = $item->report['survey'];
         }
 
         // Fields of the object itself (logged as ordinary changes of the object).

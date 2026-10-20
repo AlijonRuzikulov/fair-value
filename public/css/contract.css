@@ -76,3 +76,4 @@ td small { color: var(--muted); }
 .report-toolbar .primary { background: #4f46e5; }
 .report-toolbar .on { background: #e0e7ff; color: #1e3a8a; }
 .report-loading { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; background: #e2e8f0; font: 700 15px 'Manrope', Arial, sans-serif; color: #334155; }
+.write-in { display: block; min-height: 5mm; border-bottom: .25mm solid #8a8f98; }

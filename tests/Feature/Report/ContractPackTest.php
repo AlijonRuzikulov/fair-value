@@ -105,6 +105,35 @@ class ContractPackTest extends TestCase
         $this->get('/admin/vehicles/'.$car->id)->assertOk()->assertSee('/admin/vehicles/'.$car->id.'/contract', false);
     }
 
+    public function test_the_customer_questionnaire_is_entered_signed_and_listed_in_the_report(): void
+    {
+        $this->flat->attachments()->create(['name' => 'kadastr.jpg', 'path' => 'kadastr.jpg', 'mime' => 'image/jpeg', 'size' => 1, 'kind' => 'cadastral']);
+        $this->actingAs($this->appraiser);
+
+        // Before anything is entered: the documents and the contact are known, the rest is left to be written by hand.
+        $page = $this->get('/admin/real-estates/'.$this->flat->id.'/contract?doc=questionnaire')->assertOk();
+        $page->assertSee('SO‘ROVNOMASI', false)->assertSee('Kadastr hujjati')->assertSee('Jurayev Shokirjon Ganijonovich, +998941221274')
+            ->assertSee('class="write-in"', false)->assertSee('O‘zboshimcha qurilish yoki qayta rejalashtirish', false)->assertDontSee('SHARTNOMA');
+
+        $this->get('/admin/real-estates/'.$this->flat->id.'/report/edit')->assertOk()->assertSee('name="survey[use]"', false);
+        $this->put('/admin/real-estates/'.$this->flat->id.'/report', [
+            'script' => 'latn', 'report_date' => '2026-10-20',
+            'survey' => ['use' => 'Ijaraga berilgan', 'lease' => 'Oyiga 4 000 000 so‘m, 2027 yilgacha', 'contact' => 'Jurayev Shokirjon Ganijonovich, +998941221274', 'disputes' => ' '],
+        ])->assertSessionHasNoErrors();
+
+        $survey = $this->flat->fresh()->report['survey'];
+        $this->assertSame(['use' => 'Ijaraga berilgan', 'lease' => 'Oyiga 4 000 000 so‘m, 2027 yilgacha'], $survey, 'Known and empty answers are not stored.');
+
+        $this->get('/admin/real-estates/'.$this->flat->id.'/contract?doc=questionnaire')->assertSee('Ijaraga berilgan');
+        $this->get('/admin/real-estates/'.$this->flat->id.'/report')->assertOk()
+            ->assertSee('Buyurtmachi so‘rovnomasi bo‘yicha ma’lumotlar', false)->assertSee('Oyiga 4 000 000 so‘m, 2027 yilgacha', false);
+
+        // Questions about buildings are not asked about a car.
+        $car = Vehicle::factory()->create(['contract_number' => '700-26']);
+        $this->get('/admin/vehicles/'.$car->id.'/contract?doc=questionnaire')->assertOk()
+            ->assertSee('Obyektdan hozirgi foydalanish')->assertDontSee('O‘zboshimcha qurilish', false);
+    }
+
     public function test_short_names(): void
     {
         $this->assertSame('A.I.Saydaliyev', ContractPack::shortPersonName("SAYDALIYEV ASLIDDIN ILXOM O'G'LI"));

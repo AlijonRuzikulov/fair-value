@@ -421,7 +421,10 @@ hujjatlarni tayyorlaydi (A4, “Chop etish / PDF saqlash”):
   ikkala tarafning rekvizitlari va imzolari;
 - **ishni topshirish-qabul qilish dalolatnomasi** — hisobot raqami, manzil, baholash summasi (so‘z bilan);
 - **hisob varaq-faktura** — QQS bilan yoki QQSsiz (Sozlamalar → “QQS stavkasi”; 0 — QQS to‘lovchisi emas);
-- **baholash bo‘yicha vazifa** — shartnomaga ilova.
+- **baholash bo‘yicha vazifa** — shartnomaga ilova;
+- **buyurtmachining so‘rovnomasi** — obyektdan foydalanish, ijara, ta’mir, yuklamalar, nizolar, o‘zboshimcha
+  qurilish, kamchiliklar, qarzdorlik, hujjatlar va aloqa. Javoblar “Hisobotni tayyorlash” → 2-qadamda
+  kiritiladi; kiritilmagan javob qo‘lda yozish uchun chiziq bo‘lib chiqadi. Kiritilganlari hisobotda ham keltiriladi.
 
 Kirill yoki lotinda, imzo chiziqlari yoki QR-kodlar bilan chiqadi (yuqoridagi tugmalar).
 
@@ -433,7 +436,12 @@ sahifalarining yuqorisida ham “PDF yuklab olish” tugmasi bor. Codespace’da
 Shartnoma shartlari
 **Sozlamalar → Hisobot matnlari → “Xizmat ko‘rsatish shartnomasi”** da tahrirlanadi; `{object}`, `{fee}`,
 `{customer}` kabi so‘zlar obyekt ma’lumotlari bilan almashtiriladi. Sug‘urta polisi va bosh hisobchi —
-Sozlamalarda. Bitta hujjatni chiqarish: manzil oxiriga `?doc=contract` (`act`, `invoice`, `assignment`).
+Sozlamalarda. Bitta hujjatni chiqarish: manzil oxiriga `?doc=contract` (`act`, `invoice`, `assignment`, `questionnaire`).
+
+**Ko‘zdan kechirish dalolatnomasi (akt).** “Hisobotni tayyorlash” → 3-qadamda ishtirok etganlar, har bir
+konstruktiv elementning texnik holati, bino qiymatidagi ulushi va eskirish foizi hamda aniqlangan kamchiliklar
+kiritiladi. Binoning jismoniy eskirishi — ulushlar bo‘yicha vaznli o‘rtacha (VSN 53-86; g‘isht binoning odatiy
+ulushlari oldindan yozilgan). Akt hisobot ilovasida chiqadi, eskirish esa xarajat yondashuvi yonida ko‘rsatiladi.
 
 ### Xarita, raqamlash va to‘lovlar
 

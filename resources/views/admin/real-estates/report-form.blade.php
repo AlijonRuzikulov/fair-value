@@ -149,6 +149,19 @@
                             @endforeach
                         </div>
                     </details>
+                    @php $surveyAnswers = [...\App\Reports\Survey::defaults($item), ...(array) ($values['survey'] ?? [])]; @endphp
+                    <details class="prep-more" @if (! empty($values['survey'])) open @endif>
+                        <summary>{{ __('Customer questionnaire') }}</summary>
+                        <p class="field-hint" style="margin-bottom: 10px">{{ __('What the customer states about the object. It is printed with the contract for the customer to sign (an empty answer is left to be written by hand) and listed in the report.') }}</p>
+                        <div class="form-grid">
+                            @foreach (\App\Reports\Survey::keys($item) as $key)
+                                <x-field :name="'survey['.$key.']'" :label="__(\App\Reports\Survey::QUESTIONS[$key][1])" :value="$surveyAnswers[$key] ?? null" :span="in_array($key, ['lease', 'documents', 'contact', 'defects'], true) ? 8 : 4" :list="isset(\App\Reports\Survey::OPTIONS[$key]) ? 'survey-'.$key : null" autocomplete="off" />
+                            @endforeach
+                        </div>
+                        @foreach (\App\Reports\Survey::OPTIONS as $key => $options)
+                            <datalist id="survey-{{ $key }}">@foreach ($options as $option)<option value="{{ $option }}">@endforeach</datalist>
+                        @endforeach
+                    </details>
                 </x-card>
 
                 {{-- ============ 3. Inspection ============ --}}

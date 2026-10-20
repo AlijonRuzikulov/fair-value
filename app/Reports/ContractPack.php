@@ -13,13 +13,13 @@ use Illuminate\Support\HtmlString;
 
 /**
  * Documents signed with the customer of a valuation: the service contract,
- * the act of acceptance of the work, the invoice and the valuation
- * assignment. Texts are in Uzbek Latin and printed in the chosen alphabet;
+ * the act of acceptance of the work, the invoice, the valuation assignment
+ * and the customer's questionnaire. Texts are in Uzbek Latin and printed in the chosen alphabet;
  * names and requisites typed by people are printed as they were typed.
  */
 final class ContractPack
 {
-    public const DOCUMENTS = ['contract', 'act', 'invoice', 'assignment'];
+    public const DOCUMENTS = ['contract', 'act', 'invoice', 'assignment', 'questionnaire'];
 
     /**
      * @param  Model  $item  a valuation object (RealEstate, Vehicle, Asset…)
@@ -90,6 +90,7 @@ final class ContractPack
             'description' => self::description($item),
             'customerShort' => self::shortName($customer),
             'directorShort' => self::shortPersonName((string) $company['director']),
+            'survey' => Survey::build($item),
         ];
     }
 

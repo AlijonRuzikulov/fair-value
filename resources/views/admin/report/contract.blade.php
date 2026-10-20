@@ -238,5 +238,31 @@
     </div>
 </section>
 @endif
+
+{{-- ============================== Questionnaire ============================== --}}
+@if (in_array('questionnaire', $documents, true))
+<section class="doc">
+    <p class="doc-ref">{{ $date($contractDate) }} {{ $t('dagi') }} № {{ $contractNumber }} {{ $t('sonli shartnomaga ilova') }}</p>
+    <h1>{{ $t("Baholash obyekti bo'yicha buyurtmachining") }}<br><span class="spaced">{{ $t("SO'ROVNOMASI") }}</span></h1>
+    <div class="place-date"><span>{{ $city }}</span><span>{{ $date($contractDate) }}</span></div>
+
+    <table class="facts">
+        <tr><td>{{ $t('Buyurtmachi') }}</td><td>{{ $customerName }}</td></tr>
+        <tr><td>{{ $t('Baholash obyekti') }}</td><td>{{ $t($description) }}</td></tr>
+        <tr><td>{{ $t('Joylashgan joyi') }}</td><td>{{ $t($location ?: '—') }}</td></tr>
+        <tr><td>{{ $t('Baholash maqsadi') }}</td><td>{{ $t($purpose) }}</td></tr>
+        @foreach ($survey as $row)
+            {{-- An answer not entered is left as a line to be written by hand; names in the contact stay as typed. --}}
+            <tr><td>{{ $t($row['question']) }}</td><td>@if ($row['answer'] === null)<span class="write-in"></span>@elseif ($row['key'] === 'contact'){{ $row['answer'] }}@else{{ $t($row['answer']) }}@endif</td></tr>
+        @endforeach
+    </table>
+    <p>{{ $t("Yuqorida keltirilgan ma'lumotlarning to'g'riligini tasdiqlayman. Noto'g'ri yoki to'liq bo'lmagan ma'lumot berilishining oqibatlari uchun Buyurtmachi javobgar bo'ladi.") }}</p>
+
+    <div class="signs-row">
+        <div><h4>{{ $t('Buyurtmachi') }}</h4>{!! $sign('Buyurtmachi', $customerShort) !!}</div>
+        <div><h4>{{ $t('Qabul qildi') }}</h4>{!! $sign('Baholovchi', $item->appraiser ? \App\Reports\ContractPack::shortPersonName($item->appraiser->name) : '') !!}</div>
+    </div>
+</section>
+@endif
 </body>
 </html>

@@ -373,6 +373,15 @@
         <figcaption>{{ $t($location) }}</figcaption>
     </figure>
 @endif
+@php $answers = array_filter(\App\Reports\Survey::build($item), fn ($row) => isset($f['survey'][$row['key']])); @endphp
+@if ($answers)
+    <h3 class="sub">{{ $item->hasLocation() ? '5.3' : '5.2' }}. {{ $t("Buyurtmachi so'rovnomasi bo'yicha ma'lumotlar") }}</h3>
+    <table class="facts">
+        @foreach ($answers as $row)
+            <tr><td>{{ $t($row['question']) }}</td><td>{{ $row['key'] === 'contact' ? $row['answer'] : $t($row['answer']) }}</td></tr>
+        @endforeach
+    </table>
+@endif
 
 {{-- ============================== VI. HBU ============================== --}}
 <h2 class="section" id="s6"><span class="sec-no">VI</span>{{ $t('Eng samarali foydalanish tahlili') }}</h2>
