@@ -80,7 +80,10 @@ class ValuationReportTest extends TestCase
         $latin = $this->get('/admin/real-estates/'.$this->flat->id.'/report')->assertOk();
         $latin->assertSee('BAHOLASH HISOBOTI')
             ->assertSee('Besh yuz o‘n to‘rt million bir yuz oltmish sakkiz ming so‘m', false)
-            ->assertSee('Taqqoslash elementlari');
+            ->assertSee('Taqqoslash elementlari')
+            // The QR code for checking the report: on the cover and at the foot of every page.
+            ->assertSee('class="qr-run"', false)
+            ->assertSee('data-qr="'.$this->flat->verifyUrl().'"', false);
 
         // Market conditions of the dollar offers: 11 814.05 / 12 065.49 − 1 = −2.08 %.
         $latin->assertSee('-2,08 %', false);

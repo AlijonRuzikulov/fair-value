@@ -64,7 +64,6 @@
         @page {
             @top-left { content: "{!! $cssText($companyName) !!}"; }
             @top-right { content: "{!! $cssText($t('Baholash hisoboti').' № '.$reportNo.' · '.$reportDate->format('d.m.Y')) !!}"; }
-            @bottom-left { content: "{!! $cssText($t('Tekshirish kodi').': '.$item->verify_code) !!}"; }
         }
     </style>
     <script src="{{ asset('js/report.js') }}"></script>
@@ -148,6 +147,11 @@
 
 {{-- ============================== Executive summary ============================== --}}
 <h2 class="section" id="summary">{{ $t('Asosiy xulosalar') }}</h2>
+{{-- Repeated at the foot of every following page. --}}
+<div class="qr-run"><div class="qr-foot">
+    <div class="qr" data-qr="{{ $item->verifyUrl() }}"></div>
+    <span>{{ $t('Tekshirish kodi') }}<b>{{ $item->verify_code }}</b>{{ preg_replace('#^https?://([^/]+).*$#', '$1', $item->verifyUrl()) }}</span>
+</div></div>
 <p class="summary-lead">{{ $t("Baholash obyekti ko'zdan kechirildi, hujjatlari o'rganildi va baholash milliy standartlariga muvofiq qiymati aniqlandi. To'liq asoslash hisobotning keyingi bo'limlarida keltirilgan.") }}</p>
 <div class="summary-value">
     <span>{{ $valuationDate->format('d.m.Y') }} {{ $valueOf('holatiga :type') }}</span>
