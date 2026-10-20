@@ -98,6 +98,23 @@ bash .devcontainer/serve.sh
 ma’lumotlarni bir marta tozalaydi). Terminalda `Server running on [http://0.0.0.0:8000]`
 yozuvi chiqqach, sayt sahifasini yangilang.
 
+**Kirishda “E-mail yoki parol noto‘g‘ri” chiqsa:**
+
+- `admin12345` faqat birinchi kirish uchun. Parol almashtirilgach u ishlamaydi — kirish sahifasida
+  login ko‘rinmay qolgani shuni bildiradi.
+- Klaviatura lotinda va Caps Lock o‘chiq bo‘lsin. Nofaol qilingan xodim ham shu xabarni ko‘radi.
+- Yangi parol qo‘yish (Codespace yoki server terminalida):
+
+  ```bash
+  php artisan user:password                      # administrator (ADMIN_EMAIL)
+  php artisan user:password xodim@fairvalue.uz   # boshqa xodim
+  ```
+
+  Buyruq yangi parolni ikki marta so‘raydi, hisobni faol qiladi va bloklashni ochadi. E-mail
+  topilmasa, barcha xodimlar ro‘yxatini ko‘rsatadi. Parol o‘zgargani audit jurnaliga yoziladi.
+- “Urinishlar juda ko‘p” chiqsa — bir daqiqa kuting. “419 Page Expired” chiqsa — sahifani yangilab,
+  qayta kiriting.
+
 ### 2-usul: o‘z kompyuteringizda (Windows, macOS)
 
 1. [Laravel Herd](https://herd.laravel.com) ni o‘rnating — PHP va Composer u bilan birga keladi

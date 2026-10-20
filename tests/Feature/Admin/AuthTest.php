@@ -63,4 +63,22 @@ class AuthTest extends TestCase
         $this->actingAs($user)->get('/admin')->assertRedirect('/login');
         $this->assertGuest();
     }
+
+    public function test_a_forgotten_password_is_reset_in_the_terminal(): void
+    {
+        config(['fairvalue.admin.email' => 'admin@fairvalue.uz']);
+        $admin = User::factory()->admin()->create(['email' => 'admin@fairvalue.uz', 'password' => 'forgotten-1', 'is_active' => false]);
+
+        $this->artisan('user:password', ['--password' => 'short'])->assertExitCode(1);
+        $this->artisan('user:password', ['email' => 'nobody@fairvalue.uz', '--password' => 'NewPassword2026'])
+            ->expectsOutputToContain('admin@fairvalue.uz')->assertExitCode(1);
+        $this->artisan('user:password')
+            ->expectsQuestion('New password (at least 10 characters, letters and numbers)', 'NewPassword2026')
+            ->expectsQuestion('The same password again', 'NewPassword2026')
+            ->assertExitCode(0);
+
+        $this->assertSame(1, Activity::where('event', 'password_changed')->count());
+        $this->post('/login', ['email' => 'admin@fairvalue.uz', 'password' => 'NewPassword2026'])->assertRedirect('/admin');
+        $this->assertAuthenticatedAs($admin);
+    }
 }
