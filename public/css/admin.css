@@ -1130,6 +1130,7 @@ a.page-link:hover { background: var(--neutral-soft); }
 .analog-weighting .input { height: 38px; width: auto; }
 .analog-index { font-size: 12px; color: var(--muted); }
 .analog-index .input { height: 38px; width: 90px; }
+.area-copy { margin-top: -6px; }
 .analog-actions { display: flex; justify-content: flex-end; align-items: flex-end; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
 .analog-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
 .analog-summary small { font-size: 12px; opacity: .85; }

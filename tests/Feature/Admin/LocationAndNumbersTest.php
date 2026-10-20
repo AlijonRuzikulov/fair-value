@@ -60,7 +60,7 @@ class LocationAndNumbersTest extends TestCase
         $this->post('/admin/real-estates', $this->payload(['contract_number' => 'B-15']))->assertRedirect();
         $this->assertSame('B-15', RealEstate::latest('id')->value('contract_number'));
 
-        $this->get('/admin/real-estates/create?kind=residential')->assertOk()->assertSee('placeholder="670-26"', false);
+        $this->get('/admin/real-estates/create?kind=residential')->assertOk()->assertSee('placeholder="670-26"', false)->assertSee('data-area-copy', false);
 
         // Reports: the default format, then the company's own.
         $first->update(['status' => ValuationStatus::Completed]);

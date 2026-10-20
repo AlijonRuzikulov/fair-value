@@ -1135,6 +1135,7 @@
     "The sign-in page shows the first login. Set DEMO_MODE=false on the real site.": "Страница входа показывает первый логин. На рабочем сайте установите DEMO_MODE=false.",
     "The site did not let the server open the page (code :code). Paste the text of the listing below.": "Сайт не дал серверу открыть страницу (код :code). Вставьте текст объявления ниже.",
     "The technical condition and the physical wear of each structural element as seen at the inspection. The wear of the building is the average weighted by the shares of the elements in its cost (typical shares of a brick building; correct them for other buildings).": "Техническое состояние и физический износ каждого конструктивного элемента по результатам осмотра. Износ здания — средневзвешенный по долям элементов в его стоимости (типовые доли кирпичного здания; для других зданий исправьте их).",
+    "The useful, land and built-up areas are the total area (as in a flat)": "Полезная площадь, площадь участка и площадь застройки равны общей (как у квартиры)",
     "The valuation is not completed yet": "Оценка ещё не завершена",
     "The value by the comparative approach has been saved.": "Стоимость по сравнительному подходу сохранена.",
     "There is no report with this code. Check the code; if it is correct, the document may be forged — contact us.": "Отчёта с таким кодом нет. Проверьте код; если он верный, документ может быть поддельным — свяжитесь с нами.",

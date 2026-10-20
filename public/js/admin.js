@@ -785,6 +785,28 @@
     total();
   });
 
+  /* ---------- Areas of real estate taken from the total area ----------- */
+
+  $$('[data-area-copy]').forEach(function (box) {
+    var form = box.closest('form');
+    var total = $('[name="total_area"]', form);
+    var others = ['useful_area', 'land_area', 'built_up_area'].map(function (name) { return $('[name="' + name + '"]', form); }).filter(Boolean);
+    if (!total || !others.length) return;
+    function sync() {
+      others.forEach(function (input) {
+        if (box.checked) input.value = total.value;
+        input.readOnly = box.checked;
+      });
+    }
+    box.addEventListener('change', sync);
+    total.addEventListener('input', sync);
+    // Already the same everywhere: the box starts ticked.
+    if (total.value.trim() !== '' && others.every(function (input) { return input.value === total.value; })) {
+      box.checked = true;
+      sync();
+    }
+  });
+
   // PDF buttons: the file is made on the server in a few seconds; a second click would start another.
   $$('[data-pdf]').forEach(function (button) {
     button.addEventListener('click', function () {

@@ -1135,6 +1135,7 @@
     "The sign-in page shows the first login. Set DEMO_MODE=false on the real site.": "Kirish sahifasida birinchi login ko‘rinadi. Haqiqiy saytda DEMO_MODE=false qo‘ying.",
     "The site did not let the server open the page (code :code). Paste the text of the listing below.": "Sayt serverga sahifani ochishga ruxsat bermadi (kod :code). Quyida e’lon matnini qo‘ying.",
     "The technical condition and the physical wear of each structural element as seen at the inspection. The wear of the building is the average weighted by the shares of the elements in its cost (typical shares of a brick building; correct them for other buildings).": "Ko‘zdan kechirishda aniqlangan har bir konstruktiv elementning texnik holati va jismoniy eskirishi. Binoning eskirishi — elementlarning bino qiymatidagi ulushi bo‘yicha vaznli o‘rtacha (g‘isht binoning odatiy ulushlari; boshqa binolar uchun to‘g‘rilang).",
+    "The useful, land and built-up areas are the total area (as in a flat)": "Foydali maydon, yer maydoni va qurilish osti maydoni umumiy maydonga teng (kvartiradagidek)",
     "The valuation is not completed yet": "Baholash hali yakunlanmagan",
     "The value by the comparative approach has been saved.": "Qiyosiy yondashuv bo‘yicha qiymat saqlandi.",
     "There is no report with this code. Check the code; if it is correct, the document may be forged — contact us.": "Bunday kodli hisobot yo‘q. Kodni tekshiring; agar u to‘g‘ri bo‘lsa, hujjat soxta bo‘lishi mumkin — biz bilan bog‘laning.",
