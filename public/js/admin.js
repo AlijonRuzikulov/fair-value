@@ -683,4 +683,12 @@
       else $$('input', row).forEach(function (input) { if (input.type === 'checkbox') input.checked = false; else input.value = ''; });
     });
   });
+
+  // PDF buttons: the file is made on the server in a few seconds; a second click would start another.
+  $$('[data-pdf]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      button.classList.add('is-busy');
+      window.setTimeout(function () { button.classList.remove('is-busy'); }, 8000);
+    });
+  });
 })();

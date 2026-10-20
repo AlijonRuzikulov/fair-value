@@ -22,6 +22,7 @@ use App\Reports\ReportScript;
 use App\Services\Analogs\AnalogFinder;
 use App\Services\Analogs\ListingAi;
 use App\Services\CurrencyService;
+use App\Services\Pdf\PdfPrinter;
 use App\Support\CsvExport;
 use App\Support\DocumentNumber;
 use App\Support\Format;
@@ -35,7 +36,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Throwable;
 
 /**
  * List, form, card, print and export pages shared by all valuation objects.
@@ -275,16 +278,14 @@ abstract class ValuationController extends Controller
     public function contract(Request $request, string $id): Response
     {
         $item = $this->find($id);
-        $script = in_array($request->query('script'), [ReportScript::LATIN, ReportScript::CYRILLIC], true)
-            ? $request->query('script')
-            : ($item instanceof RealEstate ? RealEstateReport::values($item)['script'] : (Setting::get('report_script') === ReportScript::CYRILLIC ? ReportScript::CYRILLIC : ReportScript::LATIN));
-        $qr = $request->boolean('qr');
-        $only = in_array($request->query('doc'), ContractPack::DOCUMENTS, true) ? [$request->query('doc')] : ContractPack::DOCUMENTS;
+        [$script, $qr, $only] = $this->contractOptions($request, $item);
 
-        $link = fn (array $changes) => route($this->routeName('contract'), [$item->id, ...array_filter(['script' => $script, 'qr' => $qr ? 1 : null, 'doc' => count($only) === 1 ? $only[0] : null]), ...$changes]);
+        $params = fn (array $changes = []) => [$item->id, ...array_filter(['script' => $script, 'qr' => $qr ? 1 : null, 'doc' => count($only) === 1 ? $only[0] : null]), ...$changes];
+        $link = fn (array $changes) => route($this->routeName('contract'), $params($changes));
         $toolbar = [
             'preparing' => __('Preparing the documents…'),
             'print' => __('Print / save as PDF'),
+            'download' => ['label' => __('Download PDF'), 'url' => route($this->routeName('contract.pdf'), $params())],
             'scripts' => [
                 ['label' => 'Lotin', 'url' => $link(['script' => ReportScript::LATIN]), 'active' => $script === ReportScript::LATIN],
                 ['label' => 'Кирилл', 'url' => $link(['script' => ReportScript::CYRILLIC]), 'active' => $script === ReportScript::CYRILLIC],
@@ -294,17 +295,62 @@ abstract class ValuationController extends Controller
             'back' => ['label' => __('Back'), 'url' => route($this->routeName('show'), $item->id)],
         ];
 
+        $html = $this->contractPage($item, $script, $qr, $only, $toolbar);
+        Activity::record('printed', $item, ['document' => 'contract', 'script' => $script]);
+
+        return response($html);
+    }
+
+    /**
+     * The contract documents as a PDF file. Without Chromium on the server
+     * (or when it fails) the page opens with the print dialog instead.
+     */
+    public function contractPdf(Request $request, string $id, PdfPrinter $printer): Response|RedirectResponse
+    {
+        $item = $this->find($id);
+        [$script, $qr, $only] = $this->contractOptions($request, $item);
+        $params = [$item->id, ...array_filter(['script' => $script, 'qr' => $qr ? 1 : null, 'doc' => count($only) === 1 ? $only[0] : null])];
+
+        if ($printer->available()) {
+            try {
+                $pdf = $printer->print($this->contractPage($item, $script, $qr, $only, []));
+                Activity::record('printed', $item, ['document' => 'contract', 'script' => $script, 'format' => 'pdf']);
+                $name = 'shartnoma-'.(trim(preg_replace('/[^A-Za-z0-9]+/', '-', (string) ($item->contract_number ?: $item->id)), '-') ?: $item->id).($qr ? '-qr' : '').'.pdf';
+
+                return response($pdf, 200, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, $name),
+                ]);
+            } catch (Throwable $e) {
+                report($e);
+            }
+        }
+
+        return redirect()->route($this->routeName('contract'), [...$params, 'autoprint' => 1]);
+    }
+
+    /** @return array{string, bool, list<string>} the script, QR codes instead of signature lines, the documents */
+    private function contractOptions(Request $request, Model $item): array
+    {
+        $script = in_array($request->query('script'), [ReportScript::LATIN, ReportScript::CYRILLIC], true)
+            ? $request->query('script')
+            : ($item instanceof RealEstate ? RealEstateReport::values($item)['script'] : (Setting::get('report_script') === ReportScript::CYRILLIC ? ReportScript::CYRILLIC : ReportScript::LATIN));
+        $only = in_array($request->query('doc'), ContractPack::DOCUMENTS, true) ? [$request->query('doc')] : ContractPack::DOCUMENTS;
+
+        return [$script, $request->boolean('qr'), $only];
+    }
+
+    /** @param  list<string>  $only */
+    private function contractPage(Model $item, string $script, bool $qr, array $only, array $toolbar): string
+    {
         // The documents are in Uzbek whatever language the panel is in.
         $locale = app()->getLocale();
         app()->setLocale('uz');
         try {
-            $html = view('admin.report.contract', ContractPack::build($item, ReportScript::make($script), $qr, $only) + ['toolbar' => $toolbar])->render();
+            return view('admin.report.contract', ContractPack::build($item, ReportScript::make($script), $qr, $only) + ['toolbar' => $toolbar])->render();
         } finally {
             app()->setLocale($locale);
         }
-        Activity::record('printed', $item, ['document' => 'contract', 'script' => $script]);
-
-        return response($html);
     }
 
     public function export(Request $request): StreamedResponse

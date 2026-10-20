@@ -8,6 +8,14 @@ rm -f .devcontainer/.ready
 
 composer install --no-interaction --prefer-dist --no-progress
 
+# Chromium prints the report and the contract into PDF files (without it the
+# PDF buttons open the print dialog).
+if ! command -v chromium > /dev/null 2>&1; then
+    echo "Installing Chromium for PDF files…"
+    { sudo apt-get update -qq && sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq chromium > /dev/null; } \
+        || echo "Chromium was not installed: the PDF buttons will open the print dialog."
+fi
+
 if [ ! -f .env ]; then
     cp .env.example .env
 fi

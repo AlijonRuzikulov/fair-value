@@ -222,6 +222,10 @@ server {
 
 SSL: `sudo certbot --nginx -d fairvalue.uz -d www.fairvalue.uz`.
 
+PDF fayllar (hisobot va shartnoma) serverdagi Chromium bilan tayyorlanadi: `sudo apt install chromium`
+(Ubuntu’da `chromium-browser` yoki Google Chrome ham bo‘ladi; boshqa joyda bo‘lsa — `.env` ga
+`PDF_CHROME=/yo‘l/chrome`). Chromium bo‘lmasa, PDF tugmalari sahifani chop etish oynasi bilan ochadi.
+
 ### Cron (valyuta kurslari, audit tekshiruvi)
 
 Kurslar har 3 soatda yangilanishi, audit jurnali har kecha tekshirilishi va eski yozuvlar
@@ -419,7 +423,14 @@ hujjatlarni tayyorlaydi (A4, “Chop etish / PDF saqlash”):
 - **hisob varaq-faktura** — QQS bilan yoki QQSsiz (Sozlamalar → “QQS stavkasi”; 0 — QQS to‘lovchisi emas);
 - **baholash bo‘yicha vazifa** — shartnomaga ilova.
 
-Kirill yoki lotinda, imzo chiziqlari yoki QR-kodlar bilan chiqadi (yuqoridagi tugmalar). Shartnoma shartlari
+Kirill yoki lotinda, imzo chiziqlari yoki QR-kodlar bilan chiqadi (yuqoridagi tugmalar).
+
+**PDF fayllar.** Obyekt sahifasidagi **“PDF fayllar”** kartasida to‘rtta tugma bor: hisobot (QR kod bilan va
+QR kodsiz) va shartnoma (QR kodlar bilan va imzo chiziqlari bilan). Fayl serverda Chromium bilan bir necha
+soniyada tayyorlanib, yuklab olinadi (`hisobot-20-551-26.pdf`, `shartnoma-668-26.pdf`). Hisobot va shartnoma
+sahifalarining yuqorisida ham “PDF yuklab olish” tugmasi bor. Codespace’da Chromium o‘zi o‘rnatiladi.
+
+Shartnoma shartlari
 **Sozlamalar → Hisobot matnlari → “Xizmat ko‘rsatish shartnomasi”** da tahrirlanadi; `{object}`, `{fee}`,
 `{customer}` kabi so‘zlar obyekt ma’lumotlari bilan almashtiriladi. Sug‘urta polisi va bosh hisobchi —
 Sozlamalarda. Bitta hujjatni chiqarish: manzil oxiriga `?doc=contract` (`act`, `invoice`, `assignment`).

@@ -179,4 +179,19 @@ return [
         'attribution' => env('MAP_ATTRIBUTION', '© OpenStreetMap'),
         'center' => [41.3111, 69.2797],
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | PDF files
+    |--------------------------------------------------------------------------
+    |
+    | The report and the contract are printed into PDF files by Chromium on
+    | the server (apt install chromium). Without it the buttons open the
+    | page with the print dialog. PDF_CHROME names a Chromium in another place.
+    |
+    */
+
+    'pdf' => [
+        'chrome' => env('PDF_CHROME', ''),
+    ],
 ];

@@ -86,6 +86,17 @@
                 </div>
             </div>
 
+            <x-card :title="__('PDF files')" icon="download">
+                <div class="pdf-buttons">
+                    @if ($item instanceof \App\Models\RealEstate)
+                        <a class="btn btn-sm" href="{{ route('admin.real-estates.report.pdf', $item->id) }}" data-pdf><x-icon name="qr-code" :size="14" /> {{ __('Report PDF with QR code') }}</a>
+                        <a class="btn btn-sm" href="{{ route('admin.real-estates.report.pdf', [$item->id, 'qr' => 0]) }}" data-pdf><x-icon name="file-text" :size="14" /> {{ __('Report PDF') }}</a>
+                    @endif
+                    <a class="btn btn-sm" href="{{ route($module->routeName('contract.pdf'), [$item->id, 'qr' => 1]) }}" data-pdf><x-icon name="qr-code" :size="14" /> {{ __('Contract PDF with QR codes') }}</a>
+                    <a class="btn btn-sm" href="{{ route($module->routeName('contract.pdf'), $item->id) }}" data-pdf><x-icon name="file-pen-line" :size="14" /> {{ __('Contract PDF') }}</a>
+                </div>
+            </x-card>
+
             @include('admin.objects._workflow')
 
             @if ($module->usesApproaches())

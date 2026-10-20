@@ -11,6 +11,7 @@ use App\Reports\RealEstateReport;
 use App\Reports\ReportScript;
 use App\Services\CurrencyService;
 use App\Services\Documents\DocumentAi;
+use App\Services\Pdf\PdfPrinter;
 use App\Support\ComparativeCalculator;
 use App\Support\NumberInput;
 use Illuminate\Http\RedirectResponse;
@@ -20,7 +21,9 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\HeaderUtils;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Throwable;
 
 /**
  * The full valuation report of real estate: the form with the report data
@@ -144,26 +147,79 @@ class ValuationReportController extends Controller
     public function show(Request $request, string $id): Response
     {
         $item = RealEstate::findOrFail($id);
+        $script = self::script($request);
+        $qr = ! $request->has('qr') || $request->boolean('qr');
 
+        $active = $script ?? RealEstateReport::values($item)['script'];
+        $link = fn (array $changes) => route('admin.real-estates.report', [$item->id, ...self::query($script, $qr), ...$changes]);
+        $toolbar = [
+            'preparing' => __('Preparing the report…'),
+            'print' => __('Print / save as PDF'),
+            'download' => ['label' => __('Download PDF'), 'url' => route('admin.real-estates.report.pdf', [$item->id, ...self::query($script, $qr)])],
+            'scripts' => [
+                ['label' => 'Lotin', 'url' => $link(['script' => ReportScript::LATIN]), 'active' => $active === ReportScript::LATIN],
+                ['label' => 'Кирилл', 'url' => $link(['script' => ReportScript::CYRILLIC]), 'active' => $active === ReportScript::CYRILLIC],
+                ['label' => __('With QR codes'), 'url' => $link(['qr' => null]), 'active' => $qr],
+                ['label' => __('Without QR codes'), 'url' => $link(['qr' => 0]), 'active' => ! $qr],
+            ],
+            'edit' => Gate::allows('edit-valuation', $item) ? ['label' => __('Report data'), 'url' => route('admin.real-estates.report.edit', $item->id)] : null,
+            'back' => ['label' => __('Back'), 'url' => route('admin.real-estates.show', $item->id)],
+        ];
+
+        [$html, $data] = $this->render($item, $script, $qr, $toolbar);
+        Activity::record('printed', $item, ['document' => 'report', 'script' => $data['s']->script]);
+
+        return response($html);
+    }
+
+    /**
+     * The report as a PDF file. Without Chromium on the server (or when it
+     * fails) the report page opens with the print dialog instead.
+     */
+    public function pdf(Request $request, string $id, PdfPrinter $printer): Response|RedirectResponse
+    {
+        $item = RealEstate::findOrFail($id);
+        $script = self::script($request);
+        $qr = ! $request->has('qr') || $request->boolean('qr');
+
+        if ($printer->available()) {
+            try {
+                [$html, $data] = $this->render($item, $script, $qr, []);
+                $pdf = $printer->print($html);
+                Activity::record('printed', $item, ['document' => 'report', 'script' => $data['s']->script, 'format' => 'pdf']);
+                $name = 'hisobot-'.(trim(preg_replace('/[^A-Za-z0-9]+/', '-', (string) ($item->report_number ?: $item->id)), '-') ?: $item->id).($qr ? '' : '-qrsiz').'.pdf';
+
+                return response($pdf, 200, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => HeaderUtils::makeDisposition(HeaderUtils::DISPOSITION_ATTACHMENT, $name),
+                ]);
+            } catch (Throwable $e) {
+                report($e);
+            }
+        }
+
+        return redirect()->route('admin.real-estates.report', [$item->id, ...self::query($script, $qr), 'autoprint' => 1]);
+    }
+
+    /** @return array<string, string|int> the script and "without QR codes" of the address of the report */
+    private static function query(?string $script, bool $qr): array
+    {
+        return array_filter(['script' => $script, 'qr' => $qr ? null : 0], fn ($value) => $value !== null);
+    }
+
+    private static function script(Request $request): ?string
+    {
+        return in_array($request->query('script'), [ReportScript::LATIN, ReportScript::CYRILLIC], true) ? $request->query('script') : null;
+    }
+
+    /** @return array{string, array<string, mixed>} the page and the data of the report */
+    private function render(RealEstate $item, ?string $script, bool $qr, array $toolbar): array
+    {
         // Rates of the valuation date are downloaded once, if they are missing.
         $currency = app(CurrencyService::class);
         foreach (['USD', 'EUR', 'RUB'] as $code) {
             $currency->rateOn($code, $item->valuation_date ?? now());
         }
-
-        $script = in_array($request->query('script'), [ReportScript::LATIN, ReportScript::CYRILLIC], true) ? $request->query('script') : null;
-
-        $active = $script ?? RealEstateReport::values($item)['script'];
-        $toolbar = [
-            'preparing' => __('Preparing the report…'),
-            'print' => __('Print / save as PDF'),
-            'scripts' => [
-                ['label' => 'Lotin', 'url' => route('admin.real-estates.report', [$item->id, 'script' => ReportScript::LATIN]), 'active' => $active === ReportScript::LATIN],
-                ['label' => 'Кирилл', 'url' => route('admin.real-estates.report', [$item->id, 'script' => ReportScript::CYRILLIC]), 'active' => $active === ReportScript::CYRILLIC],
-            ],
-            'edit' => Gate::allows('edit-valuation', $item) ? ['label' => __('Report data'), 'url' => route('admin.real-estates.report.edit', $item->id)] : null,
-            'back' => ['label' => __('Back'), 'url' => route('admin.real-estates.show', $item->id)],
-        ];
 
         // The report is written in Uzbek whatever language the panel is in,
         // so it is rendered here, while the locale is switched.
@@ -171,13 +227,12 @@ class ValuationReportController extends Controller
         app()->setLocale('uz');
         try {
             $data = RealEstateReport::build($item, $script);
-            $html = view('admin.report.real-estate', $data + ['toolbar' => $toolbar])->render();
+            $html = view('admin.report.real-estate', $data + ['toolbar' => $toolbar, 'qr' => $qr])->render();
         } finally {
             app()->setLocale($locale);
         }
-        Activity::record('printed', $item, ['document' => 'report', 'script' => $data['s']->script]);
 
-        return response($html);
+        return [$html, $data];
     }
 
     /** A company document (certificate, insurance policy…) appended to reports. */

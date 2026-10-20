@@ -519,6 +519,9 @@ h1, h2, h3, h4, p { margin: 0; }
 .btn-sm { height: 32px; padding: 0 12px; font-size: 12px; border-radius: 8px; }
 .btn-icon { width: 34px; height: 34px; padding: 0; }
 .btn[disabled] { opacity: .5; pointer-events: none; }
+.btn.is-busy { opacity: .55; pointer-events: none; cursor: progress; }
+.pdf-buttons { display: grid; gap: 8px; }
+.pdf-buttons .btn { justify-content: flex-start; }
 
 /* --- Badges & chips ---------------------------------------------------- */
 

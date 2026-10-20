@@ -37,6 +37,7 @@
     print.textContent = toolbar.print || 'Print';
     print.addEventListener('click', function () { window.print(); });
     bar.appendChild(print);
+    if (toolbar.download) bar.appendChild(link(toolbar.download.label, toolbar.download.url, 'primary'));
     (toolbar.scripts || []).forEach(function (s) { bar.appendChild(link(s.label, s.url, s.active ? 'on' : '')); });
     if (toolbar.edit) bar.appendChild(link(toolbar.edit.label, toolbar.edit.url));
     if (toolbar.back) bar.appendChild(link(toolbar.back.label, toolbar.back.url));
@@ -50,6 +51,8 @@
       loading.remove();
       buildToolbar();
       document.body.setAttribute('data-paged', 'done');
+      // Opened by a PDF button while the server cannot make the file: the print dialog saves it.
+      if (/[?&]autoprint=1(&|$)/.test(window.location.search)) window.setTimeout(function () { window.print(); }, 300);
     }
   };
 })();

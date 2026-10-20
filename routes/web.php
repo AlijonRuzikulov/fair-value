@@ -63,6 +63,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
         Route::get("{$uri}/export", [$controller, 'export'])->name("{$uri}.export");
         Route::get("{$uri}/{id}/print", [$controller, 'print'])->whereNumber('id')->name("{$uri}.print");
         Route::get("{$uri}/{id}/contract", [$controller, 'contract'])->whereNumber('id')->name("{$uri}.contract");
+        Route::get("{$uri}/{id}/contract/pdf", [$controller, 'contractPdf'])->whereNumber('id')->middleware('throttle:20,1')->name("{$uri}.contract.pdf");
         Route::post("{$uri}/{id}/workflow", [$controller, 'workflow'])->whereNumber('id')->name("{$uri}.workflow");
         Route::resource($uri, $controller)->parameters([$uri => 'id']);
     }
@@ -99,6 +100,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
     // Full valuation report of real estate
     Route::controller(Admin\ValuationReportController::class)->group(function () {
         Route::get('real-estates/{id}/report', 'show')->whereNumber('id')->name('real-estates.report');
+        Route::get('real-estates/{id}/report/pdf', 'pdf')->whereNumber('id')->middleware('throttle:20,1')->name('real-estates.report.pdf');
         Route::get('real-estates/{id}/report/edit', 'edit')->whereNumber('id')->name('real-estates.report.edit');
         Route::put('real-estates/{id}/report', 'update')->whereNumber('id')->name('real-estates.report.update');
         Route::get('report-documents/{index}', 'document')->whereNumber('index')->name('report-documents.show');
