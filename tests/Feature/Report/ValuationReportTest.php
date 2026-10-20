@@ -15,9 +15,11 @@ use App\Reports\ReportScript;
 use App\Reports\ReportText;
 use App\Services\Analogs\AnalogPhoto;
 use App\Services\CurrencyService;
+use App\Support\ComparativeCalculator;
 use Database\Seeders\RegionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -240,6 +242,26 @@ class ValuationReportTest extends TestCase
 
         $this->delete('/admin/analogs/'.$analog->id.'/photo')->assertRedirect();
         Storage::disk('local')->assertMissing($path);
+    }
+
+    public function test_a_monthly_price_index_drives_the_market_conditions(): void
+    {
+        $this->actingAs($this->appraiser);
+
+        $this->put('/admin/real-estates/'.$this->flat->id.'/analogs', ['market_index' => '0,8'])->assertRedirect()->assertSessionHas('status');
+        $this->assertSame(0.8, $this->flat->fresh()->report['market_index']);
+
+        // Offers of 15 July in dollars (12 065,49) valued on 1 September (11 814,05): 48 days = 1.58 months at 0.8 %.
+        $this->assertSame(1.58, ComparativeCalculator::months(Carbon::parse('2026-07-15'), Carbon::parse('2026-09-01')));
+        $expected = round((11814.05 / 12065.49 * 1.008 ** 1.58 - 1) * 100, 2);
+        $this->get('/admin/real-estates/'.$this->flat->id.'/report')->assertOk()
+            ->assertSee('oyiga 0,8 % narx indeksi bo‘yicha', false)
+            ->assertSee(number_format($expected, 2, ',', ' ').' %', false);
+        $this->get('/admin/real-estates/'.$this->flat->id)->assertOk()->assertSee('name="market_index" value="0.8"', false);
+
+        $this->put('/admin/real-estates/'.$this->flat->id.'/analogs', ['market_index' => '45'])->assertSessionHas('error');
+        $this->put('/admin/real-estates/'.$this->flat->id.'/analogs', ['market_index' => ''])->assertSessionHas('status');
+        $this->assertNull($this->flat->fresh()->report['market_index']);
     }
 
     public function test_photos_are_only_downloaded_from_public_addresses(): void

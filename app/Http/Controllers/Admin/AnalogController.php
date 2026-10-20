@@ -169,10 +169,23 @@ class AnalogController extends Controller
 
         if (in_array($request->input('weighting'), ComparativeCalculator::WEIGHTING, true)) {
             $object->report = [...(array) $object->report, 'weighting' => $request->input('weighting')];
+        }
+        // Monthly change of prices for the market conditions; empty — not used.
+        $badIndex = false;
+        if ($request->has('market_index')) {
+            $index = NumberInput::normalize($request->input('market_index'));
+            $badIndex = $index !== null && $index !== '' && (! is_numeric($index) || abs((float) $index) > 20);
+            if (! $badIndex) {
+                $object->report = [...(array) $object->report, 'market_index' => $index === null || $index === '' ? null : (float) $index];
+            }
+        }
+        if ($object->isDirty('report')) {
             Activity::muted(fn () => $object->save());
         }
 
-        return $this->back($type, $object)->with('status', __('Changes saved.'));
+        return $badIndex
+            ? $this->back($type, $object)->with('error', __('The price index must be a number of percent per month between −20 and 20.'))
+            : $this->back($type, $object)->with('status', __('Changes saved.'));
     }
 
     /** Uploads (or replaces) the photo of an analogue shown in the report. */

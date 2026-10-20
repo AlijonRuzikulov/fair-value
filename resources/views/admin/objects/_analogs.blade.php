@@ -159,8 +159,8 @@
                                     <td colspan="8"><div class="analog-adj-inner">
                                         <span class="analog-adj-title">{{ __('Adjustments, %') }}:</span>
                                         @foreach ($adjustmentLabels as $key => $label)
-                                            @if ($key === 'market' && $analog->currency === 'USD')
-                                                <span class="adj-field" title="{{ __('Worked out from the dollar rates on the offer date and on the valuation date.') }}">
+                                            @if ($key === 'market' && ($analog->currency === 'USD' || $options['index'] !== null))
+                                                <span class="adj-field" title="{{ $options['index'] !== null ? __('Worked out from the price index for the months from the offer date to the valuation date (and from the dollar rates for a price in dollars).') : __('Worked out from the dollar rates on the offer date and on the valuation date.') }}">
                                                     <span>{{ $label }}</span>
                                                     <output class="adj-auto">{{ $row ? $percent($row['steps']['market']['percent']) : '—' }}</output>
                                                 </span>
@@ -218,6 +218,9 @@
                             <option value="count10" @selected($result['weighting'] === 'count10')>{{ __('By the number of adjustments, in whole tens of percent') }}</option>
                             <option value="size" @selected($result['weighting'] === 'size')>{{ __('By the size of adjustments') }}</option>
                         </select>
+                    </label>
+                    <label class="adj-field analog-index" title="{{ __('Market conditions follow the prices from the offer date to the valuation date: (1 + index)^months. Empty — not used.') }}"><span>{{ __('Price index, % per month') }}</span>
+                        <input class="input" name="market_index" value="{{ $options['index'] !== null ? rtrim(rtrim(number_format($options['index'], 2, '.', ''), '0'), '.') : '' }}" inputmode="decimal" placeholder="—">
                     </label>
                     <button class="btn" type="submit"><x-icon name="refresh-cw" :size="16" /> {{ __('Save and recalculate') }}</button>
                 </div>

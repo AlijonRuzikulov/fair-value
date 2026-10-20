@@ -253,12 +253,16 @@ final class RealEstateReport
         ];
     }
 
-    /** The dollar rate on the valuation date and the weighting for the comparative approach. */
+    /** The dollar rate on the valuation date, the weighting and the price index for the comparative approach. */
     public static function comparativeOptions(RealEstate $object, bool $download = false): array
     {
+        $report = (array) $object->report;
+
         return [
             'usd_rate' => app(CurrencyService::class)->rateOn('USD', $object->valuation_date ?? now(), $download),
-            'weighting' => ((array) $object->report)['weighting'] ?? 'count',
+            'weighting' => $report['weighting'] ?? 'count',
+            'index' => isset($report['market_index']) && is_numeric($report['market_index']) ? (float) $report['market_index'] : null,
+            'valuation_date' => $object->valuation_date ?? now(),
         ];
     }
 
@@ -304,7 +308,7 @@ final class RealEstateReport
         $rates = collect(['USD', 'EUR', 'RUB'])->mapWithKeys(fn ($code) => [$code => $currency->rateOn($code, $valuationDate, false)]);
 
         // Comparative approach.
-        $options = ['usd_rate' => $rates['USD'], 'weighting' => $f['weighting']];
+        $options = ['usd_rate' => $rates['USD'], 'weighting' => $f['weighting'], 'index' => isset($f['market_index']) && is_numeric($f['market_index']) ? (float) $f['market_index'] : null, 'valuation_date' => $valuationDate];
         $analogs = $object->analogs->filter(fn (Analog $a) => $a->included && $a->isUsable())->values();
         $comparative = ComparativeCalculator::calculate((float) $object->total_area, $analogs, $options);
         $usable = $object->analogs->filter->isUsable();
@@ -485,11 +489,14 @@ final class RealEstateReport
         };
         $applied = fn (string $key) => $analogs->contains(fn (Analog $a) => abs($result['rows'][$a->id]['steps'][$key]['percent'] ?? 0) >= 0.005);
 
+        $index = isset($f['market_index']) && is_numeric($f['market_index']) ? rtrim(rtrim(number_format((float) $f['market_index'], 2, ',', ''), '0'), ',') : null;
         $texts = [
             'rights' => ['Beriladigan mulkiy huquqlar', "Baholash obyekti va analoglar bo'yicha beriladigan huquqlar bir xil ({$f['rights']}) bo'lganligi sababli tuzatish kiritilmadi.", 'Beriladigan mulkiy huquqlardagi farq uchun tuzatish kiritildi: '],
             'financing' => ['Moliyalashtirish shartlari', "Barcha analoglar bo'yicha to'lov oldindan, bozor shartlarida amalga oshirilishi nazarda tutilganligi sababli tuzatish kiritilmadi.", 'Moliyalashtirish shartlaridagi farq uchun tuzatish kiritildi: '],
             'bargain' => ['Sotuv shartlari', "Analoglar narxi taklif narxi bo'lganligi sababli sotuvchi va xaridor o'rtasidagi savdolashuvni hisobga olgan holda tuzatish kiritilmadi.", "Analoglar narxi taklif narxi bo'lib, bitim narxiga o'tish uchun savdolashuvga tuzatish kiritildi: "],
-            'market' => ['Bozor shartlari', "Analoglar baholash sanasiga yaqin sanada taklif qilinganligi va narxlar so'mda ko'rsatilganligi sababli tuzatish kiritilmadi.", "Taklif sanasi va baholash sanasidagi valyuta kurslari (O'zbekiston Respublikasi Markaziy banki) farqi hisobga olinib tuzatish kiritildi: "],
+            'market' => ['Bozor shartlari', "Analoglar baholash sanasiga yaqin sanada taklif qilinganligi va narxlar so'mda ko'rsatilganligi sababli tuzatish kiritilmadi.", $index !== null
+                ? "Taklif sanasidan baholash sanasigacha narxlarning o'zgarishi oyiga {$index} % narx indeksi bo'yicha ((1 + indeks)^oylar soni), dollardagi takliflar uchun esa valyuta kurslari (O'zbekiston Respublikasi Markaziy banki) farqi ham hisobga olinib tuzatish kiritildi: "
+                : "Taklif sanasi va baholash sanasidagi valyuta kurslari (O'zbekiston Respublikasi Markaziy banki) farqi hisobga olinib tuzatish kiritildi: "],
             'location' => ['Joylashgan yeri', "Analoglar baholash obyekti bilan bir hududda, o'xshash joylashuvda bo'lganligi sababli tuzatish kiritilmadi.", "Joylashuvdagi farqlar (manzil nufuzi, markaziy yo'lga yaqinligi, tuman markazigacha masofa) hisobga olinib tuzatish kiritildi: "],
             'area' => ['Umumiy maydoni (katta-kichikligi)', "Analoglar maydoni baholash obyekti maydoniga yaqin bo'lganligi sababli tuzatish kiritilmadi.", "Maydoni katta obyektlarning 1 m² narxi past bo'lishi hisobga olinib, maydondagi farq uchun tuzatish kiritildi: "],
             'floor' => ['Qavati', "Analoglar va baholash obyekti qavati o'xshash bo'lganligi sababli tuzatish kiritilmadi.", "Birinchi va oxirgi qavatlar narxi o'rta qavatlardan past bo'lishi hisobga olinib tuzatish kiritildi: "],

@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Models\Analog;
 use App\Support\ComparativeCalculator;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class ComparativeCalculatorTest extends TestCase
@@ -99,6 +100,25 @@ class ComparativeCalculatorTest extends TestCase
 
         $withoutRate = ComparativeCalculator::calculate(60, collect([$analog]));
         $this->assertSame(0.0, $withoutRate['rows'][1]['steps']['market']['percent']);
+    }
+
+    public function test_market_conditions_can_follow_a_monthly_price_index(): void
+    {
+        // Offered on 1 July, valued on 1 October (92 days = 3.02 months), prices rise 1 % a month.
+        $sums = $this->analog(1, 600_000_000, 60, ['listed_at' => '2026-07-01', 'adjustments' => ['market' => 30]]);
+        $dollars = $this->analog(2, 600_000_000, 60, ['price' => 50_000, 'currency' => 'USD', 'usd_rate' => 12_000, 'listed_at' => '2026-07-01']);
+        $unknown = $this->analog(3, 600_000_000, 60, ['adjustments' => ['market' => 2]]);
+        $options = ['usd_rate' => 12_600, 'index' => 1.0, 'valuation_date' => '2026-10-01'];
+
+        $result = ComparativeCalculator::calculate(60, collect([$sums, $dollars, $unknown]), $options);
+
+        $this->assertSame(3.02, ComparativeCalculator::months(Carbon::parse('2026-07-01'), Carbon::parse('2026-10-01')));
+        $this->assertSame(round((1.01 ** 3.02 - 1) * 100, 2), $result['rows'][1]['steps']['market']['percent'], 'The index replaces a typed value.');
+        $this->assertSame(round((1.05 * 1.01 ** 3.02 - 1) * 100, 2), $result['rows'][2]['steps']['market']['percent'], 'Dollars: the rates and the index.');
+        $this->assertSame(0.0, $result['rows'][3]['steps']['market']['percent'], 'Without the offer date nothing follows the prices.');
+
+        $without = ComparativeCalculator::calculate(60, collect([$sums]), ['usd_rate' => 12_600, 'valuation_date' => '2026-10-01']);
+        $this->assertSame(30.0, $without['rows'][1]['steps']['market']['percent'], 'Without an index the typed value stays.');
     }
 
     public function test_offers_far_from_the_median_are_outliers(): void

@@ -3,6 +3,8 @@
 namespace App\Support;
 
 use App\Models\Analog;
+use Carbon\CarbonInterface;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 /**
@@ -16,7 +18,9 @@ final class ComparativeCalculator
     /**
      * Adjustments the appraiser can set, in percent, in the order they are
      * applied. "market" (market conditions) of an offer priced in dollars is
-     * worked out from the exchange rates on the offer and valuation dates.
+     * worked out from the exchange rates on the offer and valuation dates;
+     * with a price index it also follows the prices from the offer date to
+     * the valuation date.
      */
     public const ADJUSTMENTS = ['rights', 'financing', 'bargain', 'market', 'location', 'area', 'floor', 'material', 'condition', 'amenities', 'other'];
 
@@ -132,18 +136,29 @@ final class ComparativeCalculator
     }
 
     /**
-     * The adjustment applied for an element, in percent. Market conditions of
-     * an offer in dollars: rate on the valuation date / rate on the offer date.
+     * The adjustment applied for an element, in percent. Market conditions:
+     * an offer in dollars × rate on the valuation date / rate on the offer
+     * date; with a monthly price index also × (1 + index)^months from the
+     * offer date to the valuation date (for offers in sum as well).
      */
-    public static function adjustment(Analog $analog, string $key, ?float $usdRate = null): float
+    public static function adjustment(Analog $analog, string $key, ?float $usdRate = null, ?float $index = null, ?CarbonInterface $date = null): float
     {
-        if ($key === 'market' && $analog->currency === 'USD') {
-            return $usdRate > 0 && (float) $analog->usd_rate > 0
-                ? round(($usdRate / (float) $analog->usd_rate - 1) * 100, 2)
-                : 0.0;
+        if ($key !== 'market' || ($analog->currency !== 'USD' && $index === null)) {
+            return $analog->adjustment($key);
         }
 
-        return $analog->adjustment($key);
+        $currency = $analog->currency === 'USD' && $usdRate > 0 && (float) $analog->usd_rate > 0 ? $usdRate / (float) $analog->usd_rate : 1.0;
+        $prices = $index !== null && $date !== null && $analog->listed_at !== null
+            ? (1 + $index / 100) ** self::months(Carbon::parse($analog->listed_at), $date)
+            : 1.0;
+
+        return round(($currency * $prices - 1) * 100, 2);
+    }
+
+    /** Months (with their part) from the offer to the valuation date; negative for an offer made later. */
+    public static function months(CarbonInterface $from, CarbonInterface $to): float
+    {
+        return round($from->copy()->startOfDay()->diffInDays($to->copy()->startOfDay(), false) / 30.4375, 2);
     }
 
     /**
@@ -169,13 +184,15 @@ final class ComparativeCalculator
 
     /**
      * @param  Collection<int, Analog>  $analogs
-     * @param  array{usd_rate?: float|null, weighting?: string|null}  $options  usd_rate — dollar rate on the valuation date
+     * @param  array{usd_rate?: float|null, weighting?: string|null, index?: float|null, valuation_date?: CarbonInterface|string|null}  $options  usd_rate — dollar rate on the valuation date; index — monthly change of prices, %
      * @return array{rows: array<int, array{price_m2: float, steps: array<string, array{percent: float, value: float}>, adjusted_m2: float, total: float, count: int, gross: float, weight: float}>, count: int, price_m2: ?float, value: ?float, min: ?float, max: ?float, variation: ?float, weighting: string}
      */
     public static function calculate(?float $subjectArea, Collection $analogs, array $options = []): array
     {
         $weighting = in_array($options['weighting'] ?? null, self::WEIGHTING, true) ? $options['weighting'] : 'count';
         $usdRate = isset($options['usd_rate']) ? (float) $options['usd_rate'] : null;
+        $index = isset($options['index']) && is_numeric($options['index']) ? (float) $options['index'] : null;
+        $date = isset($options['valuation_date']) ? Carbon::parse($options['valuation_date']) : null;
 
         $rows = [];
         foreach ($analogs as $analog) {
@@ -188,7 +205,7 @@ final class ComparativeCalculator
             $count = 0;
             $gross = 0.0;
             foreach (self::ADJUSTMENTS as $key) {
-                $percent = self::adjustment($analog, $key, $usdRate);
+                $percent = self::adjustment($analog, $key, $usdRate, $index, $date);
                 $value *= 1 + $percent / 100;
                 $steps[$key] = ['percent' => $percent, 'value' => round($value, 2)];
                 $gross += abs($percent);
