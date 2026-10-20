@@ -116,6 +116,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
     Route::post('attachments', [Admin\AttachmentController::class, 'store'])->name('attachments.store');
     Route::get('attachments/{attachment}', [Admin\AttachmentController::class, 'show'])->name('attachments.show');
     Route::delete('attachments/{attachment}', [Admin\AttachmentController::class, 'destroy'])->name('attachments.destroy');
+    Route::patch('attachments/{attachment}', [Admin\AttachmentController::class, 'update'])->name('attachments.update');
+    Route::post('attachments/{attachment}/rotate', [Admin\AttachmentController::class, 'rotate'])->middleware('throttle:60,1')->name('attachments.rotate');
 
     Route::get('districts', Admin\DistrictLookupController::class)->name('districts');
 

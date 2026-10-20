@@ -61,7 +61,7 @@
                 @endif
             </x-card>
 
-            @include('admin.objects._attachments', ['owner' => $item])
+            @include('admin.objects._documents', ['owner' => $item])
 
             @if ($item->notes)
                 <x-card :title="__('Notes')" icon="message-circle">

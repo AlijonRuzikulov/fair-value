@@ -38,7 +38,7 @@
                     @php $kind = collect($result['documents'])->firstWhere('file', $i)['kind'] ?? null; @endphp
                     <a class="doc-read-file" href="{{ route('admin.attachments.show', $file) }}" target="_blank">
                         @if ($file->isImage())
-                            <img src="{{ route('admin.attachments.show', $file) }}" alt="{{ $file->name }}" loading="lazy">
+                            <img src="{{ $file->isEditableImage() ? route('admin.attachments.show', [$file, 'thumb' => 1, 'v' => $file->updated_at?->timestamp]) : route('admin.attachments.show', $file) }}" alt="{{ $file->name }}" loading="lazy">
                         @else
                             <span class="doc-read-pdf"><x-icon name="file-text" :size="28" /></span>
                         @endif

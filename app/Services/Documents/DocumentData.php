@@ -2,6 +2,7 @@
 
 namespace App\Services\Documents;
 
+use App\Enums\DocumentKind;
 use App\Models\Attachment;
 use App\Models\District;
 use App\Models\Region;
@@ -26,6 +27,19 @@ final class DocumentData
     private const MAX_SIDE = 2000;
 
     private const MAX_FILES = 6;
+
+    /** The kind of an attached file for a kind of document the AI recognised. */
+    public static function attachmentKind(string $kind): ?DocumentKind
+    {
+        return match ($kind) {
+            'id_card', 'passport' => DocumentKind::Passport,
+            'cadastral_extract' => DocumentKind::Cadastral,
+            'technical_passport' => DocumentKind::TechnicalPassport,
+            'contract' => DocumentKind::Contract,
+            'photo' => DocumentKind::Photo,
+            default => null,
+        };
+    }
 
     /**
      * Images and PDFs of the attachments, ready for DocumentAi::read().

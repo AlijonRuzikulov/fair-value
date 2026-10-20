@@ -133,6 +133,10 @@ class DocumentReadController extends Controller
                 $fileId = $session['files'][$document['file']] ?? null;
                 if ($fileId) {
                     $roles[$fileId] = $document['kind'] === 'photo' ? 'photo' : 'document';
+                    $kind = DocumentData::attachmentKind($document['kind']);
+                    if ($kind) {
+                        $item->attachments()->whereKey($fileId)->update(['kind' => $kind->value]);
+                    }
                 }
             }
             $report['attachments'] = $roles;

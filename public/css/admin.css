@@ -1471,3 +1471,30 @@ summary.btn::-webkit-details-marker { display: none; }
 .object-map { display: grid; gap: 10px; }
 .object-map .static-map { width: 100% !important; }
 .map-links { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* Documents of a valuation object, one place for each kind */
+.dropzone-sm { flex-direction: row; justify-content: center; flex-wrap: wrap; padding: 12px; margin-bottom: 14px; }
+.doc-slots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.doc-slot { display: grid; gap: 10px; align-content: start; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: #fff; min-width: 0; }
+.doc-slot.is-wide { grid-column: 1 / -1; }
+.doc-slot.is-missing { border-color: #f5c27a; background: #fffaf2; }
+.doc-slot-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; }
+.doc-slot-icon { display: inline-flex; width: 28px; height: 28px; align-items: center; justify-content: center; border-radius: 8px; background: var(--brand-soft); color: var(--brand-ink); }
+.doc-slot-add { margin-left: auto; }
+.doc-slot-add label { cursor: pointer; }
+.doc-slot-empty { margin: 0; color: var(--muted); font-size: 13px; }
+.doc-thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.doc-thumb { margin: 0; display: grid; gap: 6px; padding: 6px; border: 1px solid var(--line); border-radius: 12px; background: #fafbfc; min-width: 0; }
+.doc-thumb-view { display: block; height: 116px; border-radius: 8px; overflow: hidden; background: #eef1f5; }
+.doc-thumb-view img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.doc-thumb-file { display: flex; height: 100%; align-items: center; justify-content: center; font-weight: 800; color: var(--muted); letter-spacing: .06em; }
+.doc-thumb figcaption { display: grid; min-width: 0; font-size: 12px; }
+.doc-thumb-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; color: var(--ink); }
+.doc-thumb figcaption small { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.doc-thumb-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; }
+.doc-thumb-kind { flex: 1 1 100%; }
+.doc-thumb-kind select { width: 100%; height: 30px; padding: 2px 8px; font-size: 12px; }
+@media (max-width: 720px) { .doc-slots { grid-template-columns: 1fr; } }
+.doc-thumb-tools .btn-icon { width: 30px; height: 30px; padding: 0; }
+.doc-thumb-tools form { display: contents; }
+.doc-thumb-tools .doc-thumb-kind { display: block; }

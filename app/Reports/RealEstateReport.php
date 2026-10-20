@@ -2,6 +2,7 @@
 
 namespace App\Reports;
 
+use App\Enums\DocumentKind;
 use App\Enums\PersonRole;
 use App\Enums\RealEstateKind;
 use App\Enums\ValuationApproach;
@@ -262,7 +263,12 @@ final class RealEstateReport
         $saved = (array) ($values['attachments'] ?? []);
 
         return $object->attachments->filter->isImage()->sortBy('id')->values()->map(function (Attachment $file) use ($saved) {
-            $guess = preg_match('/pasport|passport|паспорт|kadastr|кадастр|guvohnoma|гувоҳнома|ko.?chirma|кўчирма|hujjat|ҳужжат|document|scan|скан|shartnoma|шартнома|id.?card/iu', $file->name) ? 'document' : 'photo';
+            // Photos go to the photo pages, scans of documents to the appendix, the rest is left out.
+            $guess = match ($file->documentKind()) {
+                DocumentKind::Photo => 'photo',
+                DocumentKind::Passport, DocumentKind::Cadastral, DocumentKind::TechnicalPassport => 'document',
+                default => 'skip',
+            };
             $file->setAttribute('report_role', in_array($saved[$file->id] ?? null, ['photo', 'document', 'skip'], true) ? $saved[$file->id] : $guess);
 
             return $file;

@@ -100,7 +100,7 @@
                                     <label class="doc-ai-file">
                                         <input type="checkbox" name="files[]" value="{{ $file->id }}" @checked($guessDocument($file))>
                                         @if ($file->isImage())
-                                            <img src="{{ route('admin.attachments.show', $file) }}" alt="" loading="lazy">
+                                            <img src="{{ $file->isEditableImage() ? route('admin.attachments.show', [$file, 'thumb' => 1, 'v' => $file->updated_at?->timestamp]) : route('admin.attachments.show', $file) }}" alt="" loading="lazy">
                                         @else
                                             <span class="doc-read-pdf"><x-icon name="file-text" :size="22" /></span>
                                         @endif
@@ -205,7 +205,7 @@
                         <div class="report-images">
                             @foreach ($images as $file)
                                 <div class="report-image">
-                                    <img src="{{ route('admin.attachments.show', $file) }}" alt="{{ $file->name }}" loading="lazy">
+                                    <img src="{{ $file->isEditableImage() ? route('admin.attachments.show', [$file, 'thumb' => 1, 'v' => $file->updated_at?->timestamp]) : route('admin.attachments.show', $file) }}" alt="{{ $file->name }}" loading="lazy">
                                     <small title="{{ $file->name }}">{{ $file->name }}</small>
                                     <select class="input" name="attachments[{{ $file->id }}]" aria-label="{{ $file->name }}">
                                         <option value="photo" @selected($file->report_role === 'photo')>{{ __('Photo of the object') }}</option>

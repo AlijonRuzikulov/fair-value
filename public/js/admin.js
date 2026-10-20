@@ -394,8 +394,11 @@
   /* ---------- Attachments --------------------------------------------- */
 
   // A file field that belongs to another form (form="…") sends it as soon as a file is chosen.
+  // A select (or a file field) that sends its form as soon as it is changed.
   $$('[data-submit-on-change]').forEach(function (input) {
-    input.addEventListener('change', function () { if (input.files.length && input.form) input.form.submit(); });
+    input.addEventListener('change', function () {
+      if (input.form && (input.type !== 'file' || input.files.length)) input.form.submit();
+    });
   });
 
   $$('[data-upload]').forEach(function (form) {

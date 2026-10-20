@@ -426,6 +426,10 @@ Sozlamalarda. Bitta hujjatni chiqarish: manzil oxiriga `?doc=contract` (`act`, `
   `{yyyy}/{nnnn}` → 2026/0001. Oldingi tizimdagi oxirgi raqamni bitta obyektga qo‘lda yozsangiz, keyingilari
   undan davom etadi.
 - **To‘lovlar:** xizmat narxi, to‘langan summa va qarzdorlik obyekt sahifasida ko‘rinadi.
+- **Hujjat joylari:** obyekt sahifasida har bir hujjat turining o‘z joyi bor — pasport (ID-karta) nusxasi, ariza,
+  kadastr hujjati, texnik pasport, obyekt rasmlari, boshqa fayllar. Yetishmayotgan majburiy hujjatlar belgilanadi;
+  fayl turi nomidan aniqlanadi va o‘zgartiriladi. Yonbosh olingan rasm va skanerlar **chapga/o‘ngga aylantiriladi**
+  (hisobotga ham aylangan holda chiqadi). Telefonda “Qo‘shish” kamerani ochadi.
 
 ### Telegram’ga ariza xabarlari
 
