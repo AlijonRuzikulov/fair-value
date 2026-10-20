@@ -83,7 +83,7 @@ class ListingParser
         return [
             'url' => $url, 'title' => null, 'price' => null, 'currency' => null, 'area' => null,
             'rooms' => null, 'floor' => null, 'floors_total' => null, 'location' => null,
-            'condition' => null, 'wall_material' => null, 'listed_at' => null, 'image' => null,
+            'condition' => null, 'wall_material' => null, 'communications' => null, 'listed_at' => null, 'image' => null,
         ];
     }
 

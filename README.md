@@ -342,6 +342,12 @@ Server faqat ro‘yxatdagi saytlarga murojaat qiladi (`ANALOG_DOMAINS`).
 **Muhim:** e’lonlar — sotuvchining so‘ragan narxi; topilgan qiymatlar va tuzatishlarni har doim baholovchi
 tekshiradi. Saytlar tuzilishini o‘zgartirsa, ba’zi maydonlarni qo‘lda to‘ldirishga to‘g‘ri kelishi mumkin.
 
+**Vaznlar** uch usulda: tuzatishlar soniga ko‘ra, tuzatishlar soniga ko‘ra **butun o‘n foizlarda** (30 / 40 / 30 %)
+va tuzatishlar miqdoriga ko‘ra. **Qulayliklar** tuzatishi analogning muhandislik kommunikatsiyalaridan avtomatik
+hisoblanadi: obyektda bor, analogda yo‘q har bir kommunikatsiya uchun +1 % (`fairvalue.analogs.communication_step`).
+Kommunikatsiyalar e’londan o‘qiladi yoki analog qatorida belgilanadi; belgilanmagan bo‘lsa — noma’lum, tuzatish yo‘q.
+Hisobotdagi jadval 10-son MBS bo‘yicha barcha taqqoslash elementlarini (ijara bilan bog‘liqlarini ham) ko‘rsatadi.
+
 ### To‘liq baholash hisoboti (ko‘chmas mulk)
 
 Ko‘chmas mulk sahifasidagi **“Baholash hisoboti”** tugmasi tizimdagi ma’lumotlardan to‘liq hisobotni

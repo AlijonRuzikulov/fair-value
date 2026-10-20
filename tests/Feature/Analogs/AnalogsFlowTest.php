@@ -213,6 +213,37 @@ class AnalogsFlowTest extends TestCase
         $this->assertContains('cost', $flat->approaches);
     }
 
+    public function test_communications_of_an_analogue_set_the_adjustment_for_amenities(): void
+    {
+        $this->withoutAi();
+        $this->flat->update(['features' => ['electricity', 'gas', 'water', 'sewerage', 'heating', 'hot_water', 'elevator'], 'approaches' => ['comparative']]);
+        $this->actingAs($this->user)->post($this->url(), ['mode' => 'manual', 'title' => 'Kvartira A', 'price' => '600 000 000', 'currency' => 'UZS', 'area' => '60'])->assertSessionHasNoErrors();
+        $analog = $this->flat->analogs()->sole();
+        $this->assertNull($analog->communications);
+
+        $row = ['price' => $analog->price, 'currency' => 'UZS', 'area' => $analog->area, 'included' => '1', 'adjustments' => ['bargain' => '-5', 'amenities' => '0'], 'communications_shown' => '1'];
+        $this->put($this->url(), ['analogs' => [$analog->id => [...$row, 'communications' => ['electricity', 'gas', 'water', 'sewerage', 'nonsense']]], 'weighting' => 'count10'])->assertRedirect();
+
+        $analog->refresh();
+        $this->assertSame(['electricity', 'gas', 'water', 'sewerage'], $analog->communications);
+        $this->assertSame(2.0, (float) $analog->adjustments['amenities'], 'Six against four communications: +2 %.');
+        $this->assertSame('count10', $this->flat->fresh()->report['weighting']);
+
+        // Saving without marks leaves them unknown: no adjustment is added.
+        $other = $this->flat->analogs()->create(['status' => Analog::READY, 'title' => 'B', 'price' => 600_000_000, 'currency' => 'UZS', 'price_uzs' => 600_000_000, 'area' => 60, 'included' => true]);
+        $this->put($this->url(), ['analogs' => [$other->id => [...$row, 'adjustments' => ['amenities' => '0']]]]);
+        $this->assertNull($other->fresh()->communications);
+        $this->assertSame(0.0, (float) $other->fresh()->adjustments['amenities']);
+
+        // Unchanged communications keep the amenities adjustment the appraiser typed.
+        $this->put($this->url(), ['analogs' => [$analog->id => [...$row, 'adjustments' => ['amenities' => '3'], 'communications' => $analog->communications]]]);
+        $this->assertSame(3.0, (float) $analog->fresh()->adjustments['amenities']);
+
+        $this->get('/admin/real-estates/'.$this->flat->id.'/report?script=latn')->assertOk()
+            ->assertSee('elektr energiya ta’minoti, gaz ta’minoti, suv ta’minoti, kanalizatsiya (4)', false)
+            ->assertSee('butun o‘n foizlarga yaxlitlandi', false);
+    }
+
     public function test_choosing_the_comparative_approach_starts_the_search(): void
     {
         $this->fakeAi(found: []);

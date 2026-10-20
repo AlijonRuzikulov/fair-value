@@ -135,6 +135,7 @@ return [
         'area_elasticity' => 0.1,    // larger flats cost less per m²
         'max_area_adjustment' => 10.0,
         'max_condition_adjustment' => 30.0,
+        'communication_step' => 1.0, // % for each engineering communication the analogue lacks
         'outlier' => 0.35,           // further than ±35 % from the median → left out
     ],
 

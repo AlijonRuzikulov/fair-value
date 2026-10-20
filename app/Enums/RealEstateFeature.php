@@ -22,6 +22,16 @@ enum RealEstateFeature: string
     case AirConditioning = 'air_conditioning';
     case Basement = 'basement';
 
+    /**
+     * Engineering communications, compared with those of analogues.
+     *
+     * @return list<self>
+     */
+    public static function communications(): array
+    {
+        return [self::Electricity, self::Gas, self::Water, self::Sewerage, self::Heating, self::HotWater];
+    }
+
     public function label(): string
     {
         return match ($this) {

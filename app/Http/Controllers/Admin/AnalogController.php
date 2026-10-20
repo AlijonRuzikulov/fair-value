@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\RealEstateFeature;
 use App\Enums\ValuationApproach;
 use App\Http\Controllers\Controller;
 use App\Models\Activity;
@@ -114,7 +115,16 @@ class AnalogController extends Controller
                 $adjustments[$key] = max(-50, min(50, round($value, 2)));
             }
 
+            // Communications: unknown (null) until at least one is marked.
+            $communications = isset($row['communications_shown'])
+                ? (array_values(array_intersect(array_column(RealEstateFeature::communications(), 'value'), (array) ($row['communications'] ?? []))) ?: null)
+                : $analog->communications;
+            if ($communications !== $analog->communications) {
+                $adjustments['amenities'] = ComparativeCalculator::amenities(AnalogFinder::communications($object), $communications);
+            }
+
             $analog->fill([
+                'communications' => $communications,
                 'price' => is_numeric($price) && (float) $price > 0 ? (float) $price : null,
                 'currency' => $code,
                 'area' => self::positive($row['area'] ?? null),

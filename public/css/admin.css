@@ -1498,3 +1498,8 @@ summary.btn::-webkit-details-marker { display: none; }
 .doc-thumb-tools .btn-icon { width: 30px; height: 30px; padding: 0; }
 .doc-thumb-tools form { display: contents; }
 .doc-thumb-tools .doc-thumb-kind { display: block; }
+.analog-comms { flex: 1 1 100%; }
+.analog-comm-list { display: flex; flex-wrap: wrap; gap: 4px; }
+.comm-chip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border: 1px solid var(--line); border-radius: 999px; font-size: 12px; cursor: pointer; background: #fff; }
+.comm-chip:has(input:checked) { border-color: var(--brand); background: var(--brand-soft); color: var(--brand-ink); }
+.comm-chip input { margin: 0; accent-color: var(--brand); }

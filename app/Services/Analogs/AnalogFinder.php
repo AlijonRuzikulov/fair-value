@@ -2,6 +2,7 @@
 
 namespace App\Services\Analogs;
 
+use App\Enums\RealEstateFeature;
 use App\Models\Analog;
 use App\Models\RealEstate;
 use App\Services\CurrencyService;
@@ -223,6 +224,7 @@ class AnalogFinder
             'location' => $listing['location'] ?? null,
             'condition' => $listing['condition'] ?? null,
             'wall_material' => isset($listing['wall_material']) ? mb_substr($listing['wall_material'], 0, 250) : null,
+            'communications' => $listing['communications'] ?? null,
             'image_url' => $image ?? $analog->image_url,
             'listed_at' => $listing['listed_at'] ?? null,
             'included' => true,
@@ -250,6 +252,14 @@ class AnalogFinder
     }
 
     /** What the analogues are compared with. */
+    /** Engineering communications of the object (its features that are communications). */
+    public static function communications(Model $object): array
+    {
+        $keys = array_column(RealEstateFeature::communications(), 'value');
+
+        return array_values(array_intersect($keys, (array) ($object->features ?? [])));
+    }
+
     public static function subject(Model $object): array
     {
         $object->loadMissing(['region', 'district']);
@@ -263,6 +273,7 @@ class AnalogFinder
             'floors_total' => $object->floors_total ?? null,
             'year_built' => $object->year_built ?? null,
             'condition' => $object->condition ?? null,
+            'communications' => self::communications($object),
             'region' => $object->region?->name,
             'district' => $object->district?->name,
             'address' => $object->address,

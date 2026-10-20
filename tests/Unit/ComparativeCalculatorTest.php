@@ -121,4 +121,40 @@ class ComparativeCalculatorTest extends TestCase
         $this->assertNull($result['value']);
         $this->assertSame(0, $result['count']);
     }
+
+    public function test_weights_can_be_rounded_to_whole_tens_of_percent(): void
+    {
+        $this->assertSame([1 => 0.3, 2 => 0.4, 3 => 0.3], ComparativeCalculator::roundWeights([1 => 3 / 11, 2 => 4 / 11, 3 => 3 / 11]));
+        $this->assertSame([7 => 0.5, 8 => 0.5], ComparativeCalculator::roundWeights([7 => 0.5, 8 => 0.5]));
+        $five = ComparativeCalculator::roundWeights([0.05, 0.05, 0.3, 0.3, 0.3]);
+        $this->assertEqualsWithDelta(1.0, array_sum($five), 0.0001);
+        $this->assertGreaterThanOrEqual(0.1, min($five), 'Every analogue keeps at least one step.');
+        $six = ComparativeCalculator::roundWeights(array_fill(0, 6, 1 / 6));
+        $this->assertEqualsWithDelta(1.0, array_sum($six), 0.0001);
+        $this->assertSame(0.0, fmod(round(min($six) * 100), 5.0), 'Steps of 5 % for more than five analogues.');
+
+        // Counts 4, 3 and 4 give 30 / 40 / 30 %, as in the template report.
+        $adjust = fn (int $n) => array_slice(['rights' => 1, 'location' => 1, 'area' => 1, 'floor' => 1, 'condition' => 1], 0, $n);
+        $analogs = collect([
+            $this->analog(1, 600_000_000, 60, ['adjustments' => $adjust(4)]),
+            $this->analog(2, 660_000_000, 60, ['adjustments' => $adjust(3)]),
+            $this->analog(3, 540_000_000, 60, ['adjustments' => $adjust(4)]),
+        ]);
+        $result = ComparativeCalculator::calculate(61.52, $analogs, ['weighting' => 'count10']);
+        $this->assertSame([0.3, 0.4, 0.3], array_values(array_column($result['rows'], 'weight')));
+        $expected = $result['rows'][1]['adjusted_m2'] * 0.3 + $result['rows'][2]['adjusted_m2'] * 0.4 + $result['rows'][3]['adjusted_m2'] * 0.3;
+        $this->assertEqualsWithDelta($expected, $result['price_m2'], 0.01);
+        $this->assertSame('count10', $result['weighting']);
+    }
+
+    public function test_each_communication_the_analogue_lacks_adds_one_percent(): void
+    {
+        $object = ['electricity', 'gas', 'water', 'sewerage', 'heating', 'hot_water'];
+        $this->assertSame(2.0, ComparativeCalculator::amenities($object, ['electricity', 'gas', 'water', 'sewerage']));
+        $this->assertSame(0.0, ComparativeCalculator::amenities($object, null), 'Unknown communications: no adjustment.');
+        $this->assertSame(-1.0, ComparativeCalculator::amenities(['gas'], ['gas', 'water']));
+
+        $suggested = ComparativeCalculator::suggest(['area' => 60.0, 'communications' => $object], $this->analog(1, 1, 60, ['communications' => ['gas', 'water', 'electricity', 'sewerage']]));
+        $this->assertSame(2.0, $suggested['amenities']);
+    }
 }

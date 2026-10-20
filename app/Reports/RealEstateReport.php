@@ -440,9 +440,11 @@ final class RealEstateReport
             ['title' => 'Funksional foydaliligi', 'key' => null, 'subject' => $f['function'], 'analogs' => $same($f['function'])],
             ['title' => 'Qurilish tugallanganligi', 'key' => null, 'subject' => $f['completion'].' %', 'analogs' => $same('100 %')],
             ['title' => 'Obodonlashtirilganligi', 'key' => null, 'subject' => $f['landscaping'], 'analogs' => $same($f['landscaping'])],
-            ['title' => 'Qulayliklari (muhandislik kommunikatsiyalari)', 'key' => 'amenities', 'subject' => $communications ? implode(', ', $communications) : '—', 'analogs' => $same('Markazlashgan')],
+            ['title' => 'Qulayliklari (muhandislik kommunikatsiyalari)', 'key' => 'amenities', 'subject' => $communications ? implode(', ', $communications).' ('.count($communications).')' : '—',
+                'analogs' => $of(fn (Analog $a) => $a->communications === null ? "Ma'lumot mavjud emas" : (($names = array_values(array_intersect_key(self::COMMUNICATIONS, array_flip($a->communications)))) ? implode(', ', $names).' ('.count($names).')' : 'Mavjud emas'))],
             ['title' => 'Uchastka ekologiyasi', 'key' => null, 'subject' => "Ma'lumot mavjud emas", 'analogs' => $same("Ma'lumot mavjud emas")],
-            ['title' => "Daromadga ta'sir qiluvchi tavsiflar", 'key' => null, 'subject' => "Ma'lumot mavjud emas", 'analogs' => $same("Ma'lumot mavjud emas")],
+            ['title' => "Daromadga ta'sir qiluvchi tavsiflar (foydalanish xarajatlari)", 'key' => null, 'subject' => "Ma'lumot mavjud emas", 'analogs' => $same("Ma'lumot mavjud emas")],
+            ['title' => "Ijara bilan bog'liq elementlar: ijara shartnomasi shartlari va muddati, ijarani uzaytirish, ijarachilarning ishonchliligi, ijara narxidagi chegirmalar, boshqaruv sifati, sotuv narxining ijara stavkasi bilan bog'liqligi, subsidiya va imtiyozlar", 'key' => null, 'subject' => "Ma'lumot mavjud emas", 'analogs' => $same("Ma'lumot mavjud emas")],
             ['title' => 'Eng samarali foydalanishga muvofiqligi', 'key' => null, 'subject' => 'Joriy foydalanish samarali', 'analogs' => $same('Joriy foydalanish samarali')],
             ['title' => "Ko'chmas mulk hisoblanmaydigan komponentlar", 'key' => null, 'subject' => 'Mavjud emas', 'analogs' => $same('Mavjud emas')],
         ];
@@ -485,7 +487,7 @@ final class RealEstateReport
             'floor' => ['Qavati', "Analoglar va baholash obyekti qavati o'xshash bo'lganligi sababli tuzatish kiritilmadi.", "Birinchi va oxirgi qavatlar narxi o'rta qavatlardan past bo'lishi hisobga olinib tuzatish kiritildi: "],
             'material' => ['Qurilish materiallari', "Analoglar devor materiali baholash obyektiniki bilan o'xshash bo'lganligi sababli tuzatish kiritilmadi.", 'Devor materialidagi farq uchun tuzatish kiritildi: '],
             'condition' => ["Bino holati (ta'mir)", "Analoglar ta'mir holati baholash obyektiniki bilan o'xshash bo'lganligi sababli tuzatish kiritilmadi.", "Ta'mir holatidagi farq KMK 2.01.16-97 bo'yicha eskirish darajalari asosida hisobga olindi ((100 − obyekt eskirishi) / (100 − analog eskirishi)): "],
-            'amenities' => ['Qulayliklari', "Analoglar va baholash obyektida muhandislik kommunikatsiyalari bir xil bo'lganligi sababli tuzatish kiritilmadi.", 'Muhandislik kommunikatsiyalari va qulayliklardagi farq uchun tuzatish kiritildi: '],
+            'amenities' => ['Qulayliklari', "Analoglar va baholash obyektida muhandislik kommunikatsiyalari bir xil bo'lganligi sababli tuzatish kiritilmadi.", 'Muhandislik kommunikatsiyalari soni bo‘yicha farq uchun (har bir kommunikatsiya — '.rtrim(rtrim(number_format((float) config('fairvalue.analogs.communication_step', 1.0), 2, ',', ''), '0'), ',').' %) tuzatish kiritildi: '],
             'other' => ['Boshqa farqlar', '', 'Boshqa farqlar uchun tuzatish kiritildi: '],
         ];
 
@@ -500,9 +502,11 @@ final class RealEstateReport
 
         $counts = $analogs->map(fn (Analog $a) => '№'.$no[$a->id].' — '.$result['rows'][$a->id]['count'])->implode('; ');
         $weights = $analogs->map(fn (Analog $a) => '№'.$no[$a->id].' — '.$number($result['rows'][$a->id]['weight'] * 100, 2).' %')->implode('; ');
-        $out[] = ['title' => 'Vaznlar', 'text' => $result['weighting'] === 'count'
-            ? "Kiritilgan tuzatishlar soni (savdolashishdan tashqari): {$counts}. Vaznlar tuzatishlar soniga teskari proporsional aniqlandi — kamroq tuzatish kiritilgan analog baholash obyektiga ko'proq o'xshash: {$weights}."
-            : "Vaznlar kiritilgan tuzatishlarning umumiy miqdoriga (mutlaq qiymatlar yig'indisiga) teskari proporsional aniqlandi — kichikroq tuzatish kiritilgan analog baholash obyektiga ko'proq o'xshash: {$weights}."];
+        $out[] = ['title' => 'Vaznlar', 'text' => match ($result['weighting']) {
+            'count' => "Kiritilgan tuzatishlar soni (savdolashishdan tashqari): {$counts}. Vaznlar tuzatishlar soniga teskari proporsional aniqlandi — kamroq tuzatish kiritilgan analog baholash obyektiga ko'proq o'xshash: {$weights}.",
+            'count10' => "Kiritilgan tuzatishlar soni (savdolashishdan tashqari): {$counts}. Vaznlar tuzatishlar soniga teskari proporsional aniqlanib, butun o'n foizlarga yaxlitlandi (yig'indisi 100 %) — kamroq tuzatish kiritilgan analog baholash obyektiga ko'proq o'xshash: {$weights}.",
+            default => "Vaznlar kiritilgan tuzatishlarning umumiy miqdoriga (mutlaq qiymatlar yig'indisiga) teskari proporsional aniqlandi — kichikroq tuzatish kiritilgan analog baholash obyektiga ko'proq o'xshash: {$weights}.",
+        }];
 
         if ($result['variation'] !== null) {
             $out[] = ['title' => 'Natijalarning bir xilligi', 'text' => 'Tuzatishlardan keyingi 1 m² narxlarining variatsiya koeffitsiyenti '.$number($result['variation'], 1).' % ni tashkil etdi'.($result['variation'] <= 33 ? " (33 % dan kam) — analoglar to'plami bir xil va natija ishonchli." : ' (33 % dan ko\'p) — analoglar o\'rtasida sezilarli farq mavjud.')];

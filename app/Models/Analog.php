@@ -21,7 +21,7 @@ class Analog extends Model
 
     protected $fillable = [
         'status', 'source', 'url', 'image_url', 'photo_path', 'title', 'price', 'currency', 'usd_rate', 'price_uzs',
-        'area', 'rooms', 'floor', 'floors_total', 'location', 'condition', 'wall_material', 'listed_at',
+        'area', 'rooms', 'floor', 'floors_total', 'location', 'condition', 'wall_material', 'communications', 'listed_at',
         'adjustments', 'included', 'note', 'created_by',
     ];
 
@@ -33,6 +33,7 @@ class Analog extends Model
     protected function casts(): array
     {
         return [
+            'communications' => 'array',
             'price' => 'decimal:2',
             'usd_rate' => 'decimal:2',
             'price_uzs' => 'decimal:2',

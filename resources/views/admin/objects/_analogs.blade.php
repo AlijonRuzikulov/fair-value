@@ -169,6 +169,17 @@
                                         <label class="adj-field"><span>{{ __('Offer date') }}</span><input class="input w-140" type="date" name="{{ $name }}[listed_at]" value="{{ $analog->listed_at?->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}" @disabled(! $canEdit)></label>
                                         <label class="adj-field"><span>{{ __('Condition') }}</span><input class="input w-140" name="{{ $name }}[condition]" value="{{ $analog->condition }}" list="analog-conditions" @disabled(! $canEdit)></label>
                                         <label class="adj-field"><span>{{ __('Walls') }}</span><input class="input w-120" name="{{ $name }}[wall_material]" value="{{ $analog->wall_material }}" list="analog-walls" @disabled(! $canEdit)></label>
+                                        @if ($item instanceof \App\Models\RealEstate)
+                                            <span class="adj-field analog-comms" title="{{ __('Engineering communications of the analogue: each one the object has and the analogue lacks adds 1 % (Amenities).') }}">
+                                                <span>{{ __('Communications') }}</span>
+                                                <input type="hidden" name="{{ $name }}[communications_shown]" value="1">
+                                                <span class="analog-comm-list">
+                                                    @foreach (\App\Enums\RealEstateFeature::communications() as $comm)
+                                                        <label class="comm-chip"><input type="checkbox" name="{{ $name }}[communications][]" value="{{ $comm->value }}" @checked(in_array($comm->value, (array) $analog->communications, true)) @disabled(! $canEdit)><span>{{ $comm->label() }}</span></label>
+                                                    @endforeach
+                                                </span>
+                                            </span>
+                                        @endif
                                         @if ($analog->currency === 'USD' && $analog->usd_rate)<span class="faint">USD {{ Format::number($analog->usd_rate, 2) }}</span>@endif
                                         <span class="analog-photo">
                                             @if ($analog->photo_path)
@@ -196,6 +207,7 @@
                     <label class="adj-field analog-weighting"><span>{{ __('Weights of the analogues') }}</span>
                         <select class="input" name="weighting">
                             <option value="count" @selected($result['weighting'] === 'count')>{{ __('By the number of adjustments') }}</option>
+                            <option value="count10" @selected($result['weighting'] === 'count10')>{{ __('By the number of adjustments, in whole tens of percent') }}</option>
                             <option value="size" @selected($result['weighting'] === 'size')>{{ __('By the size of adjustments') }}</option>
                         </select>
                     </label>

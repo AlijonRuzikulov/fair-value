@@ -20,8 +20,12 @@ final class ComparativeCalculator
      */
     public const ADJUSTMENTS = ['rights', 'financing', 'bargain', 'market', 'location', 'area', 'floor', 'material', 'condition', 'amenities', 'other'];
 
-    /** Weighting of the adjusted prices: the fewer (or the smaller) adjustments, the larger the weight. */
-    public const WEIGHTING = ['count', 'size'];
+    /**
+     * Weighting of the adjusted prices: the fewer (or the smaller) adjustments,
+     * the larger the weight. "count10" is the weighting by the number of
+     * adjustments rounded to whole tens of percent (30 / 40 / 30 %).
+     */
+    public const WEIGHTING = ['count', 'count10', 'size'];
 
     /** Physical wear in percent by repair state, used to compare the condition (KMK 2.01.16-97). */
     private const WEAR = [
@@ -68,7 +72,24 @@ final class ComparativeCalculator
             'area' => $area,
             'floor' => round($floor, 1),
             'condition' => $condition,
+            'amenities' => self::amenities($subject['communications'] ?? [], $analog->communications),
         ];
+    }
+
+    /**
+     * Engineering communications: each one the object has and the analogue
+     * does not raises the analogue's price by a step (1 % by default).
+     *
+     * @param  list<string>  $subject
+     * @param  list<string>|null  $analog  null when not known
+     */
+    public static function amenities(array $subject, ?array $analog): float
+    {
+        if ($analog === null || $subject === []) {
+            return 0.0;
+        }
+
+        return round((count(array_unique($subject)) - count(array_unique($analog))) * (float) config('fairvalue.analogs.communication_step', 1.0), 2);
     }
 
     /** Wear in percent for a repair state written in Uzbek, Russian or English; null if unknown. */
@@ -183,7 +204,7 @@ final class ComparativeCalculator
                 'total' => round(($value / $priceM2 - 1) * 100, 2),
                 'count' => $count,
                 'gross' => round($gross, 2),
-                'raw_weight' => $weighting === 'count' ? 1 / max(1, $count) : 1 / (1 + $gross / 100),
+                'raw_weight' => $weighting === 'size' ? 1 / (1 + $gross / 100) : 1 / max(1, $count),
             ];
         }
 
@@ -192,10 +213,14 @@ final class ComparativeCalculator
         }
 
         $weightSum = array_sum(array_column($rows, 'raw_weight'));
+        $weights = array_map(fn ($row) => $row['raw_weight'] / $weightSum, $rows);
+        if ($weighting === 'count10') {
+            $weights = self::roundWeights($weights);
+        }
         $priceM2 = 0.0;
         foreach ($rows as $id => $row) {
-            $rows[$id]['weight'] = round($row['raw_weight'] / $weightSum, 4);
-            $priceM2 += $row['adjusted_m2'] * $row['raw_weight'] / $weightSum;
+            $rows[$id]['weight'] = round($weights[$id], 4);
+            $priceM2 += $row['adjusted_m2'] * $weights[$id];
             unset($rows[$id]['raw_weight']);
         }
 
@@ -214,5 +239,38 @@ final class ComparativeCalculator
             'variation' => $mean > 0 ? round(sqrt($variance) / $mean * 100, 1) : null,
             'weighting' => $weighting,
         ];
+    }
+
+    /**
+     * Weights rounded to whole tens of percent (fives when there are more
+     * than five analogues), each at least one step, adding up to 100 %.
+     *
+     * @param  array<int, float>  $weights  shares that add up to 1
+     * @return array<int, float>
+     */
+    public static function roundWeights(array $weights): array
+    {
+        $step = count($weights) > 5 ? 5 : 10;
+        $units = intdiv(100, $step);
+        if (count($weights) > $units) {
+            return $weights;
+        }
+
+        $exact = array_map(fn ($w) => $w * $units, $weights);
+        $whole = array_map(fn ($u) => max(1, (int) floor($u)), $exact);
+        // The units left go to the largest remainders; extra units come off the largest weights.
+        $remainders = array_map(fn ($u, $w) => $u - $w, $exact, $whole);
+        $order = array_keys($exact);
+        while (array_sum($whole) < $units) {
+            $best = array_keys($remainders, max($remainders))[0];
+            $whole[$order[$best]]++;
+            $remainders[$best] = -INF;
+        }
+        while (array_sum($whole) > $units) {
+            $largest = array_keys($whole, max($whole))[0];
+            $whole[$largest]--;
+        }
+
+        return array_map(fn ($w) => $w * $step / 100, $whole);
     }
 }

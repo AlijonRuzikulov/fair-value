@@ -3,6 +3,7 @@
 namespace App\Services\Analogs;
 
 use Anthropic\Client;
+use App\Enums\RealEstateFeature;
 use RuntimeException;
 
 /**
@@ -25,6 +26,8 @@ class ClaudeListingAi implements ListingAi
         location: district and city as written, e.g. "Chilonzor tumani, Toshkent". listed_at: YYYY-MM-DD or null.
         condition: the repair state if stated (e.g. "euro repair", "needs repair"), else null.
         wall_material: the building's wall material if stated (e.g. "brick", "panel", "monolith"), else null.
+        communications: the engineering communications the listing states (electricity, gas, water, sewerage, heating, hot_water),
+        or null when the listing does not say.
         TXT;
 
     private const SEARCH_SYSTEM = <<<'TXT'
@@ -182,9 +185,13 @@ class ClaudeListingAi implements ListingAi
                             'location' => $nullable('string'),
                             'condition' => $nullable('string'),
                             'wall_material' => $nullable('string'),
+                            'communications' => ['anyOf' => [
+                                ['type' => 'array', 'items' => ['type' => 'string', 'enum' => array_column(RealEstateFeature::communications(), 'value')]],
+                                ['type' => 'null'],
+                            ]],
                             'listed_at' => $nullable('string'),
                         ],
-                        'required' => ['url', 'title', 'price', 'currency', 'area_m2', 'rooms', 'floor', 'floors_total', 'location', 'condition', 'wall_material', 'listed_at'],
+                        'required' => ['url', 'title', 'price', 'currency', 'area_m2', 'rooms', 'floor', 'floors_total', 'location', 'condition', 'wall_material', 'communications', 'listed_at'],
                         'additionalProperties' => false,
                     ],
                 ],
@@ -207,6 +214,9 @@ class ClaudeListingAi implements ListingAi
         $listing['location'] = isset($item['location']) ? mb_substr(trim($item['location']), 0, 250) : null;
         $listing['condition'] = isset($item['condition']) ? mb_substr(trim($item['condition']), 0, 250) : null;
         $listing['wall_material'] = isset($item['wall_material']) ? mb_substr(trim($item['wall_material']), 0, 250) : null;
+        $listing['communications'] = is_array($item['communications'] ?? null)
+            ? array_values(array_unique(array_intersect($item['communications'], array_column(RealEstateFeature::communications(), 'value'))))
+            : null;
         $listing['listed_at'] = isset($item['listed_at']) && strtotime($item['listed_at']) ? date('Y-m-d', strtotime($item['listed_at'])) : null;
 
         return $listing;
