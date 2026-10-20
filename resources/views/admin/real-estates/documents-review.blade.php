@@ -12,7 +12,7 @@
     ];
     $objectLabels = [
         'cadastral_number' => __('Cadastral number'), 'total_area' => __('Total area'), 'living_area' => __('Living area'),
-        'useful_area' => __('Useful area'), 'land_area' => __('Land area'), 'floors_total' => __('Number of floors'), 'floor' => __('Floor'),
+        'useful_area' => __('Useful area'), 'land_area' => __('Land area'), 'built_up_area' => __('Built-up area'), 'floors_total' => __('Number of floors'), 'floor' => __('Floor'),
         'rooms' => __('Rooms'), 'year_built' => __('Year built'), 'address' => __('Address'),
     ];
     $show = fn ($value) => $value instanceof \Carbon\CarbonInterface ? $value->format('d.m.Y') : (filled($value) ? (string) $value : null);

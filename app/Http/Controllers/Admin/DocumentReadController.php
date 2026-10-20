@@ -25,7 +25,7 @@ use Throwable;
 class DocumentReadController extends Controller
 {
     /** Object fields that can be taken from the documents. */
-    public const OBJECT_FIELDS = ['cadastral_number', 'total_area', 'living_area', 'useful_area', 'land_area', 'floors_total', 'floor', 'rooms', 'year_built', 'address'];
+    public const OBJECT_FIELDS = ['cadastral_number', 'total_area', 'living_area', 'useful_area', 'land_area', 'built_up_area', 'floors_total', 'floor', 'rooms', 'year_built', 'address'];
 
     public function __construct(private DocumentAi $ai) {}
 

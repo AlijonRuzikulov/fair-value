@@ -23,7 +23,8 @@ class SecurityHeaders
             'X-Content-Type-Options' => 'nosniff',
             'X-Frame-Options' => 'SAMEORIGIN',
             'Referrer-Policy' => 'strict-origin-when-cross-origin',
-            'Permissions-Policy' => 'camera=(), microphone=(), geolocation=(), payment=()',
+            // Geolocation: the "my location" button on the map of an object.
+            'Permissions-Policy' => 'camera=(), microphone=(), geolocation=(self), payment=()',
             'Cross-Origin-Opener-Policy' => 'same-origin',
         ];
 
@@ -33,7 +34,7 @@ class SecurityHeaders
                 "default-src 'self'",
                 "script-src 'self' 'nonce-{$nonce}'",
                 "style-src 'self' 'unsafe-inline'",
-                "img-src 'self' data:",
+                "img-src 'self' data:".self::tileOrigin(),
                 "font-src 'self'",
                 "connect-src 'self'",
                 "object-src 'none'",
@@ -54,5 +55,13 @@ class SecurityHeaders
         }
 
         return $response;
+    }
+
+    /** The map tile server, which serves images to the pages with a map. */
+    private static function tileOrigin(): string
+    {
+        $parts = parse_url((string) config('fairvalue.map.tiles'));
+
+        return isset($parts['scheme'], $parts['host']) ? ' '.$parts['scheme'].'://'.str_replace(['{s}', '{', '}'], ['*', '', ''], $parts['host']) : '';
     }
 }

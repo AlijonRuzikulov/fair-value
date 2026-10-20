@@ -314,8 +314,10 @@
 <table class="facts">
     <tr><td>{{ $t('Obyekt nomi') }}</td><td>{{ $t($item->name) }}</td></tr>
     <tr><td>{{ $t('Funksional maqsadi va foydalanilishi') }}</td><td>{{ $t($f['function']) }}</td></tr>
-    <tr><td>{{ $t('Joylashgan joyi') }}</td><td>{{ $t($location) }}</td></tr>
+    <tr><td>{{ $t('Joylashgan joyi') }}</td><td>{{ $t($location) }}@if ($item->landmark) ({{ $t("mo'ljal") }}: {{ $t($item->landmark) }})@endif</td></tr>
+    @if ($item->hasLocation())<tr><td>{{ $t('Geografik koordinatalari') }}</td><td>{{ number_format($item->latitude, 6, '.', '') }}, {{ number_format($item->longitude, 6, '.', '') }}</td></tr>@endif
     <tr><td>{{ $t('Umumiy maydoni') }}</td><td>{{ $num($item->total_area) }} {{ $t('kv. m') }}</td></tr>
+    @if ($item->built_up_area)<tr><td>{{ $t('Qurilish osti maydoni') }}</td><td>{{ $num($item->built_up_area) }} {{ $t('kv. m') }}</td></tr>@endif
     @if ($item->useful_area)<tr><td>{{ $t('Foydali maydoni') }}</td><td>{{ $num($item->useful_area) }} {{ $t('kv. m') }}</td></tr>@endif
     @if ($item->living_area)<tr><td>{{ $t('Yashash maydoni') }}</td><td>{{ $num($item->living_area) }} {{ $t('kv. m') }}</td></tr>@endif
     @if ($item->rooms)<tr><td>{{ $t('Xonalar soni') }}</td><td>{{ $item->rooms }}</td></tr>@endif
@@ -338,6 +340,13 @@
     <tr><td>{{ $t("Boshqa faoliyatga o'zgartirish qulayligi") }}</td><td>{{ $t($f['convertibility']) }}</td></tr>
     <tr><td>{{ $t('Atrofdagi imoratlar') }}</td><td>{{ $t($f['surroundings']) }}</td></tr>
 </table>
+@if ($item->hasLocation())
+    <h3 class="sub">5.2. {{ $t('Baholash obyektining xaritadagi joylashuvi') }}</h3>
+    <figure class="location-map">
+        <x-static-map :lat="$item->latitude" :lng="$item->longitude" :width="640" :height="300" />
+        <figcaption>{{ $t($location) }}</figcaption>
+    </figure>
+@endif
 
 {{-- ============================== VI. HBU ============================== --}}
 <h2 class="section" id="s6"><span class="sec-no">VI</span>{{ $t('Eng samarali foydalanish tahlili') }}</h2>

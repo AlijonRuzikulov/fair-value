@@ -20,7 +20,8 @@ class RealEstate extends Model
     protected $fillable = [
         'kind', 'name', 'cadastral_number', 'total_area', 'useful_area', 'living_area',
         'land_area', 'floors_total', 'floor', 'rooms', 'year_built', 'wall_material',
-        'condition', 'features', 'report', ...self::VALUATION_FIELDS,
+        'condition', 'features', 'report', 'latitude', 'longitude', 'landmark', 'cadastral_value', 'built_up_area',
+        ...self::VALUATION_FIELDS,
     ];
 
     protected function casts(): array
@@ -33,6 +34,10 @@ class RealEstate extends Model
             'useful_area' => 'decimal:2',
             'living_area' => 'decimal:2',
             'land_area' => 'decimal:2',
+            'built_up_area' => 'decimal:2',
+            'cadastral_value' => 'decimal:2',
+            'latitude' => 'float',
+            'longitude' => 'float',
         ];
     }
 
@@ -63,6 +68,11 @@ class RealEstate extends Model
             fn ($v) => RealEstateFeature::tryFrom((string) $v),
             (array) $this->features
         )));
+    }
+
+    public function hasLocation(): bool
+    {
+        return $this->latitude !== null && $this->longitude !== null;
     }
 
     public function pricePerSquareMeter(): ?float

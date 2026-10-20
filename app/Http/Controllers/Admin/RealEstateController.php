@@ -9,6 +9,7 @@ use App\Support\Format;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\HtmlString;
 use Illuminate\Validation\Rule;
 
@@ -84,7 +85,7 @@ class RealEstateController extends ValuationController
 
     protected function numericFields(): array
     {
-        return ['total_area', 'useful_area', 'living_area', 'land_area'];
+        return ['total_area', 'useful_area', 'living_area', 'land_area', 'built_up_area', 'cadastral_value', 'latitude', 'longitude'];
     }
 
     protected function rules(Request $request, ?Model $item): array
@@ -97,6 +98,11 @@ class RealEstateController extends ValuationController
             'useful_area' => ['nullable', 'numeric', 'min:0', 'max:9999999999'],
             'living_area' => ['nullable', 'numeric', 'min:0', 'max:9999999999'],
             'land_area' => ['nullable', 'numeric', 'min:0', 'max:9999999999'],
+            'built_up_area' => ['nullable', 'numeric', 'min:0', 'max:9999999999'],
+            'cadastral_value' => ['nullable', 'numeric', 'min:0', 'max:9999999999999999'],
+            'landmark' => ['nullable', 'string', 'max:150'],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90', 'required_with:longitude'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180', 'required_with:latitude'],
             'floors_total' => ['nullable', 'integer', 'min:0', 'max:200'],
             'floor' => ['nullable', 'integer', 'min:-5', 'max:200'],
             'rooms' => ['nullable', 'integer', 'min:0', 'max:1000'],
@@ -115,7 +121,12 @@ class RealEstateController extends ValuationController
 
     protected function formData(Model $item): array
     {
-        return ['features' => RealEstateFeature::options()];
+        return [
+            'features' => RealEstateFeature::options(),
+            // Landmarks typed before, the most used first.
+            'landmarks' => RealEstate::query()->whereNotNull('landmark')->toBase()
+                ->select('landmark', DB::raw('count(*) as uses'))->groupBy('landmark')->orderByDesc('uses')->limit(300)->pluck('landmark'),
+        ];
     }
 
     public function columns(): array
@@ -150,12 +161,15 @@ class RealEstateController extends ValuationController
             __('Useful area') => $item->useful_area ? Format::number($item->useful_area, 2).$m2 : null,
             __('Living area') => $item->living_area ? Format::number($item->living_area, 2).$m2 : null,
             __('Land area') => $item->land_area ? Format::number($item->land_area, 2).$m2 : null,
+            __('Built-up area') => $item->built_up_area ? Format::number($item->built_up_area, 2).$m2 : null,
             __('Rooms') => $item->rooms,
             __('Floor') => $item->floor ? $item->floor.($item->floors_total ? ' / '.$item->floors_total : '') : ($item->floors_total ? __('Floors: :n', ['n' => $item->floors_total]) : null),
             __('Year built') => $item->year_built,
             __('Wall material') => $item->wall_material,
             __('Technical condition') => $item->condition,
             __('Price per m²') => $item->pricePerSquareMeter() ? Format::money($item->pricePerSquareMeter()) : null,
+            __('Cadastral or book value') => $item->cadastral_value !== null ? Format::money($item->cadastral_value) : null,
+            __('Landmark (massif, neighbourhood)') => $item->landmark,
         ];
     }
 
@@ -168,6 +182,11 @@ class RealEstateController extends ValuationController
             __('Total area') => fn ($i) => $i->total_area,
             __('Useful area') => fn ($i) => $i->useful_area,
             __('Land area') => fn ($i) => $i->land_area,
+            __('Built-up area') => fn ($i) => $i->built_up_area,
+            __('Cadastral or book value') => fn ($i) => $i->cadastral_value,
+            __('Landmark (massif, neighbourhood)') => fn ($i) => $i->landmark,
+            __('Latitude') => fn ($i) => $i->latitude,
+            __('Longitude') => fn ($i) => $i->longitude,
             __('Year built') => fn ($i) => $i->year_built,
             __('Special amenities') => fn ($i) => collect($i->featureList())->map->label()->implode(', '),
         ];

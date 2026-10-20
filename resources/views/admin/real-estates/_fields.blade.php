@@ -19,6 +19,8 @@
     <x-field name="living_area" :label="__('Living area')" :value="$item->living_area" money :suffix="__('m²')" span="12" />
 </div>
 <x-field name="land_area" :label="__('Land area')" :value="$item->land_area" money :suffix="__('m²')" span="3" />
+<x-field name="built_up_area" :label="__('Built-up area')" :value="$item->built_up_area" money :suffix="__('m²')" span="3" :hint="__('Area under the building (footprint).')" />
+<x-field name="cadastral_value" :label="__('Cadastral or book value')" :value="$item->cadastral_value" money :suffix="__('sum')" span="3" />
 <x-field name="floors_total" type="number" :label="__('Number of floors')" :value="$item->floors_total" span="2" min="0" />
 <x-field name="floor" type="number" :label="__('Floor')" :value="$item->floor" span="2" />
 <x-field name="rooms" type="number" :label="__('Rooms')" :value="$item->rooms" span="2" min="0" />

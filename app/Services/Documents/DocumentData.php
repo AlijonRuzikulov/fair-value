@@ -115,6 +115,7 @@ final class DocumentData
             'living_area' => $number($p['living_area'] ?? null),
             'useful_area' => $number($p['useful_area'] ?? null),
             'land_area' => $number($p['land_area'] ?? null),
+            'built_up_area' => $number($p['built_up_area'] ?? null),
             'floors_total' => $integer($p['floors_total'] ?? null),
             'floor' => $integer($p['floor'] ?? null),
             'rooms' => $integer($p['rooms'] ?? null),

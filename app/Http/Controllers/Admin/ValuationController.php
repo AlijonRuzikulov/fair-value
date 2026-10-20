@@ -22,6 +22,7 @@ use App\Services\Analogs\AnalogFinder;
 use App\Services\Analogs\ListingAi;
 use App\Services\CurrencyService;
 use App\Support\CsvExport;
+use App\Support\DocumentNumber;
 use App\Support\Format;
 use App\Support\NumberInput;
 use Illuminate\Database\Eloquent\Builder;
@@ -46,7 +47,7 @@ abstract class ValuationController extends Controller
     protected const FILTERS = ['q', 'status', 'region_id', 'district_id', 'appraiser_id', 'purpose', 'from', 'to'];
 
     /** Money fields typed with thousand separators ("1 250 000"). */
-    protected const MONEY_FIELDS = ['value_cost', 'value_comparative', 'value_income', 'market_value', 'service_fee'];
+    protected const MONEY_FIELDS = ['value_cost', 'value_comparative', 'value_income', 'market_value', 'service_fee', 'paid_amount'];
 
     /** @return class-string<Model> */
     abstract protected function model(): string;
@@ -325,6 +326,7 @@ abstract class ValuationController extends Controller
             __('Valuation date') => fn ($i) => Format::date($i->valuation_date),
             __('Contract') => fn ($i) => $i->contract_number,
             __('Service fee') => fn ($i) => $i->service_fee,
+            __('Paid') => fn ($i) => $i->paid_amount,
             __('Report number') => fn ($i) => $i->report_number,
             __('Status') => fn ($i) => $i->status?->label(),
             __('Appraiser') => fn ($i) => $i->appraiser?->name,
@@ -432,6 +434,7 @@ abstract class ValuationController extends Controller
             'contract_number' => ['nullable', 'string', 'max:60'],
             'contract_date' => ['nullable', 'date'],
             'service_fee' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
+            'paid_amount' => ['nullable', 'numeric', 'min:0', 'max:999999999999'],
             'report_number' => ['nullable', 'string', 'max:60'],
             'status' => ['required', Rule::enum(ValuationStatus::class)
                 ->when($request->user()->cannot('finalize-valuations'), fn ($rule) => $rule->except([ValuationStatus::Completed]))],
@@ -469,6 +472,12 @@ abstract class ValuationController extends Controller
                 if (! in_array($approach->value, $data['approaches'], true)) {
                     $data[$approach->column()] = null;
                 }
+            }
+
+            // A new valuation gets the next contract number (and today's date) unless one was typed.
+            if (! $item->exists && blank($data['contract_number'] ?? null)) {
+                $data['contract_number'] = DocumentNumber::next('contract');
+                $data['contract_date'] ??= now()->toDateString();
             }
 
             $item->fill($data)->save();

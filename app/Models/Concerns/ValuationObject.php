@@ -12,7 +12,7 @@ use App\Models\Client;
 use App\Models\District;
 use App\Models\Region;
 use App\Models\User;
-use App\Support\ReportNumber;
+use App\Support\DocumentNumber;
 use App\Support\VerifyCode;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -35,7 +35,7 @@ trait ValuationObject
         'region_id', 'district_id', 'address', 'purpose', 'approaches',
         'value_cost', 'value_comparative', 'value_income', 'market_value',
         'valuation_date', 'inspection_date', 'contract_number', 'contract_date',
-        'service_fee', 'report_number', 'status', 'appraiser_id', 'notes',
+        'service_fee', 'paid_amount', 'report_number', 'status', 'appraiser_id', 'notes',
     ];
 
     public static function bootValuationObject(): void
@@ -50,7 +50,7 @@ trait ValuationObject
             if ($model->status === ValuationStatus::Completed) {
                 $model->completed_at ??= now();
                 if (blank($model->report_number)) {
-                    $model->report_number = ReportNumber::next();
+                    $model->report_number = DocumentNumber::next('report');
                 }
             } elseif ($model->isDirty('status')) {
                 $model->completed_at = null;
@@ -67,6 +67,7 @@ trait ValuationObject
             'value_income' => 'decimal:2',
             'market_value' => 'decimal:2',
             'service_fee' => 'decimal:2',
+            'paid_amount' => 'decimal:2',
             'valuation_date' => 'date',
             'inspection_date' => 'date',
             'contract_date' => 'date',

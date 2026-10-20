@@ -53,6 +53,9 @@ return [
         // Printed on service contracts and invoices.
         'insurance_policy' => '',
         'chief_accountant' => '',
+        // Numbering of contracts and reports: {n} or {nnnn} (0001), {yy}, {yyyy}.
+        'contract_number_format' => '{n}-{yy}',
+        'report_number_format' => '{yyyy}/{nnnn}',
         // VAT rate in percent; 0 when the company is not a VAT payer.
         'vat_rate' => '0',
         // Alphabet of new reports: latn or cyrl (each object can still choose).
@@ -158,4 +161,19 @@ return [
         'mimes' => 'pdf,doc,docx,xls,xlsx,jpg,jpeg,png,webp,heic,zip,rar,txt',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Map
+    |--------------------------------------------------------------------------
+    |
+    | Tiles of the maps where the location of real estate is marked and
+    | printed. OpenStreetMap by default; its attribution must stay visible.
+    |
+    */
+
+    'map' => [
+        'tiles' => env('MAP_TILES', 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
+        'attribution' => env('MAP_ATTRIBUTION', '© OpenStreetMap'),
+        'center' => [41.3111, 69.2797],
+    ],
 ];

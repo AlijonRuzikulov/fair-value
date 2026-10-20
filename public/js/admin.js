@@ -582,4 +582,69 @@
 
     recalc();
   }
+
+  /* ---------- Map: where the object is -------------------------------- */
+
+  $$('[data-map-picker]').forEach(function (box) {
+    if (!window.L) return;
+    var form = box.closest('form');
+    var lat = $('[data-map-lat]', form);
+    var lng = $('[data-map-lng]', form);
+    var hasPoint = function () { return lat.value.trim() !== '' && lng.value.trim() !== '' && !isNaN(parseFloat(lat.value)) && !isNaN(parseFloat(lng.value)); };
+    var center = JSON.parse(box.dataset.center || '[41.3111, 69.2797]');
+    var map = L.map($('[data-map-canvas]', box), { scrollWheelZoom: false })
+      .setView(hasPoint() ? [parseFloat(lat.value), parseFloat(lng.value)] : center, hasPoint() ? 16 : 11);
+    map.attributionControl.setPrefix('Leaflet');
+    L.tileLayer(box.dataset.tiles, { maxZoom: 19, attribution: box.dataset.attribution }).addTo(map);
+    var icon = L.divIcon({ className: 'map-pin', html: '<span></span>', iconSize: [28, 40], iconAnchor: [14, 40] });
+    var marker = null;
+
+    function write(point) {
+      lat.value = point.lat.toFixed(7);
+      lng.value = point.lng.toFixed(7);
+    }
+    function place(point, zoomIn) {
+      if (!marker) {
+        marker = L.marker(point, { draggable: true, icon: icon }).addTo(map);
+        marker.on('dragend', function () { write(marker.getLatLng()); });
+      } else {
+        marker.setLatLng(point);
+      }
+      if (zoomIn) map.setView(point, Math.max(map.getZoom(), 16));
+    }
+
+    if (hasPoint()) place([parseFloat(lat.value), parseFloat(lng.value)], false);
+    map.on('click', function (e) { place(e.latlng, false); write(e.latlng); });
+
+    // "41.311, 69.279" pasted into the latitude field fills both.
+    [lat, lng].forEach(function (input) {
+      input.addEventListener('change', function () {
+        var pair = input.value.match(/^\s*(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)\s*$/);
+        if (pair) { lat.value = pair[1]; lng.value = pair[2]; }
+        if (hasPoint()) place([parseFloat(lat.value), parseFloat(lng.value)], true);
+      });
+    });
+
+    var locate = $('[data-map-locate]', form);
+    if (locate) locate.addEventListener('click', function () {
+      if (!navigator.geolocation) { alert(locate.dataset.error); return; }
+      locate.disabled = true;
+      navigator.geolocation.getCurrentPosition(function (pos) {
+        locate.disabled = false;
+        var point = L.latLng(pos.coords.latitude, pos.coords.longitude);
+        place(point, true);
+        write(point);
+      }, function () {
+        locate.disabled = false;
+        alert(locate.dataset.error);
+      }, { enableHighAccuracy: true, timeout: 15000 });
+    });
+
+    var clear = $('[data-map-clear]', form);
+    if (clear) clear.addEventListener('click', function () {
+      if (marker) { map.removeLayer(marker); marker = null; }
+      lat.value = '';
+      lng.value = '';
+    });
+  });
 })();

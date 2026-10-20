@@ -25,7 +25,7 @@ class ClaudeDocumentAi implements DocumentAi
         passport_series: the two letters (e.g. "AE"); passport_number: the 7 digits; passport_issued_by: the issuing authority as printed.
         property: from the extract or the technical passport. cadastral_number exactly with colons (e.g. "11:20:01:08:01:0079:0001:051").
         address: a clean address in Uzbek Latin (region, city or district, street, house, flat), even if the document mixes Russian and Uzbek;
-        region and district separately (e.g. "Toshkent viloyati", "Chirchiq shahri"). Areas in square metres as numbers.
+        region and district separately (e.g. "Toshkent viloyati", "Chirchiq shahri"). Areas in square metres as numbers; built_up_area is the area under the building ("qurilish osti maydoni").
         rights_basis: the document that establishes the right, as written (e.g. "notarial idoraning 27.10.2025 yildagi ... son oldi-sotdi shartnomasi").
         encumbrances: mortgage, arrest or other restrictions as written, or null if the field is empty.
         documents: for every file (numbered from 0 in the order given) say what it is.
@@ -108,7 +108,7 @@ class ClaudeDocumentAi implements DocumentAi
             'person' => $object($strings(DocumentData::PERSON)),
             'property' => $object([
                 ...$strings(['cadastral_number', 'object_type', 'name', 'address', 'region', 'district', 'owner_name', 'share', 'rights_type', 'registration_date', 'rights_basis', 'encumbrances']),
-                ...array_fill_keys(['total_area', 'living_area', 'useful_area', 'land_area'], $nullable('number')),
+                ...array_fill_keys(['total_area', 'living_area', 'useful_area', 'land_area', 'built_up_area'], $nullable('number')),
                 ...array_fill_keys(['floors_total', 'floor', 'rooms', 'year_built'], $nullable('integer')),
             ]),
             'notes' => $nullable('string'),

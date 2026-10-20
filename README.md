@@ -414,6 +414,19 @@ Kirill yoki lotinda, imzo chiziqlari yoki QR-kodlar bilan chiqadi (yuqoridagi tu
 `{customer}` kabi so‘zlar obyekt ma’lumotlari bilan almashtiriladi. Sug‘urta polisi va bosh hisobchi —
 Sozlamalarda. Bitta hujjatni chiqarish: manzil oxiriga `?doc=contract` (`act`, `invoice`, `assignment`).
 
+### Xarita, raqamlash va to‘lovlar
+
+- **Xaritada joylashuv** (ko‘chmas mulk): tahrirlash sahifasida xaritani bosib yoki “Mening joylashuvim”
+  (telefonda) bilan nuqta belgilanadi; Google/Yandex’dan nusxa olingan koordinatalarni “Kenglik”ka qo‘yish mumkin.
+  Obyekt sahifasida va hisobotda (5.2-band) xarita chiqadi. Xarita OpenStreetMap’dan olinadi
+  (`.env`: `MAP_TILES`, `MAP_ATTRIBUTION`).
+- **Mo‘ljal (massiv, mahalla)**, **kadastr yoki balans qiymati**, **qurilish osti maydoni** maydonlari.
+- **Avtomatik raqamlash:** yangi obyektga navbatdagi shartnoma raqami va bugungi sana beriladi; hisobot raqami
+  yakunlanganda beriladi. Format — Sozlamalarda: `{n}-{yy}` → 668-26, `20/{n}-{yy}` → 20/551-26,
+  `{yyyy}/{nnnn}` → 2026/0001. Oldingi tizimdagi oxirgi raqamni bitta obyektga qo‘lda yozsangiz, keyingilari
+  undan davom etadi.
+- **To‘lovlar:** xizmat narxi, to‘langan summa va qarzdorlik obyekt sahifasida ko‘rinadi.
+
 ### Telegram’ga ariza xabarlari
 
 1. [@BotFather](https://t.me/BotFather) orqali bot yarating va tokenni oling.

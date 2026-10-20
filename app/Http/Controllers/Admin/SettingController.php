@@ -8,6 +8,7 @@ use App\Models\Setting;
 use App\Reports\RealEstateReport;
 use App\Reports\ReportScript;
 use App\Services\CurrencyService;
+use App\Support\DocumentNumber;
 use App\Support\NumberInput;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -26,7 +27,7 @@ class SettingController extends Controller
         'working_hours', 'telegram', 'instagram', 'map_url', 'bank_name', 'bank_account', 'bank_mfo',
         'stat_years', 'stat_reports', 'stat_clients', 'stat_banks', 'labor_rate',
         'legal_name_ru', 'oked', 'membership', 'report_city', 'report_script',
-        'insurance_policy', 'chief_accountant', 'vat_rate',
+        'insurance_policy', 'chief_accountant', 'vat_rate', 'contract_number_format', 'report_number_format',
     ];
 
     public function edit(CurrencyService $currency): View
@@ -39,6 +40,12 @@ class SettingController extends Controller
     public function update(Request $request): RedirectResponse
     {
         $request->merge(['labor_rate' => NumberInput::normalize($request->input('labor_rate')), 'vat_rate' => NumberInput::normalize($request->input('vat_rate'))]);
+
+        $numberFormat = function (string $attribute, mixed $value, \Closure $fail) {
+            if (! DocumentNumber::valid((string) $value)) {
+                $fail(__('The format must contain {n} or {nnnn} once.'));
+            }
+        };
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:80'],
@@ -70,6 +77,8 @@ class SettingController extends Controller
             'insurance_policy' => ['nullable', 'string', 'max:500'],
             'chief_accountant' => ['nullable', 'string', 'max:120'],
             'vat_rate' => ['nullable', 'numeric', 'min:0', 'max:50'],
+            'contract_number_format' => ['nullable', 'string', 'max:40', $numberFormat],
+            'report_number_format' => ['nullable', 'string', 'max:40', $numberFormat],
         ]);
 
         $changes = [];

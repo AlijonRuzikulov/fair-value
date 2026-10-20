@@ -126,6 +126,11 @@
                     <x-detail :label="__('Appraiser')" :value="$item->appraiser?->name" />
                     <x-detail :label="__('Contract')" :value="trim(($item->contract_number ?? '').($item->contract_date ? ' · '.Format::date($item->contract_date) : ''), ' ·')" />
                     <x-detail :label="__('Service fee')" :value="$item->service_fee !== null ? Format::money($item->service_fee) : null" />
+                    @if ($item->service_fee > 0)
+                        @php $debt = max(0, (float) $item->service_fee - (float) $item->paid_amount); @endphp
+                        <x-detail :label="__('Paid')" :value="Format::money((float) $item->paid_amount)" />
+                        <div class="detail"><dt>{{ __('Debt') }}</dt><dd>@if ($debt > 0)<span class="badge badge-warning">{{ Format::money($debt) }}</span>@else<span class="badge badge-success">{{ __('Paid in full') }}</span>@endif</dd></div>
+                    @endif
                     <x-detail :label="__('Inspection date')" :value="$item->inspection_date ? Format::date($item->inspection_date) : null" />
                     <x-detail :label="__('Completed')" :value="$item->completed_at ? Format::datetime($item->completed_at) : null" />
                     <x-detail :label="__('Created')" :value="Format::datetime($item->created_at).($item->creator ? ' · '.$item->creator->name : '')" />

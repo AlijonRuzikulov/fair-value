@@ -252,3 +252,13 @@ a { color: var(--accent); word-break: break-all; }
 .report-toolbar .primary { background: #4f46e5; }
 .report-toolbar .on { background: #e0e7ff; color: #1e3a8a; }
 .report-loading { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; background: #e2e8f0; font: 700 15px 'Manrope', Arial, sans-serif; color: #334155; }
+
+/* Map of an object: tiles around the point (static) and the picker on the form */
+.static-map { position: relative; max-width: 100%; overflow: hidden; border-radius: 2mm; background: #e2e8f0; }
+.static-map-tiles { position: absolute; left: 50%; top: 0; }
+.static-map img { position: absolute; width: 256px; height: 256px; max-width: none; }
+.static-map-pin { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -100%); filter: drop-shadow(0 2px 3px rgba(15, 23, 42, .35)); }
+.static-map-credit { position: absolute; right: 0; bottom: 0; padding: 1px 6px; background: rgba(255, 255, 255, .85); color: #334155; font-size: 10px; }
+.location-map { margin: 0 0 4mm; break-inside: avoid; }
+.location-map .static-map { margin: 0 auto; }
+.location-map figcaption { margin-top: 1.5mm; text-align: center; font: 600 8pt 'Manrope', Arial, sans-serif; color: var(--muted); }

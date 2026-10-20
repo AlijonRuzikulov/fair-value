@@ -183,6 +183,7 @@ final class ContractPack
             $areas = collect([
                 'umumiy maydoni' => $item->total_area,
                 'foydali maydoni' => $item->useful_area,
+                'qurilish osti maydoni' => $item->built_up_area,
                 'yer maydoni' => $item->land_area,
             ])->filter(fn ($area) => $area !== null && (float) $area > 0)
                 ->map(fn ($area, $label) => $label.' '.number_format((float) $area, 2, ',', ' ').' kv. m');

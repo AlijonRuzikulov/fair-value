@@ -22,6 +22,7 @@
         <x-card :title="__('Location')" icon="map-pin">
             <div class="form-grid">
                 @include('admin.objects._location')
+                @includeIf('admin.'.$module->slugName().'._location-extra')
             </div>
         </x-card>
 
@@ -60,10 +61,12 @@
 
         <x-card :title="__('Contract and report')" icon="file-check">
             <div class="form-grid">
-                <x-field name="contract_number" :label="__('Contract number')" :value="$item->contract_number" span="3" />
+                <x-field name="contract_number" :label="__('Contract number')" :value="$item->contract_number" span="3"
+                         :placeholder="$item->exists ? null : \App\Support\DocumentNumber::next('contract')" :hint="$item->exists ? null : __('Leave empty to get the next number.')" />
                 <x-field name="contract_date" type="date" :label="__('Contract date')" :value="$item->contract_date" span="3" />
                 <x-field name="service_fee" :label="__('Service fee')" :value="$item->service_fee" money :suffix="__('sum')" span="3" />
-                <x-field name="report_number" :label="__('Report number')" :value="$item->report_number" span="3" :hint="__('Assigned automatically when completed.')" />
+                <x-field name="paid_amount" :label="__('Paid')" :value="$item->paid_amount" money :suffix="__('sum')" span="3" />
+                <x-field name="report_number" :label="__('Report number')" :value="$item->report_number" span="4" :hint="__('Assigned automatically when completed.')" />
                 <x-select name="status" :label="__('Status')" :options="$statuses" :value="$item->status" span="4" required />
                 <x-select name="appraiser_id" :label="__('Appraiser')" :options="$appraisers" :value="$item->appraiser_id" placeholder="—" span="4" />
                 <x-textarea name="notes" :label="__('Notes')" :value="$item->notes" span="12" />
