@@ -599,6 +599,12 @@
       .setView(hasPoint() ? [parseFloat(lat.value), parseFloat(lng.value)] : center, hasPoint() ? 16 : 11);
     map.attributionControl.setPrefix('Leaflet');
     var tiles = L.tileLayer(box.dataset.tiles, { maxZoom: 19, attribution: box.dataset.attribution }).addTo(map);
+    // The same tiles in grey, where the pin stands out better.
+    var names = JSON.parse(box.dataset.layers || '["Map", "Grey"]');
+    var layers = {};
+    layers[names[0]] = tiles;
+    layers[names[1]] = L.tileLayer(box.dataset.tiles, { maxZoom: 19, attribution: box.dataset.attribution, className: 'map-tiles-grey' });
+    L.control.layers(layers, null, { position: 'topright' }).addTo(map);
     // The map background could not be loaded: the point can still be marked, and the reason is told once.
     tiles.once('tileerror', function () {
       var note = $('[data-map-error]', box);
@@ -632,6 +638,58 @@
         if (hasPoint()) place([parseFloat(lat.value), parseFloat(lng.value)], true);
       });
     });
+
+    // Address search: the places found are listed under the box, a click puts the pin there.
+    var query = $('[data-map-query]', box);
+    var results = $('[data-map-results]', box);
+    var find = $('[data-map-find]', box);
+    function showPlaces(places) {
+      results.innerHTML = '';
+      results.hidden = false;
+      if (!places.length) {
+        var none = document.createElement('p');
+        none.className = 'muted';
+        none.textContent = box.dataset.nothing;
+        results.appendChild(none);
+        return;
+      }
+      places.forEach(function (place) {
+        var item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'map-result';
+        item.textContent = place.label;
+        item.addEventListener('click', function () {
+          placeAndWrite(L.latLng(place.lat, place.lng));
+          results.hidden = true;
+        });
+        results.appendChild(item);
+      });
+    }
+    function placeAndWrite(point) { place(point, true); write(point); }
+    function search() {
+      var q = query.value.trim();
+      if (q.length < 3) return;
+      find.disabled = true;
+      fetch(box.dataset.search + '?q=' + encodeURIComponent(q), { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+        .then(function (r) {
+          return r.json().catch(function () { return {}; }).then(function (body) {
+            if (!r.ok) throw new Error(body.message || '');
+            return body;
+          });
+        })
+        .then(function (places) { showPlaces(Array.isArray(places) ? places : []); })
+        .catch(function (error) {
+          results.hidden = false;
+          results.textContent = (error && error.message) || box.dataset.nothing;
+        })
+        .then(function () { find.disabled = false; });
+    }
+    if (query && find && results) {
+      find.addEventListener('click', search);
+      query.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); search(); }
+      });
+    }
 
     var locate = $('[data-map-locate]', form);
     if (locate) locate.addEventListener('click', function () {

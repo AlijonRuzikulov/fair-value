@@ -87,6 +87,8 @@ final class RealEstateReport
 
     /** Suggestions offered in the fields (the appraiser may type anything). */
     public const OPTIONS = [
+        // The market value, or a value other than the market one.
+        'value_type' => ['Bozor qiymati', 'Investitsion qiymat', 'Tugatish qiymati', 'Utilizatsiya qiymati'],
         'function' => ["Ko'p qavatli turar joy", 'Turar joy (hovli)', 'Noturar joy (savdo)', 'Noturar joy (ofis)', 'Ombor', 'Ishlab chiqarish binosi'],
         'ownership_form' => ['Xususiy mulk', 'Davlat mulki', 'Jamoa mulki'],
         'rights' => ['Egalik huquqi', 'Mulk huquqi', 'Ijara huquqi', 'Doimiy foydalanish huquqi'],

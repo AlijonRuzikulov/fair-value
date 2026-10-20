@@ -108,6 +108,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
     // Map tiles, downloaded once and kept on this site
     Route::get('map/tiles/{z}/{x}/{y}.png', [Admin\MapTileController::class, 'show'])
         ->whereNumber(['z', 'x', 'y'])->middleware('throttle:1200,1')->name('map.tile');
+    Route::get('map/search', [Admin\MapSearchController::class, 'search'])->middleware('throttle:30,1')->name('map.search');
 
     // Cost and income approaches of real estate
     Route::controller(Admin\ApproachController::class)->group(function () {

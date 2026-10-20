@@ -177,6 +177,8 @@ return [
     'map' => [
         'tiles' => env('MAP_TILES', 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
         'attribution' => env('MAP_ATTRIBUTION', '© OpenStreetMap'),
+        // Address search (Nominatim API).
+        'search' => env('MAP_SEARCH', 'https://nominatim.openstreetmap.org/search'),
         'center' => [41.3111, 69.2797],
     ],
 

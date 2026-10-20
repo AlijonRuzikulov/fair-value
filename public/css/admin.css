@@ -522,6 +522,12 @@ h1, h2, h3, h4, p { margin: 0; }
 .btn.is-busy { opacity: .55; pointer-events: none; cursor: progress; }
 .pdf-buttons { display: grid; gap: 8px; }
 .pdf-buttons .btn { justify-content: flex-start; }
+.map-search { display: flex; gap: 8px; margin-bottom: 8px; }
+.map-search .input { flex: 1; min-width: 0; }
+.map-results { display: grid; gap: 2px; margin-bottom: 8px; padding: 6px; border: 1px solid var(--line); border-radius: 10px; background: #fff; max-height: 220px; overflow-y: auto; }
+.map-result { display: block; width: 100%; padding: 7px 10px; border: 0; border-radius: 7px; background: none; text-align: left; font: inherit; font-size: 13px; color: var(--ink); cursor: pointer; }
+.map-result:hover, .map-result:focus-visible { background: var(--neutral-soft); }
+.map-tiles-grey { filter: grayscale(1) contrast(1.05); }
 
 /* --- Badges & chips ---------------------------------------------------- */
 
