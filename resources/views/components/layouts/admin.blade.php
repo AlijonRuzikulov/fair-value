@@ -5,7 +5,7 @@
     $user = auth()->user();
     $usd = $currencyRates->get('USD');
     // The classic look follows the valuation portal the appraisers are used to; Settings switch it to the modern one.
-    $classic = \App\Models\Setting::get('admin_theme') !== 'modern';
+    $classic = \App\Support\AdminTheme::classic();
 @endphp
 <!DOCTYPE html>
 <html lang="{{ $locales[$locale]['html'] ?? $locale }}">

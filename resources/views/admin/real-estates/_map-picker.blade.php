@@ -1,0 +1,25 @@
+{{-- The point on the map: click to mark it, drag the pin, find an address or use the phone's location. --}}
+@php [$latSpan, $toolSpan] = $mapSpans ?? [2, 4]; @endphp
+<x-field name="latitude" :label="__('Latitude')" :value="$item->latitude" :span="$latSpan" inputmode="decimal" autocomplete="off" placeholder="41.311100" data-map-lat />
+<x-field name="longitude" :label="__('Longitude')" :value="$item->longitude" :span="$latSpan" inputmode="decimal" autocomplete="off" placeholder="69.279700" data-map-lng />
+<div class="field span-{{ $toolSpan }} map-tools" style="align-self: end">
+    <button type="button" class="btn btn-sm" data-map-locate data-error="{{ __('The location could not be determined. Allow access to the location or mark the point on the map.') }}"><x-icon name="locate-fixed" :size="14" /> {{ __('My location') }}</button>
+    <button type="button" class="btn btn-sm btn-ghost" data-map-clear><x-icon name="x" :size="14" /> {{ __('Clear') }}</button>
+</div>
+<div class="field span-12 map-picker" data-map-picker data-tiles="{{ url('admin/map/tiles') }}/{z}/{x}/{y}.png" data-attribution="{{ config('fairvalue.map.attribution') }}" data-center="{{ json_encode(config('fairvalue.map.center')) }}"
+     data-search="{{ route('admin.map.search') }}" data-layers="{{ json_encode([__('Map'), __('Grey map')]) }}" data-nothing="{{ __('Nothing was found. Write the city, the street and the house, or mark the point on the map.') }}">
+    {{-- Searched on request (Enter or the button), as the address service asks; the box is not sent with the form. --}}
+    <div class="map-search">
+        <input class="input" type="search" data-map-query autocomplete="off" placeholder="{{ __('Find an address: city, street, house') }}" aria-label="{{ __('Find an address') }}">
+        <button type="button" class="btn btn-sm" data-map-find><x-icon name="search" :size="14" /> {{ __('Find') }}</button>
+    </div>
+    <div class="map-results" data-map-results hidden></div>
+    <div class="map-canvas" data-map-canvas aria-label="{{ __('Map') }}"></div>
+    <p class="field-error" data-map-error hidden>{{ __('The map background could not be loaded (the map server did not answer). The point can still be marked or its coordinates typed.') }}</p>
+    <p class="field-hint">{{ __('Click on the map where the object is; the pin can be dragged. Coordinates copied from Google or Yandex maps (for example 41.311, 69.279) can be pasted into "Latitude".') }}</p>
+</div>
+
+@push('scripts')
+    <link rel="stylesheet" href="{{ asset('js/vendor/leaflet/leaflet.css') }}">
+    <script src="{{ asset('js/vendor/leaflet/leaflet.js') }}"></script>
+@endpush

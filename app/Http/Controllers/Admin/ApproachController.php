@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\ValuationApproach;
 use App\Http\Controllers\Controller;
 use App\Models\RealEstate;
+use App\Reports\RealEstateReport;
+use App\Support\ComparativeCalculator;
 use App\Support\CostApproach;
 use App\Support\IncomeApproach;
 use App\Support\NumberInput;
@@ -80,6 +82,70 @@ class ApproachController extends Controller
         $this->save($item, 'income', $input, ValuationApproach::Income, $result['value']);
 
         return redirect()->to(route('admin.real-estates.show', $item->id).'#income-approach')->with('status', __('Changes saved.'));
+    }
+
+    /**
+     * An approach applied, or refused with the reason printed in the report
+     * ("voz kechildi" on the object page of the valuation portal).
+     */
+    public function toggle(Request $request, string $id, string $approach): RedirectResponse
+    {
+        $item = $this->object($id);
+        $case = ValuationApproach::from($approach);
+        $data = $request->validate([
+            'applied' => ['required', 'boolean'],
+            'reason' => ['nullable', 'string', 'max:2000'],
+        ], [], ['reason' => __('Reason')]);
+
+        $report = (array) $item->report;
+        $applied = array_map(fn (ValuationApproach $a) => $a->value, $item->approachList());
+        if ($data['applied']) {
+            $applied[] = $case->value;
+            // The value worked out again from what was typed before the refusal.
+            $item->{$case->column()} = match ($case) {
+                ValuationApproach::Cost => isset($report['cost']) ? CostApproach::calculate($report['cost'], (int) ($item->valuation_date ?? now())->format('Y'))['value'] : null,
+                ValuationApproach::Income => isset($report['income']) ? IncomeApproach::calculate($report['income'])['value'] : null,
+                ValuationApproach::Comparative => ComparativeCalculator::calculate((float) $item->total_area, $item->analogs, RealEstateReport::comparativeOptions($item))['value'],
+            };
+        } else {
+            $applied = array_diff($applied, [$case->value]);
+            $item->{$case->column()} = null;
+        }
+        // The reason typed with a refusal; otherwise the standard text of the report.
+        if (! $data['applied'] && filled($data['reason'] ?? null)) {
+            $report['reason_'.$case->value] = $data['reason'];
+        } else {
+            unset($report['reason_'.$case->value]);
+        }
+
+        $item->approaches = array_values(array_filter(
+            array_map(fn (ValuationApproach $a) => $a->value, ValuationApproach::cases()),
+            fn ($value) => in_array($value, $applied, true)
+        ));
+        $item->report = $report;
+        $item->save();
+
+        return redirect()->to(route('admin.real-estates.show', $item->id).'#approach-'.$case->value)
+            ->with('status', $data['applied'] ? __('The approach is applied.') : __('The approach is refused.'));
+    }
+
+    /** The final value of the reconciliation: typed, or the reconciled one rounded to thousands. */
+    public function value(Request $request, string $id): RedirectResponse
+    {
+        $item = $this->object($id);
+        if ($request->boolean('reconciled')) {
+            $reconciled = RealEstateReport::reconciliation($item)['reconciled'];
+            if ($reconciled <= 0) {
+                return back()->with('error', __('Enter the values of the applied approaches first.'));
+            }
+            $item->update(['market_value' => round($reconciled, -3)]);
+        } else {
+            $request->merge(['market_value' => NumberInput::normalize($request->input('market_value'))]);
+            $data = $request->validate(['market_value' => ['nullable', 'numeric', 'min:0', 'max:9999999999999999']], [], ['market_value' => __('Market value')]);
+            $item->update(['market_value' => $data['market_value']]);
+        }
+
+        return redirect()->to(route('admin.real-estates.show', $item->id).'#reconciliation')->with('status', __('Changes saved.'));
     }
 
     /** Keeps the data with the report and, when the approach is applied, its value. */

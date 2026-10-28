@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ValuationApproach;
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\LocaleController;
@@ -110,10 +111,16 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
         ->whereNumber(['z', 'x', 'y'])->middleware('throttle:1200,1')->name('map.tile');
     Route::get('map/search', [Admin\MapSearchController::class, 'search'])->middleware('throttle:30,1')->name('map.search');
 
+    // The main data saved on the object page
+    Route::put('real-estates/{id}/main', [Admin\RealEstateController::class, 'main'])->whereNumber('id')->name('real-estates.main');
+
     // Cost and income approaches of real estate
     Route::controller(Admin\ApproachController::class)->group(function () {
         Route::put('real-estates/{id}/approaches/cost', 'cost')->whereNumber('id')->name('real-estates.approaches.cost');
         Route::put('real-estates/{id}/approaches/income', 'income')->whereNumber('id')->name('real-estates.approaches.income');
+        Route::put('real-estates/{id}/approaches/{approach}/applied', 'toggle')->whereNumber('id')
+            ->whereIn('approach', array_map(fn ($a) => $a->value, ValuationApproach::cases()))->name('real-estates.approaches.toggle');
+        Route::put('real-estates/{id}/value', 'value')->whereNumber('id')->name('real-estates.value');
     });
     Route::controller(Admin\DocumentReadController::class)->group(function () {
         Route::post('real-estates/{id}/documents/read', 'read')->whereNumber('id')->middleware('throttle:10,1')->name('real-estates.documents.read');

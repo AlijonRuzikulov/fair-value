@@ -597,6 +597,9 @@
     var center = JSON.parse(box.dataset.center || '[41.3111, 69.2797]');
     var map = L.map($('[data-map-canvas]', box), { scrollWheelZoom: false })
       .setView(hasPoint() ? [parseFloat(lat.value), parseFloat(lng.value)] : center, hasPoint() ? 16 : 11);
+    // A folded section gives the map no size: it is measured again when unfolded.
+    var fold = box.closest('details');
+    if (fold) fold.addEventListener('toggle', function () { if (fold.open) map.invalidateSize(); });
     map.attributionControl.setPrefix('Leaflet');
     var tiles = L.tileLayer(box.dataset.tiles, { maxZoom: 19, attribution: box.dataset.attribution }).addTo(map);
     // The same tiles in grey, where the pin stands out better.
@@ -783,6 +786,33 @@
       $('[data-act-share]', row).addEventListener('input', total);
     });
     total();
+  });
+
+  /* ---------- Folded sections and the type of value ------------------- */
+
+  // A link to a part of a folded section (#survey, #approach-cost) unfolds it.
+  function unfold() {
+    var id = decodeURIComponent(location.hash.slice(1));
+    var target = id && document.getElementById(id);
+    for (var el = target; el; el = el.parentElement) {
+      if (el.tagName === 'DETAILS') el.open = true;
+    }
+    if (target) target.scrollIntoView();
+  }
+  window.addEventListener('hashchange', unfold);
+  if (location.hash) unfold();
+
+  // "Other than the market value": the type is chosen from the list.
+  $$('[data-value-kind]').forEach(function (box) {
+    var other = $('[data-value-other]', box);
+    $$('input[name="value_kind"]', box).forEach(function (radio) {
+      radio.addEventListener('change', function () {
+        var on = radio.value === 'other' && radio.checked;
+        other.hidden = !on;
+        other.disabled = !on;
+        if (on) other.focus();
+      });
+    });
   });
 
   /* ---------- Areas of real estate taken from the total area ----------- */

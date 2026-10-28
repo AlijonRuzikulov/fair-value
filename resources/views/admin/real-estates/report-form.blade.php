@@ -150,7 +150,7 @@
                         </div>
                     </details>
                     @php $surveyAnswers = [...\App\Reports\Survey::defaults($item), ...(array) ($values['survey'] ?? [])]; @endphp
-                    <details class="prep-more" @if (! empty($values['survey'])) open @endif>
+                    <details class="prep-more" id="survey" @if (! empty($values['survey'])) open @endif>
                         <summary>{{ __('Customer questionnaire') }}</summary>
                         <p class="field-hint" style="margin-bottom: 10px">{{ __('What the customer states about the object. It is printed with the contract for the customer to sign (an empty answer is left to be written by hand) and listed in the report.') }}</p>
                         <div class="form-grid">

@@ -17,53 +17,50 @@
     ];
     // Completed on the form, without the approval steps.
     $completedDirectly = ! $approved && $status === ValuationStatus::Completed;
+    // Steps that need a reason: returning, reopening, cancelling.
+    $withReason = $canFinalize ? array_filter([
+        'returned' => $status === ValuationStatus::Review && $canApprove ? [__('Return for correction'), 'undo-2', ''] : null,
+        'reopened' => $status === ValuationStatus::Completed && $canApprove ? [__('Revaluate'), 'refresh-cw', $portal ?? false ? 'btn-warning' : ''] : null,
+        'cancelled' => ! in_array($status, [ValuationStatus::Completed, ValuationStatus::Cancelled], true) ? [__('Cancel the valuation'), 'circle-x', $portal ?? false ? 'btn-fill-danger' : 'btn-danger'] : null,
+    ]) : [];
+    $portal ??= false;
 @endphp
-<x-card :title="__('Status and approval')" icon="badge-check">
-    <x-slot:actions><x-status :status="$status" /></x-slot:actions>
-
-    <ol class="approval">
-        @foreach ($stages as [$title, $step, $who])
-            @php $done = $step || ($loop->index === 1 && $completedDirectly); @endphp
-            <li @class(['is-done' => $done])>
-                <span class="approval-mark"><x-icon :name="$done ? 'check' : 'hourglass'" :size="14" /></span>
-                <div>
-                    <strong>{{ $title }}</strong>
-                    <small>@if ($step){{ Format::datetime($step->created_at) }} · {{ $step->user?->name ?? '—' }}@elseif ($done){{ __('Completed without approval') }} · {{ Format::datetime($item->completed_at) }}@else{{ __('Not yet') }}@if ($who) · {{ $who }}@endif @endif</small>
-                </div>
-            </li>
-        @endforeach
-    </ol>
-
-    @if ($canFinalize)
-        <div class="approval-actions">
-            @if (in_array($status, [ValuationStatus::New, ValuationStatus::InProgress], true))
-                <form method="post" action="{{ $route }}">
-                    @csrf <input type="hidden" name="action" value="submitted">
-                    <button class="btn btn-primary btn-sm" type="submit"><x-icon name="send-horizontal" :size="14" /> {{ __('Submit for approval') }}</button>
-                </form>
-            @endif
-            @if ($status === ValuationStatus::Review && $canApprove)
-                <form method="post" action="{{ $route }}">
-                    @csrf <input type="hidden" name="action" value="approved">
-                    <button class="btn btn-primary btn-sm" type="submit"><x-icon name="badge-check" :size="14" /> {{ __('Approve') }}</button>
-                </form>
-            @endif
-            @if ($status === ValuationStatus::Completed && ! $accepted)
-                <form method="post" action="{{ $route }}">
-                    @csrf <input type="hidden" name="action" value="accepted">
-                    <button class="btn btn-sm" type="submit"><x-icon name="handshake" :size="14" /> {{ __('The act is signed') }}</button>
-                </form>
-            @endif
+@if ($portal)
+    {{-- The classic look: "Holat" and "Tarixi" cards, the steps with a reason under them as on the valuation portal. --}}
+    <div class="portal-cards">
+        <section class="card card-accent" id="status">
+            <header class="card-head"><h2 class="card-title">{{ __('Status') }}</h2><div class="card-actions"><x-status :status="$status" /></div></header>
+            <div class="card-body">
+                @include('admin.objects._workflow-stages')
+                @include('admin.objects._workflow-actions')
+            </div>
+        </section>
+        <section class="card card-accent" id="history">
+            <header class="card-head"><h2 class="card-title">{{ __('History') }}</h2><div class="card-actions"><span>{{ __('Time spent') }}: <strong>{{ $item->timeSpent() }}</strong></span></div></header>
+            <div class="card-body">@include('admin.objects._workflow-history')</div>
+        </section>
+    </div>
+    @if ($withReason)
+        <div class="portal-reasons">
+            @foreach ($withReason as $action => [$label, $icon, $class])
+                <details class="portal-reason">
+                    <summary class="btn {{ $class ?: 'btn-info' }}"><x-icon :name="$icon" :size="16" /> {{ $label }}</summary>
+                    <form method="post" action="{{ $route }}" class="approval-reason">
+                        @csrf <input type="hidden" name="action" value="{{ $action }}">
+                        <input class="input input-sm" name="comment" required maxlength="2000" placeholder="{{ __('Reason') }}" aria-label="{{ $label }}: {{ __('Reason') }}">
+                        <button class="btn btn-sm {{ $class }}" type="submit">{{ __('Confirm') }}</button>
+                    </form>
+                </details>
+            @endforeach
         </div>
+    @endif
+@else
+    <x-card :title="__('Status and approval')" icon="badge-check">
+        <x-slot:actions><x-status :status="$status" /></x-slot:actions>
 
-        {{-- Steps that need a reason: returning, reopening, cancelling. --}}
-        @php
-            $withReason = array_filter([
-                'returned' => $status === ValuationStatus::Review && $canApprove ? [__('Return for correction'), 'undo-2', ''] : null,
-                'reopened' => $status === ValuationStatus::Completed && $canApprove ? [__('Revaluate'), 'refresh-cw', ''] : null,
-                'cancelled' => ! in_array($status, [ValuationStatus::Completed, ValuationStatus::Cancelled], true) ? [__('Cancel the valuation'), 'circle-x', 'btn-danger'] : null,
-            ]);
-        @endphp
+        @include('admin.objects._workflow-stages')
+        @include('admin.objects._workflow-actions')
+
         @if ($withReason)
             <details class="approval-more">
                 <summary>{{ __('Return, revaluate or cancel') }}</summary>
@@ -76,30 +73,13 @@
                 @endforeach
             </details>
         @endif
-        @if ($status === ValuationStatus::Review && ! $canApprove)
-            <p class="field-hint">{{ __('The report is waiting for the director (an administrator) to approve it.') }}</p>
-        @endif
-    @endif
 
-    <div class="approval-history">
-        <div class="approval-history-head">
-            <strong>{{ __('History') }}</strong>
-            <span class="muted">{{ __('Time spent') }}: {{ $item->timeSpent() }}</span>
+        <div class="approval-history">
+            <div class="approval-history-head">
+                <strong>{{ __('History') }}</strong>
+                <span class="muted">{{ __('Time spent') }}: {{ $item->timeSpent() }}</span>
+            </div>
+            @include('admin.objects._workflow-history')
         </div>
-        @if ($item->steps->isEmpty())
-            <p class="muted">{{ __('No approval steps yet.') }}</p>
-        @else
-            <table class="table table-compact">
-                <tbody>
-                    @foreach ($item->steps->reverse() as $step)
-                        <tr>
-                            <td class="nowrap">{{ Format::datetime($step->created_at) }}</td>
-                            <td>{{ $step->user?->name ?? '—' }}</td>
-                            <td><strong>{{ ValuationStep::label($step->action) }}</strong>@if ($step->comment)<span class="cell-sub">{{ $step->comment }}</span>@endif</td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        @endif
-    </div>
-</x-card>
+    </x-card>
+@endif

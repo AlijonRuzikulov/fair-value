@@ -5,11 +5,16 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\RealEstateFeature;
 use App\Enums\RealEstateKind;
 use App\Models\RealEstate;
+use App\Reports\RealEstateReport;
+use App\Support\AdminTheme;
 use App\Support\Format;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\HtmlString;
 use Illuminate\Validation\Rule;
 
@@ -20,6 +25,17 @@ use Illuminate\Validation\Rule;
  */
 class RealEstateController extends ValuationController
 {
+    /** Report data typed together with the main data of the object; kept with the report. */
+    public const REPORT_FIELDS = ['letter_number', 'value_type', 'function', 'ownership_form', 'land_rights'];
+
+    /** The main data saved on the object page (the first step, as on the valuation portal). */
+    private const MAIN_FIELDS = [
+        'name', 'cadastral_number', 'cadastral_value', 'region_id', 'district_id', 'landmark', 'address',
+        'contract_number', 'contract_date', 'report_number', 'land_area', 'built_up_area', 'useful_area', 'total_area',
+        'living_area', 'rooms', 'wall_material', 'condition', 'floors_total', 'floor', 'year_built',
+        'latitude', 'longitude', 'purpose', 'valuation_date', 'inspection_date', 'value_kind', ...self::REPORT_FIELDS,
+    ];
+
     private RealEstateKind $kind = RealEstateKind::NonResidential;
 
     protected function model(): string
@@ -111,6 +127,89 @@ class RealEstateController extends ValuationController
             'condition' => ['nullable', 'string', 'max:255'],
             'features' => ['nullable', 'array'],
             'features.*' => [Rule::enum(RealEstateFeature::class)],
+            'letter_number' => ['nullable', 'string', 'max:60'],
+            // The market value, or another one named in "value_type".
+            'value_kind' => ['nullable', 'in:market,other'],
+            'value_type' => ['nullable', 'required_if:value_kind,other', 'string', 'max:150'],
+            'function' => ['nullable', 'string', 'max:150'],
+            'ownership_form' => ['nullable', 'string', 'max:150'],
+            'land_rights' => ['nullable', 'string', 'max:150'],
+        ];
+    }
+
+    protected function persist(Model $item, array $data, Request $request): Model
+    {
+        $report = [...self::REPORT_FIELDS, 'value_kind'];
+        $item = parent::persist($item, Arr::except($data, $report), $request);
+        $this->keepReportFields($item, Arr::only($data, $report), $request);
+
+        return $item;
+    }
+
+    /** Saves the main data typed on the object page, without the rest of the form. */
+    public function main(Request $request, string $id): RedirectResponse
+    {
+        $item = $this->find($id);
+        Gate::authorize('edit-valuation', $item);
+        $this->resolveKind($request, $item);
+        $this->normalizeNumbers($request);
+        $rules = Arr::only([...$this->baseRules($request, $item), ...$this->rules($request, $item)], self::MAIN_FIELDS);
+        $data = $request->validate($rules, [], $this->attributeNames());
+
+        $report = [...self::REPORT_FIELDS, 'value_kind'];
+        $item->fill(Arr::except($data, $report))->save();
+        $this->keepReportFields($item, Arr::only($data, $report), $request);
+
+        return redirect()->to(route('admin.real-estates.show', $item->id).'#main')->with('status', __('Changes saved.'));
+    }
+
+    /**
+     * Report fields of the form go to the report data; an emptied one takes
+     * its default again. Fields the form did not have are left as they are.
+     */
+    private function keepReportFields(RealEstate $item, array $data, Request $request): void
+    {
+        $present = array_filter(self::REPORT_FIELDS, fn ($key) => $request->exists($key) || ($key === 'value_type' && $request->exists('value_kind')));
+        if ($present === []) {
+            return;
+        }
+        if (($data['value_kind'] ?? null) === 'market') {
+            $data['value_type'] = RealEstateReport::MARKET_VALUE;
+        }
+
+        $report = (array) $item->report;
+        foreach ($present as $key) {
+            if (filled($data[$key] ?? null)) {
+                $report[$key] = $data[$key];
+            } else {
+                unset($report[$key]);
+            }
+        }
+        $item->report = $report;
+        $item->save();
+    }
+
+    protected function showView(): string
+    {
+        return AdminTheme::classic() ? 'admin.real-estates.portal' : parent::showView();
+    }
+
+    protected function formView(): string
+    {
+        return AdminTheme::classic() ? 'admin.real-estates.form' : parent::formView();
+    }
+
+    /** The page of the classic look has the main data form on it. */
+    protected function showData(Model $item): array
+    {
+        if (! AdminTheme::classic()) {
+            return [];
+        }
+
+        return [
+            ...$this->sharedOptions(),
+            'districts' => self::districtOptions(old('region_id', $item->region_id)),
+            ...$this->formData($item),
         ];
     }
 

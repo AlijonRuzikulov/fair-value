@@ -214,12 +214,19 @@ abstract class ValuationController extends Controller
         ]);
         Activity::recordView($item);
 
-        return view('admin.objects.show', [
+        return view($this->showView(), [
             'item' => $item,
             'nav' => $this->nav($request, $item),
             'module' => $this,
             'usdValue' => app(CurrencyService::class)->toUsd($item->market_value),
+            ...$this->showData($item),
         ]);
+    }
+
+    /** More data for the page of an object. */
+    protected function showData(Model $item): array
+    {
+        return [];
     }
 
     public function edit(Request $request, string $id): View
@@ -383,9 +390,21 @@ abstract class ValuationController extends Controller
         return CsvExport::download($this->slug().'-'.now()->format('Y-m-d').'.csv', $query, $columns);
     }
 
+    /** The page of an object; a module may have its own. */
+    protected function showView(): string
+    {
+        return 'admin.objects.show';
+    }
+
+    /** The form of an object; a module may have its own. */
+    protected function formView(): string
+    {
+        return 'admin.objects.form';
+    }
+
     protected function form(Request $request, Model $item): View
     {
-        return view('admin.objects.form', [
+        return view($this->formView(), [
             'item' => $item,
             'nav' => $this->nav($request, $item),
             'module' => $this,
@@ -462,10 +481,22 @@ abstract class ValuationController extends Controller
 
     protected function validated(Request $request, ?Model $item): array
     {
+        $this->normalizeNumbers($request);
+
+        return $request->validate([...$this->baseRules($request, $item), ...$this->rules($request, $item)], [], $this->attributeNames());
+    }
+
+    /** Amounts typed with spaces and a decimal comma ("1 250 000,50") become numbers. */
+    protected function normalizeNumbers(Request $request): void
+    {
         $numeric = [...static::MONEY_FIELDS, ...$this->numericFields()];
         $request->merge(collect($request->only($numeric))->map(fn ($v) => NumberInput::normalize($v))->all());
+    }
 
-        return $request->validate([
+    /** Rules of the fields every kind of object has. */
+    protected function baseRules(Request $request, ?Model $item): array
+    {
+        return [
             'region_id' => ['nullable', 'integer', 'exists:regions,id'],
             'district_id' => ['nullable', 'integer', Rule::exists('districts', 'id')->where('region_id', $request->integer('region_id'))],
             'address' => ['nullable', 'string', 'max:255'],
@@ -493,8 +524,7 @@ abstract class ValuationController extends Controller
             'persons' => ['nullable', 'array', 'max:20'],
             'persons.*.client_id' => ['nullable', 'integer', 'exists:clients,id'],
             'persons.*.role' => ['nullable', Rule::enum(PersonRole::class)],
-            ...$this->rules($request, $item),
-        ], [], $this->attributeNames());
+        ];
     }
 
     /**

@@ -1,4 +1,4 @@
-{{-- Cost and income approaches of the object, when they are applied: the data and the value worked out from it. --}}
+{{-- Cost and income approaches of the object, when they are applied: the data and the value worked out from it ($only: just one of them). --}}
 @php
     use App\Enums\ValuationApproach;
     use App\Support\CostApproach;
@@ -10,7 +10,7 @@
     $num = fn ($v, $d = 2) => $v === null || $v === '' ? '' : rtrim(rtrim(number_format((float) $v, $d, ',', ' '), '0'), ',');
 @endphp
 
-@if (in_array(ValuationApproach::Cost, $applied, true))
+@if (in_array(ValuationApproach::Cost, $applied, true) && ($only ?? 'cost') === 'cost')
     @php
         $costInput = $report['cost'] ?? ['buildings' => [[
             'name' => $item->name, 'unit' => 'm2', 'quantity' => $item->total_area, 'rate' => null, 'year_built' => $item->year_built,
@@ -86,7 +86,7 @@
     </x-card>
 @endif
 
-@if (in_array(ValuationApproach::Income, $applied, true))
+@if (in_array(ValuationApproach::Income, $applied, true) && ($only ?? 'income') === 'income')
     @php
         $incomeInput = $report['income'] ?? ['area' => $item->useful_area ?? $item->total_area, 'rent' => null, 'vacancy' => 10, 'opex' => 15, 'cap' => 14];
         $income = IncomeApproach::calculate($incomeInput);

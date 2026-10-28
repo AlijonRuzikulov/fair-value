@@ -60,7 +60,7 @@ class ApprovalTest extends TestCase
         $this->assertSame(3, Activity::where('event', 'workflow')->count());
 
         $this->actingAs($this->appraiser)->withSession(['locale' => 'uz'])->get('/admin/real-estates/'.$this->flat->id)->assertOk()
-            ->assertSee('Holat va tasdiqlash')->assertSee('Direktor hisobotni tasdiqladi')->assertSee('Sarflangan vaqt');
+            ->assertSee('Holati')->assertSee('Direktor hisobotni tasdiqladi')->assertSee('Sarflangan vaqt');
     }
 
     public function test_returning_and_reopening_need_a_reason_and_start_the_steps_again(): void

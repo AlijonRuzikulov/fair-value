@@ -27,6 +27,9 @@ use Illuminate\Support\Collection;
  */
 final class RealEstateReport
 {
+    /** The type of value of most valuations; any other is "a value other than the market one". */
+    public const MARKET_VALUE = 'Bozor qiymati';
+
     /** Report data by step of the preparation page: field → type (text, textarea, date, number, select). */
     public const FORM = [
         'object' => [
@@ -144,7 +147,7 @@ final class RealEstateReport
             'script' => Setting::get('report_script') === ReportScript::CYRILLIC ? ReportScript::CYRILLIC : ReportScript::LATIN,
             'report_date' => ($object->completed_at ?? now())->toDateString(),
             'letter_number' => $object->contract_number,
-            'value_type' => 'Bozor qiymati',
+            'value_type' => self::MARKET_VALUE,
             'currency_text' => "O'zbek so'mi, UZS",
             'use_period' => '12 oy',
             'report_format' => "Elektron ko'rinishda",
@@ -205,6 +208,42 @@ final class RealEstateReport
             'include_methodology' => true,
             'act' => InspectionAct::defaults(),
         ];
+    }
+
+    /**
+     * Scores of the applied approaches by the criteria, their weights (the
+     * shares of the scores) and the value they give together.
+     *
+     * @return array{scores: array<string, list<float>>, weights: array<string, float>, reconciled: float}
+     */
+    public static function reconciliation(RealEstate $object, ?array $scores = null): array
+    {
+        $scores ??= self::values($object)['scores'];
+        $applied = $object->approachList();
+        $byApproach = [];
+        foreach (ValuationApproach::cases() as $approach) {
+            $byApproach[$approach->value] = array_map(
+                fn ($i) => in_array($approach, $applied, true) ? max(0, (float) ($scores[$i][$approach->value] ?? 0)) : 0.0,
+                array_keys(self::CRITERIA)
+            );
+        }
+        $sums = array_map('array_sum', $byApproach);
+        $totalScore = array_sum($sums);
+        $weights = [];
+        $reconciled = 0.0;
+        foreach (ValuationApproach::cases() as $approach) {
+            $value = $object->{$approach->column()};
+            $weights[$approach->value] = $totalScore > 0 && $value !== null ? $sums[$approach->value] / $totalScore : 0.0;
+            $reconciled += $weights[$approach->value] * (float) $value;
+        }
+        $weightSum = array_sum($weights);
+        if ($weightSum > 0 && abs($weightSum - 1) > 0.0001) {
+            // Approaches with scores but no value are left out; the rest are scaled to 100 %.
+            $weights = array_map(fn ($w) => $w / $weightSum, $weights);
+            $reconciled /= $weightSum;
+        }
+
+        return ['scores' => $byApproach, 'weights' => $weights, 'reconciled' => $reconciled];
     }
 
     /**
@@ -315,27 +354,7 @@ final class RealEstateReport
 
         // Reconciliation of the approaches.
         $applied = $object->approachList();
-        $scores = [];
-        foreach (ValuationApproach::cases() as $approach) {
-            $scores[$approach->value] = array_map(
-                fn ($i) => in_array($approach, $applied, true) ? max(0, (float) ($f['scores'][$i][$approach->value] ?? 0)) : 0.0,
-                array_keys(self::CRITERIA)
-            );
-        }
-        $totalScore = array_sum(array_map('array_sum', $scores));
-        $weights = [];
-        $reconciled = 0.0;
-        foreach (ValuationApproach::cases() as $approach) {
-            $value = $object->{$approach->column()};
-            $weights[$approach->value] = $totalScore > 0 && $value !== null ? array_sum($scores[$approach->value]) / $totalScore : 0.0;
-            $reconciled += $weights[$approach->value] * (float) $value;
-        }
-        $weightSum = array_sum($weights);
-        if ($weightSum > 0 && abs($weightSum - 1) > 0.0001) {
-            // Approaches with scores but no value are left out; the rest are scaled to 100 %.
-            $weights = array_map(fn ($w) => $w / $weightSum, $weights);
-            $reconciled /= $weightSum;
-        }
+        ['scores' => $scores, 'weights' => $weights, 'reconciled' => $reconciled] = self::reconciliation($object, $f['scores']);
         $final = $object->market_value !== null ? (float) $object->market_value : ($reconciled > 0 ? round($reconciled, -3) : null);
 
         $features = array_map(fn ($f) => $f->value, $object->featureList());
