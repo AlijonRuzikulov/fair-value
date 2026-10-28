@@ -4,6 +4,8 @@
     $locale = app()->getLocale();
     $user = auth()->user();
     $usd = $currencyRates->get('USD');
+    // The classic look follows the valuation portal the appraisers are used to; Settings switch it to the modern one.
+    $classic = \App\Models\Setting::get('admin_theme') !== 'modern';
 @endphp
 <!DOCTYPE html>
 <html lang="{{ $locales[$locale]['html'] ?? $locale }}">
@@ -17,8 +19,12 @@
     <link rel="icon" href="{{ asset('images/favicon.svg') }}" type="image/svg+xml">
     <link rel="stylesheet" href="{{ asset('css/fonts.css') }}">
     <link rel="stylesheet" href="{{ asset('css/admin.css') }}?v={{ filemtime(public_path('css/admin.css')) }}">
+    @if ($classic)
+        <link rel="stylesheet" href="{{ asset('css/roboto.css') }}">
+        <link rel="stylesheet" href="{{ asset('css/admin-classic.css') }}?v={{ filemtime(public_path('css/admin-classic.css')) }}">
+    @endif
 </head>
-<body class="admin">
+<body @class(['admin', 'theme-classic' => $classic])>
 <div class="shell" data-shell>
     <aside class="sidebar" id="sidebar" aria-label="{{ __('Main menu') }}">
         <a class="sidebar-brand" href="{{ route('admin.dashboard') }}">
@@ -43,7 +49,7 @@
                         </summary>
                         <ul class="nav-sub">
                             @foreach ($item['children'] as $child)
-                                <li><a href="{{ $child['url'] }}" @class(['nav-sublink', 'is-active' => $nav === $child['key']]) @if ($nav === $child['key']) aria-current="page" @endif>{{ $child['label'] }}</a></li>
+                                <li><a href="{{ $child['url'] }}" @class(['nav-sublink', 'is-active' => $nav === $child['key']]) @if ($nav === $child['key']) aria-current="page" @endif><span class="nav-mini" aria-hidden="true">{{ $child['mini'] ?? '' }}</span><span>{{ $child['label'] }}</span></a></li>
                             @endforeach
                         </ul>
                     </details>

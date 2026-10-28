@@ -11,22 +11,27 @@ use Illuminate\Support\Facades\Gate;
 class AdminMenu
 {
     /**
-     * @return list<array{key:string, label:string, icon:string, color:string, url?:string, badge?:int|null, children?:list<array{key:string,label:string,url:string}>}|array{section:string}>
+     * @return list<array{key:string, label:string, icon:string, color:string, url?:string, badge?:int|null, children?:list<array{key:string,label:string,url:string,mini?:string}>}|array{section:string}>
      */
     public static function items(int $newLeads = 0): array
     {
+        // The order and the groups follow the valuation portal the appraisers know;
+        // what this system adds (dashboard, website requests, management) comes after.
         $items = [
-            ['key' => 'dashboard', 'label' => __('Dashboard'), 'icon' => 'layout-dashboard', 'color' => '#818cf8', 'url' => route('admin.dashboard')],
-            ['key' => 'clients', 'label' => __('Clients'), 'icon' => 'users', 'color' => '#38bdf8', 'children' => [
-                ['key' => 'clients.individual', 'label' => __('Individuals'), 'url' => route('admin.clients.index', ['type' => 'individual'])],
-                ['key' => 'clients.legal', 'label' => __('Legal entities'), 'url' => route('admin.clients.index', ['type' => 'legal'])],
+            ['key' => 'clients', 'label' => __('Clients'), 'icon' => 'puzzle', 'color' => '#38bdf8', 'children' => [
+                ['key' => 'clients.individual', 'mini' => 'P', 'label' => __('Individuals'), 'url' => route('admin.clients.index', ['type' => 'individual'])],
+                ['key' => 'clients.legal', 'mini' => 'L', 'label' => __('Legal entities'), 'url' => route('admin.clients.index', ['type' => 'legal'])],
             ]],
-            ['key' => 'realestate', 'label' => __('Real estate'), 'icon' => 'house', 'color' => '#34d399', 'children' => [
-                ['key' => 'realestate.nonresidential', 'label' => __('Non-residential'), 'url' => route('admin.real-estates.index', ['kind' => 'nonresidential'])],
-                ['key' => 'realestate.residential', 'label' => __('Residential'), 'url' => route('admin.real-estates.index', ['kind' => 'residential'])],
+            ['key' => 'realestate', 'label' => __('New real estate'), 'icon' => 'house', 'color' => '#34d399', 'children' => [
+                ['key' => 'realestate.nonresidential', 'mini' => mb_substr(__('Non-residential'), 0, 1), 'label' => __('Non-residential'), 'url' => route('admin.real-estates.index', ['kind' => 'nonresidential'])],
+                ['key' => 'realestate.residential', 'mini' => mb_substr(__('Residential'), 0, 1), 'label' => __('Residential'), 'url' => route('admin.real-estates.index', ['kind' => 'residential'])],
             ]],
-            ['key' => 'assets', 'label' => __('Movable property'), 'icon' => 'boxes', 'color' => '#fbbf24', 'url' => route('admin.assets.index')],
-            ['key' => 'vehicles', 'label' => __('Vehicles'), 'icon' => 'car', 'color' => '#22d3ee', 'url' => route('admin.vehicles.index')],
+            ['key' => 'assets', 'label' => __('Movable property'), 'icon' => 'boxes', 'color' => '#fbbf24', 'children' => [
+                ['key' => 'assets', 'mini' => 'A', 'label' => __('Movable property'), 'url' => route('admin.assets.index')],
+            ]],
+            ['key' => 'vehicles', 'label' => __('Vehicles'), 'icon' => 'car', 'color' => '#22d3ee', 'children' => [
+                ['key' => 'vehicles', 'mini' => 'A', 'label' => __('Vehicles'), 'url' => route('admin.vehicles.index')],
+            ]],
             ['key' => 'damage', 'label' => __('Damage caused'), 'icon' => 'wrench', 'color' => '#fb7185', 'children' => [
                 ['key' => 'damage.cases', 'label' => __('Damage assessments'), 'url' => route('admin.damage-cases.index')],
                 ['key' => 'damage.models', 'label' => __('List of cars'), 'url' => route('admin.car-models.index')],
@@ -38,11 +43,12 @@ class AdminMenu
                 ['key' => 'other.list', 'label' => __('List of other property'), 'url' => route('admin.other-assets.index')],
                 ['key' => 'other.tools', 'label' => __('Valuation plus'), 'url' => route('admin.tools')],
             ]],
+            ['section' => __('Management')],
+            ['key' => 'dashboard', 'label' => __('Dashboard'), 'icon' => 'layout-dashboard', 'color' => '#818cf8', 'url' => route('admin.dashboard')],
             ['key' => 'leads', 'label' => __('Website requests'), 'icon' => 'inbox', 'color' => '#f472b6', 'url' => route('admin.leads.index'), 'badge' => $newLeads ?: null],
         ];
 
         if (Gate::allows('admin')) {
-            $items[] = ['section' => __('Management')];
             $items[] = ['key' => 'users', 'label' => __('Employees'), 'icon' => 'user-cog', 'color' => '#38bdf8', 'url' => route('admin.users.index')];
             $items[] = ['key' => 'regions', 'label' => __('Regions and districts'), 'icon' => 'map-pin', 'color' => '#34d399', 'url' => route('admin.regions.index')];
             $items[] = ['key' => 'activity', 'label' => __('Audit log'), 'icon' => 'history', 'color' => '#fbbf24', 'url' => route('admin.activity.index')];

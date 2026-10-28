@@ -28,6 +28,7 @@ class SettingController extends Controller
         'stat_years', 'stat_reports', 'stat_clients', 'stat_banks', 'labor_rate',
         'legal_name_ru', 'oked', 'membership', 'report_city', 'report_script',
         'insurance_policy', 'chief_accountant', 'vat_rate', 'contract_number_format', 'report_number_format', 'require_approval',
+        'admin_theme',
     ];
 
     public function edit(CurrencyService $currency): View
@@ -78,6 +79,7 @@ class SettingController extends Controller
             'chief_accountant' => ['nullable', 'string', 'max:120'],
             'vat_rate' => ['nullable', 'numeric', 'min:0', 'max:50'],
             'require_approval' => ['nullable', 'in:0,1'],
+            'admin_theme' => ['nullable', 'in:classic,modern'],
             'contract_number_format' => ['nullable', 'string', 'max:40', $numberFormat],
             'report_number_format' => ['nullable', 'string', 'max:40', $numberFormat],
         ]);

@@ -23,6 +23,7 @@
                 <p class="field-hint span-6" style="align-self: center">{{ __('{n} — sequence number, {nnnn} — with zeros (0001), {yy} — year (26), {yyyy} — year (2026). For example 20/{n}-{yy} gives 20/551-26. Numbering continues from the largest number of the same format.') }}</p>
                 <x-select name="require_approval" :label="__('Completion of reports')" :options="['0' => __('The appraiser completes the report'), '1' => __('The director approves the report')]" :value="$values['require_approval'] ?: '0'" span="6" :hint="__('With approval, the appraiser submits the report and only an administrator (the director) completes it.')" />
                 <x-select name="report_script" :label="__('Alphabet of reports')" :options="['latn' => 'O‘zbekcha (lotin)', 'cyrl' => 'Ўзбекча (кирилл)']" :value="$values['report_script']" span="6" :hint="__('Used for new reports; each report can still be switched.')" />
+                <x-select name="admin_theme" :label="__('Look of the admin panel')" :options="['classic' => __('Classic, like the valuation portal'), 'modern' => __('Modern')]" :value="$values['admin_theme'] ?: 'classic'" span="6" :hint="__('Classic: orange menu and the layout the appraisers are used to.')" />
                 <x-textarea name="membership" :label="__('Membership certificate of the appraisers\' association')" :value="$values['membership']" rows="2" :hint="__('For example: a membership certificate No. … dated … issued by the public association of appraisers. Printed in the report.')" />
             </div>
         </x-card>

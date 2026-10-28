@@ -47,7 +47,7 @@ class RealEstateController extends ValuationController
     public function title(): string
     {
         return $this->kind === RealEstateKind::Residential
-            ? __('List of residential property')
+            ? __('List of new real estate (residential)')
             : __('List of new real estate (non-residential)');
     }
 

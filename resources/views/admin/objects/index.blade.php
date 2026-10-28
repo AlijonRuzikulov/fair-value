@@ -4,14 +4,17 @@
     $params = $module->routeParams();
     $currentStatus = $filters['status'] ?? null;
     $total = $statusCounts->sum();
+    // Columns in the order of the valuation portal: the first own column (the area), the approaches, the rest.
+    $columns = $module->columns();
+    $firstColumns = array_slice($columns, 0, 1, true);
+    $otherColumns = array_slice($columns, 1, null, true);
 @endphp
 <x-layouts.admin :title="$module->title()" :nav="$nav" :icon="$module->icon()">
-    <section class="card">
+    <section class="card list-card">
         <form method="get" class="card-body" action="{{ route($module->routeName('index')) }}">
             @foreach ($params as $key => $value)<input type="hidden" name="{{ $key }}" value="{{ $value }}">@endforeach
-            @if ($currentStatus)<input type="hidden" name="status" value="{{ $currentStatus }}">@endif
             <div class="filters" data-filters>
-                <div class="field span-4">
+                <div class="field span-3">
                     <label for="q">{{ __('Search') }}</label>
                     <div class="search-box">
                         <input id="q" class="input" type="search" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="{{ __('Name, number, client…') }}">
@@ -19,6 +22,7 @@
                     </div>
                 </div>
                 @includeIf('admin.'.$module->slugName().'._filters')
+                <x-select name="status" :label="__('Choose the status')" :options="collect($statuses)->map(fn ($label, $value) => $label.' ('.($statusCounts[$value] ?? 0).')')" :value="$currentStatus" placeholder="{{ __('All').' ('.$total.')' }}" span="3" />
                 <x-select name="region_id" :label="__('Region')" :options="$regions->pluck('name', 'id')" :value="$filters['region_id'] ?? null" placeholder="{{ __('All') }}" span="3" data-region-select />
                 <x-select name="district_id" :label="__('District')" :options="$districts" :value="$filters['district_id'] ?? null" placeholder="{{ __('All') }}" span="3" data-district-select />
                 <x-select name="appraiser_id" :label="__('Appraiser')" :options="$appraisers" :value="$filters['appraiser_id'] ?? null" placeholder="{{ __('All') }}" span="3" />
@@ -31,15 +35,6 @@
             </div>
             <button type="button" class="btn btn-sm filter-toggle" data-filter-toggle><x-icon name="sliders-horizontal" :size="14" /> {{ __('Filters') }}</button>
         </form>
-    </section>
-
-    <section class="card">
-        <nav class="tabs" aria-label="{{ __('Status') }}">
-            <a href="{{ request()->fullUrlWithQuery(['status' => null, 'page' => null]) }}" @class(['tab', 'is-active' => ! $currentStatus])>{{ __('All') }} <span class="tab-count">{{ $total }}</span></a>
-            @foreach ($statuses as $value => $label)
-                <a href="{{ request()->fullUrlWithQuery(['status' => $value, 'page' => null]) }}" @class(['tab', 'is-active' => $currentStatus === $value])>{{ $label }} <span class="tab-count">{{ $statusCounts[$value] ?? 0 }}</span></a>
-            @endforeach
-        </nav>
 
         <div class="list-toolbar">
             <p class="list-total">{{ __('Total') }}: <strong>{{ $items->total() }}</strong></p>
@@ -61,10 +56,11 @@
                         <tr>
                             <th>#</th>
                             <th>{{ __('Object') }}</th>
-                            @foreach ($module->columns() as $heading => $cb)<th>{{ $heading }}</th>@endforeach
+                            @foreach ($firstColumns as $heading => $cb)<th>{{ $heading }}</th>@endforeach
                             @if ($module->usesApproaches())<th>{{ __('Approaches') }}</th>@endif
-                            <th class="t-right">{{ $module->usesApproaches() ? __('Value') : __('Damage amount') }}</th>
-                            <th class="t-center">{{ __('Attachments') }}</th>
+                            @foreach ($otherColumns as $heading => $cb)<th>{{ $heading }}</th>@endforeach
+                            @unless ($module->usesApproaches())<th class="t-right">{{ __('Damage amount') }}</th>@endunless
+                            <th class="t-center">{{ __('Attached documents') }}</th>
                             <th>{{ __('Status') }}</th>
                             <th>{{ __('Persons') }}</th>
                             <th class="t-actions"><span class="sr-only">{{ __('Actions') }}</span></th>
@@ -78,8 +74,9 @@
                                     <a class="cell-title" href="{{ route($module->routeName('show'), $item->id) }}">{{ $item->title }}</a>
                                     <span class="cell-sub">{{ $item->locationLine() ?: '—' }}</span>
                                     @if ($item->report_number)<span class="cell-sub">{{ __('Report') }} № {{ $item->report_number }}</span>@endif
+                                    @if ($module->usesApproaches() && $item->market_value !== null)<span class="cell-sub cell-num">{{ Format::money($item->market_value) }}</span>@endif
                                 </td>
-                                @foreach ($module->columns() as $cb)<td>{{ $cb($item) }}</td>@endforeach
+                                @foreach ($firstColumns as $cb)<td>{{ $cb($item) }}</td>@endforeach
                                 @if ($module->usesApproaches())
                                     <td>
                                         <div class="chips">
@@ -91,7 +88,8 @@
                                         </div>
                                     </td>
                                 @endif
-                                <td class="t-right cell-num">{{ $item->market_value !== null ? Format::compact($item->market_value) : '—' }}</td>
+                                @foreach ($otherColumns as $cb)<td>{{ $cb($item) }}</td>@endforeach
+                                @unless ($module->usesApproaches())<td class="t-right cell-num">{{ $item->market_value !== null ? Format::compact($item->market_value) : '—' }}</td>@endunless
                                 <td class="t-center"><span @class(['files-count', 'has' => $item->attachments_count])><x-icon name="paperclip" :size="15" />{{ $item->attachments_count }}</span></td>
                                 <td><x-status :status="$item->status" /></td>
                                 <td style="min-width: 130px">

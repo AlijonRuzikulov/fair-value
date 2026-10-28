@@ -195,6 +195,7 @@ h1, h2, h3, h4, p { margin: 0; }
   border-radius: 50%;
   background: #475569;
 }
+.nav-mini { display: none; }
 .nav-sublink:hover { background: rgba(255, 255, 255, .05); color: #fff; }
 .nav-sublink.is-active { background: rgba(255, 255, 255, .08); color: #fff; }
 .nav-sublink.is-active::before { background: var(--c, #a78bfa); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c, #a78bfa) 30%, transparent); }

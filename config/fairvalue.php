@@ -62,6 +62,8 @@ return [
         'vat_rate' => '0',
         // Alphabet of new reports: latn or cyrl (each object can still choose).
         'report_script' => 'latn',
+        // Look of the admin panel: classic (like the valuation portal the appraisers know) or modern.
+        'admin_theme' => 'classic',
         // Numbers on the home page; empty ones are not shown.
         'stat_years' => '',
         'stat_reports' => '',
