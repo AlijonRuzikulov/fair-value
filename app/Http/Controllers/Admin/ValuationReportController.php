@@ -57,9 +57,13 @@ class ValuationReportController extends Controller
         $item = RealEstate::with(['clients', 'attachments'])->findOrFail($id);
         Gate::authorize('edit-valuation', $item);
 
-        $request->merge(['market_value' => NumberInput::normalize($request->input('market_value'))]);
+        $request->merge(collect($request->only(['market_value', 'living_area']))->map(fn ($v) => NumberInput::normalize($v))->all());
         $rules = [
             'inspection_date' => ['nullable', 'date', 'before_or_equal:today'],
+            'valuation_date' => ['nullable', 'date'],
+            'living_area' => ['nullable', 'numeric', 'min:0', 'max:9999999999'],
+            'rooms' => ['nullable', 'integer', 'min:0', 'max:1000'],
+            'condition' => ['nullable', 'string', 'max:255'],
             'features' => ['nullable', 'array'],
             'features.*' => [Rule::enum(RealEstateFeature::class)],
             'market_value' => ['nullable', 'numeric', 'min:0', 'max:999999999999999'],
@@ -158,7 +162,7 @@ class ValuationReportController extends Controller
         // Fields of the object itself (logged as ordinary changes of the object).
         // Only the fields shown on the page are changed (unticked boxes send nothing, hence "features_shown").
         $objectFields = [];
-        foreach (['inspection_date', 'market_value'] as $field) {
+        foreach (['inspection_date', 'valuation_date', 'living_area', 'rooms', 'condition', 'market_value'] as $field) {
             if ($request->exists($field)) {
                 $objectFields[$field] = $data[$field] ?? null;
             }

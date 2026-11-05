@@ -60,7 +60,7 @@ final class RealEstateReport
         'panel' => [
             'foundation' => 'Temirbeton bloklar', 'walls' => 'Temirbeton panellar', 'roof_slab' => 'Temirbeton plitalar',
             'roof_cover' => 'Rulonli (ruberoid)', 'floor_type' => 'Linoleum, laminat', 'windows_doors' => 'Plastik derazalar, metall eshik',
-            'architecture' => 'Tipik loyiha', 'landscaping' => 'Obodonlashtirilgan', 'surroundings' => "Ko'p qavatli turar joy binolari",
+            'architecture' => 'Oddiy', 'landscaping' => 'Obodonlashtirilgan', 'surroundings' => "Ko'p qavatli turar joy binolari",
         ],
         'brick' => [
             'foundation' => 'Lentasimon temirbeton', 'walls' => "Pishgan g'isht", 'roof_slab' => 'Temirbeton plitalar',
@@ -70,7 +70,7 @@ final class RealEstateReport
         'monolith' => [
             'foundation' => 'Monolit temirbeton plita', 'walls' => 'Monolit temirbeton karkas, gazoblok', 'roof_slab' => 'Monolit temirbeton',
             'roof_cover' => 'Membranali', 'floor_type' => 'Laminat, kafel', 'windows_doors' => 'Alyumin-plastik derazalar, metall eshik',
-            'architecture' => 'Zamonaviy', 'landscaping' => 'Obodonlashtirilgan, avtoturargoh', 'surroundings' => 'Yangi turar joy majmualari',
+            'architecture' => 'Evro', 'landscaping' => 'Obodonlashtirilgan, avtoturargoh', 'surroundings' => 'Yangi turar joy majmualari',
         ],
         'house' => [
             'foundation' => 'Lentasimon beton', 'walls' => "Pishgan g'isht", 'roof_slab' => "Yog'och to'sinlar",
@@ -80,12 +80,12 @@ final class RealEstateReport
         'office' => [
             'foundation' => 'Temirbeton', 'walls' => "G'isht, temirbeton karkas", 'roof_slab' => 'Temirbeton plitalar',
             'roof_cover' => 'Rulonli', 'floor_type' => 'Kafel, laminat', 'windows_doors' => 'Alyumin-plastik vitrajlar',
-            'architecture' => 'Zamonaviy', 'landscaping' => 'Obodonlashtirilgan, avtoturargoh', 'surroundings' => 'Turli maqsadli binolar',
+            'architecture' => 'Xaytek', 'landscaping' => 'Obodonlashtirilgan, avtoturargoh', 'surroundings' => 'Turli maqsadli binolar',
         ],
         'warehouse' => [
             'foundation' => 'Temirbeton ustunli', 'walls' => 'Sendvich-panellar, metall karkas', 'roof_slab' => 'Metall fermalar',
             'roof_cover' => 'Profnastil', 'floor_type' => 'Beton', 'windows_doors' => 'Metall darvozalar',
-            'architecture' => 'Sanoat binosi', 'landscaping' => 'Asfaltlangan maydon', 'surroundings' => 'Sanoat va ombor binolari',
+            'architecture' => 'Oddiy', 'landscaping' => 'Asfaltlangan maydon', 'surroundings' => 'Sanoat va ombor binolari',
         ],
     ];
 
@@ -99,7 +99,10 @@ final class RealEstateReport
             'Shlakablok', 'Gazablok', 'Aralash', 'Metall', 'Sendvich panel',
         ],
         // The kind of the property, as on the valuation portal.
-        'property_type' => ['Kvartira', 'Xususiy uy (hovli)', 'Bino', 'Binoning bir qismi (xona)', 'Inshoot', 'Tugallanmagan qurilish', 'Boshqa'],
+        'property_type' => ['Boshqa', 'Tender'],
+        // The purpose of use on the object page, by the kind of real estate.
+        'function_residential' => ["Ko'p qavatli turar joy", 'Turar joy'],
+        'function_nonresidential' => ['Noturar joy', 'Noturar joy (savdo)', 'Noturar joy (ofis)', 'Ombor', 'Ishlab chiqarish binosi'],
         'function' => ["Ko'p qavatli turar joy", 'Turar joy (hovli)', 'Noturar joy (savdo)', 'Noturar joy (ofis)', 'Ombor', 'Ishlab chiqarish binosi'],
         'ownership_form' => ['Xususiy mulk', 'Davlat mulki', 'Jamoa mulki'],
         'rights' => ['Egalik huquqi', 'Mulk huquqi', 'Ijara huquqi', 'Doimiy foydalanish huquqi'],
@@ -111,8 +114,8 @@ final class RealEstateReport
         'roof_slab' => ['Temirbeton plitalar', 'Monolit temirbeton', "Yog'och to'sinlar", 'Metall fermalar'],
         'floor_type' => ['Beton', 'Laminat', 'Linoleum', 'Kafel', 'Parket', "Yog'och"],
         'windows_doors' => ['Plastik', 'Alyumin-plastik', "Yog'och", 'Metall eshik'],
-        'repair' => ["A'lo (yangi ta'mir)", 'Yaxshi', 'Qoniqarli', "Ta'mir talab"],
-        'architecture' => ['Oddiy', 'Tipik loyiha', 'Zamonaviy'],
+        'repair' => ['Yaxshi', 'Qoniqarli', 'Qoniqarsiz', 'Avariya holatda', 'Juda yaxshi'],
+        'architecture' => ['Oddiy', 'Evro', 'Xaytek'],
         'landscaping' => ['Obodonlashtirilgan', 'Qisman obodonlashtirilgan', 'Obodonlashtirilmagan'],
         'surroundings' => ['Turar joy binolari', "Ko'p qavatli turar joy binolari", 'Xususiy turar joy uylari', 'Turli maqsadli binolar', 'Sanoat binolari'],
     ];
@@ -147,7 +150,10 @@ final class RealEstateReport
         'collateral' => "garovga qo'yish uchun", 'sale' => 'oldi-sotdi uchun', 'notary' => 'notarial harakatlar uchun',
         'court' => 'sud uchun', 'insurance' => "sug'urtalash uchun", 'charter_capital' => 'ustav kapitaliga kiritish uchun',
         'accounting' => 'buxgalteriya hisobi uchun', 'lease' => 'ijaraga berish uchun', 'compensation' => 'kompensatsiya uchun',
-        'damage' => 'zararni aniqlash uchun',
+        'damage' => 'zararni aniqlash uchun', 'zero_privatization' => 'nol qiymatda xususiylashtirish uchun',
+        'liquidation' => 'tugatish qiymatini aniqlash uchun', 'investment' => 'investitsiya qiymatini aniqlash uchun',
+        'privatization' => 'xususiylashtirish uchun', 'business' => 'biznes qiymatini aniqlash uchun',
+        'balance' => 'balansga qabul qilish uchun', 'inheritance' => 'meros masalalari uchun', 'tax' => 'soliqqa tortish uchun',
     ];
 
     private const COMMUNICATIONS = [
@@ -184,7 +190,7 @@ final class RealEstateReport
             'limiting_conditions' => 'Mavjud emas',
             'use_restrictions' => 'Baholash hisobotini tarqatish va chop qilish taqiqlanadi (buyurtmachi bundan mustasno). Hisobotdan baholash xulosasida belgilangan maqsaddagina foydalanish mumkin.',
 
-            'property_type' => $residential ? (($object->floors_total ?? 0) > 1 ? 'Kvartira' : 'Xususiy uy (hovli)') : 'Boshqa',
+            'property_type' => 'Boshqa',
             'identification' => null,
             'light' => false,
             'detached' => false,

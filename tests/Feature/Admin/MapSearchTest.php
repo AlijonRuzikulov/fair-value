@@ -55,7 +55,7 @@ class MapSearchTest extends TestCase
         $flat = RealEstate::factory()->residential()->create(['appraiser_id' => $user->id]);
 
         $this->withSession(['locale' => 'uz'])->get('/admin/real-estates/'.$flat->id.'/edit')->assertOk()
-            ->assertSee('data-map-query', false)->assertSee('Kulrang xarita')->assertSee(route('admin.map.search'), false);
+            ->assertSee('data-map-query', false)->assertSee('GRAYSCALE')->assertSee(route('admin.map.search'), false);
         $this->withSession(['locale' => 'uz'])->get('/admin/real-estates/'.$flat->id.'/report/edit')->assertOk()
             ->assertSee('<datalist id="opt-value_type">', false)->assertSee('<option value="Tugatish qiymati">', false);
     }

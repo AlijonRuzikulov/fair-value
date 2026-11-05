@@ -167,6 +167,16 @@
                 {{-- ============ 3. Inspection ============ --}}
                 <x-card :title="'3 · '.$stepInfo['inspection'][0]" :icon="$stepInfo['inspection'][2]" id="step-inspection" class="prep-step" data-step="inspection">
                     <x-slot:actions>@include('admin.real-estates._step-badge', ['ok' => $steps['inspection']])</x-slot:actions>
+                    {{-- Data of the object that the page of the classic look does not show. --}}
+                    <div class="form-grid" style="margin-bottom: 14px">
+                        <x-field name="valuation_date" type="date" :label="__('Valuation date')" :value="$item->valuation_date" span="3" />
+                        @if ($item->kind === \App\Enums\RealEstateKind::Residential)
+                            <x-field name="living_area" :label="__('Living area')" :value="$item->living_area" money :suffix="__('m²')" span="3" />
+                        @endif
+                        <x-field name="rooms" type="number" :label="__('Rooms')" :value="$item->rooms" span="3" min="0" />
+                        <x-field name="condition" :label="__('Technical condition')" :value="$item->condition" span="3" list="conditions" />
+                        <datalist id="conditions"><option value="{{ __('Excellent') }}"><option value="{{ __('Good') }}"><option value="{{ __('Satisfactory') }}"><option value="{{ __('Needs repair') }}"></datalist>
+                    </div>
                     <div class="preset-bar">
                         <x-field name="inspection_date" type="date" :label="__('Inspection date')" :value="$item->inspection_date" span="12" />
                         <div class="field">

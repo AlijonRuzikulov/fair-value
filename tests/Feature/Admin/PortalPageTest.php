@@ -62,7 +62,9 @@ class PortalPageTest extends TestCase
             ->assertSee('action="'.route('admin.real-estates.main', $this->flat->id).'"', false)
             ->assertSee('name="owner_id" value="'.$this->flat->clients->first()->id.'"', false)
             ->assertSee('name="value_kind" value="market" checked', false)
-            ->assertSee('placeholder="17-26"', false);
+            ->assertSeeInOrder(['Xat №', '17-26', 'Shartnoma №', '17-26', 'Hisobot №'])
+            // The map is the map only, as on the portal.
+            ->assertSee('data-map-compact', false)->assertDontSee('data-map-locate', false);
 
         $this->withSession(['locale' => 'uz'])->get('/admin/real-estates/'.$this->flat->id)->assertSeeInOrder([
             'Ko‘chmas mulk asosiy ma’lumotlari', 'Kadastr yoki balans qiymati', 'Viloyatni tanlang', 'Tumanni tanlang', 'Mo‘ljalni tanlang',
@@ -119,7 +121,7 @@ class PortalPageTest extends TestCase
     {
         // In the classic look the edit address shows the object page, which is its form.
         $this->actingAs($this->user)->get('/admin/real-estates/'.$this->flat->id.'/edit')->assertOk()
-            ->assertSee('portal-steps', false)->assertSee('name="letter_number"', false);
+            ->assertSee('portal-steps', false)->assertSee('id="object-form"', false);
 
         $this->put('/admin/real-estates/'.$this->flat->id, [
             'kind' => 'residential', 'name' => 'Kvartira', 'status' => 'in_progress', 'total_area' => '60',
@@ -179,7 +181,7 @@ class PortalPageTest extends TestCase
             'persons' => [['client_id' => (string) $bank->id, 'role' => 'pledgee']],
             'approaches' => ['', 'cost', 'comparative'], 'purpose' => 'collateral', 'name' => 'Savdo binosi',
             'cadastral_number' => '10:09:01:02:03:0101', 'features' => ['', 'electricity', 'gas'],
-            'architecture' => 'Zamonaviy', 'function' => 'Noturar joy (savdo)', 'repair' => 'Yaxshi', 'completion' => '85.5',
+            'architecture' => 'Xaytek', 'function' => 'Noturar joy (savdo)', 'repair' => 'Yaxshi', 'completion' => '85.5',
             'light' => '1', 'service_fee' => '2 000 000', 'paid_amount' => '500 000', 'identification' => 'Obyekt hujjatlarga mos keladi.',
             'total_area' => '120,5', 'value_kind' => 'market', ...$this->mainData(),
         ];
@@ -192,7 +194,7 @@ class PortalPageTest extends TestCase
         $this->assertSame(['electricity', 'gas'], $object->features);
         $this->assertSame(['owner' => $owner->id, 'pledgee' => $bank->id], $object->clients->mapWithKeys(fn ($c) => [$c->pivot->role => $c->id])->all());
         $this->assertSame('Bino', $object->report['property_type']);
-        $this->assertSame('Zamonaviy', $object->report['architecture']);
+        $this->assertSame('Xaytek', $object->report['architecture']);
         $this->assertEquals(85.5, $object->report['completion']);
         $this->assertTrue($object->report['light']);
         $this->assertSame('Obyekt hujjatlarga mos keladi.', $object->report['identification']);

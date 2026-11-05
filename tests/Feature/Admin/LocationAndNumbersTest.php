@@ -60,7 +60,7 @@ class LocationAndNumbersTest extends TestCase
         $this->post('/admin/real-estates', $this->payload(['contract_number' => 'B-15']))->assertRedirect();
         $this->assertSame('B-15', RealEstate::latest('id')->value('contract_number'));
 
-        $this->get('/admin/real-estates/create?kind=residential')->assertOk()->assertSee('placeholder="670-26"', false)->assertSee('data-area-copy', false);
+        $this->get('/admin/real-estates/create?kind=residential')->assertOk()->assertSee('<span class="number-next"', false)->assertSee('670-26')->assertSee('data-area-copy', false);
 
         // Reports: the default format, then the company's own.
         $first->update(['status' => ValuationStatus::Completed]);
@@ -101,10 +101,9 @@ class LocationAndNumbersTest extends TestCase
         $this->assertSame('61.52', $flat->built_up_area);
 
         $this->get('/admin/real-estates/'.$flat->id)->assertOk()
-            ->assertSee('data-map-picker', false)
-            ->assertSee('yandex.uz/maps/?pt=69.2797,41.3111', false)
+            ->assertSee('data-map-picker', false)->assertSee('name="latitude" value="41.3111', false)
             ->assertSee('Feruza massivi')->assertSee('name="cadastral_value" type="text" value="'.Format::number(830176946.46, 2).'"', false)
-            ->assertSee(Format::money(1000000));  // the debt
+            ->assertSee('value="'.Format::number(500000).'"', false);  // paid
 
         $this->get('/admin/real-estates/'.$flat->id.'/edit')->assertOk()
             ->assertSee('data-map-picker', false)->assertSee('leaflet/leaflet.js', false)->assertSee('<option value="Feruza massivi">', false);

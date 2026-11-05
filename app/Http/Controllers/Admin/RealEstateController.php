@@ -191,6 +191,10 @@ class RealEstateController extends ValuationController
 
     protected function persist(Model $item, array $data, Request $request): Model
     {
+        // Added on the page of the classic look (it has no date field): valued as of today.
+        if (! $item->exists && $request->exists('owner_id') && blank($data['valuation_date'] ?? null)) {
+            $data['valuation_date'] = now()->toDateString();
+        }
         $report = [...self::REPORT_FIELDS, ...self::REPORT_EXTRA];
         $item = parent::persist($item, Arr::except($data, [...$report, 'owner_id']), $request);
         $this->keepReportFields($item, Arr::only($data, $report), $request);

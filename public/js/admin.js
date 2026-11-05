@@ -637,7 +637,29 @@
     var layers = {};
     layers[names[0]] = tiles;
     layers[names[1]] = L.tileLayer(box.dataset.tiles, { maxZoom: 19, attribution: box.dataset.attribution, className: 'map-tiles-grey' });
-    L.control.layers(layers, null, { position: 'topright' }).addTo(map);
+    var compact = box.hasAttribute('data-map-compact');
+    // As on the valuation portal: the layers open on the left, and a search button under them.
+    L.control.layers(layers, null, compact ? { position: 'topleft', collapsed: false } : { position: 'topright' }).addTo(map);
+    if (compact) {
+      var searchBox = $('[data-map-search-box]', box);
+      var SearchButton = L.Control.extend({
+        options: { position: 'topleft' },
+        onAdd: function () {
+          var button = L.DomUtil.create('button', 'map-search-button leaflet-bar');
+          button.type = 'button';
+          button.title = box.dataset.searchTitle || '';
+          button.setAttribute('aria-label', button.title);
+          button.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>';
+          L.DomEvent.disableClickPropagation(button);
+          L.DomEvent.on(button, 'click', function () {
+            searchBox.hidden = !searchBox.hidden;
+            if (!searchBox.hidden) $('[data-map-query]', searchBox).focus();
+          });
+          return button;
+        }
+      });
+      new SearchButton().addTo(map);
+    }
     // The map background could not be loaded: the point can still be marked, and the reason is told once.
     tiles.once('tileerror', function () {
       var note = $('[data-map-error]', box);
