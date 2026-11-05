@@ -24,7 +24,7 @@
         <link rel="stylesheet" href="{{ asset('css/admin-classic.css') }}?v={{ filemtime(public_path('css/admin-classic.css')) }}">
     @endif
 </head>
-<body @class(['admin', 'theme-classic' => $classic])>
+<body @class(['admin', 'theme-classic' => $classic, 'accent-orange' => $classic && \App\Support\AdminTheme::orange()])>
 <div class="shell" data-shell>
     <aside class="sidebar" id="sidebar" aria-label="{{ __('Main menu') }}">
         <a class="sidebar-brand" href="{{ route('admin.dashboard') }}">

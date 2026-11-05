@@ -1,9 +1,10 @@
 /* ==========================================================================
    Fair Value — admin panel, classic look
    The layout of the valuation portal the appraisers work in every day
-   (a Light Bootstrap Dashboard style): an orange menu with uppercase items,
-   a white top bar, a light grey page and flat white cards. Loaded after
-   admin.css; Settings switch back to the modern look.
+   (a Light Bootstrap Dashboard style): a coloured menu with uppercase items
+   (light blue, or orange as on the portal), a white top bar, a light grey
+   page and flat white cards. Loaded after admin.css; Settings choose the
+   colour or switch back to the modern look.
    ========================================================================== */
 
 body.theme-classic {
@@ -17,16 +18,25 @@ body.theme-classic {
   --bg: #f4f4f6;
   --card: #fff;
 
-  --brand: #ffa534;
-  --brand-1: #ffa534;
-  --brand-2: #ff7f2a;
-  --brand-3: #ff5221;
-  --brand-strong: #f0821a;
-  --brand-ink: #b85d00;
-  --brand-soft: #fff3e2;
-  --brand-ring: rgba(255, 165, 52, .25);
-  --grad: #ffa534;
-  --grad-soft: #fff3e2;
+  /* The colour of the menu and the accents: light blue by default. */
+  --accent: #1dc7ea;
+  --accent-end: #4091ff;
+  --accent-strong: #1a8fd8;
+  --accent-ink: #0b6d93;
+  --accent-soft: #e5f6fd;
+  --accent-ring: rgba(29, 199, 234, .25);
+  --accent-head: linear-gradient(to right, var(--accent) 0%, var(--accent-end) 100%);
+
+  --brand: var(--accent-strong);
+  --brand-1: var(--accent);
+  --brand-2: var(--accent-strong);
+  --brand-3: var(--accent-end);
+  --brand-strong: var(--accent-strong);
+  --brand-ink: var(--accent-ink);
+  --brand-soft: var(--accent-soft);
+  --brand-ring: var(--accent-ring);
+  --grad: var(--accent);
+  --grad-soft: var(--accent-soft);
 
   --c-green: #87cb16;
   --c-blue: #447df7;
@@ -59,11 +69,22 @@ body.theme-classic {
   background: var(--bg);
 }
 
-/* --- Menu: orange, uppercase items, a letter before each sub-item -------- */
+/* Orange, as on the valuation portal (Settings). */
+body.theme-classic.accent-orange {
+  --accent: #ffa534;
+  --accent-end: #ff5221;
+  --accent-strong: #f0821a;
+  --accent-ink: #b85d00;
+  --accent-soft: #fff3e2;
+  --accent-ring: rgba(255, 165, 52, .25);
+  --accent-head: #87cb16;
+}
+
+/* --- Menu: coloured, uppercase items, a letter before each sub-item ----- */
 
 .theme-classic .sidebar {
   color: #fff;
-  background: linear-gradient(to bottom, #ffa534 0%, #ff5221 100%);
+  background: linear-gradient(to bottom, var(--accent) 0%, var(--accent-end) 100%);
   border-right: 0;
   scrollbar-color: rgba(255, 255, 255, .35) transparent;
 }
@@ -104,8 +125,8 @@ body.theme-classic {
 .theme-classic .nav-link.is-current { background: rgba(255, 255, 255, .23); color: #fff; opacity: 1; box-shadow: none; }
 .theme-classic .nav-link.is-active .nav-ico { background: none; }
 .theme-classic .nav-caret { opacity: 1; }
-.theme-classic .nav-badge { background: #fff; color: #ff5221; }
-.theme-classic .nav-link.is-active .nav-badge { color: #ff5221; }
+.theme-classic .nav-badge { background: #fff; color: var(--accent-strong); }
+.theme-classic .nav-link.is-active .nav-badge { color: var(--accent-strong); }
 .theme-classic .nav-sub { margin: 0 0 4px; padding: 0; }
 .theme-classic .nav-sublink {
   display: flex;
@@ -138,7 +159,7 @@ body.theme-classic {
   border-bottom: 1px solid rgba(0, 0, 0, .1);
 }
 .theme-classic .page-heading { gap: 12px; }
-.theme-classic .page-icon { width: 32px; height: 32px; background: #ffa534; box-shadow: none; }
+.theme-classic .page-icon { width: 32px; height: 32px; background: var(--accent); box-shadow: none; }
 .theme-classic .page-icon svg { width: 16px; height: 16px; }
 .theme-classic .page-heading h1 { font-size: 19px; font-weight: 400; color: #888; }
 .theme-classic .page-heading p { font-size: 12px; color: #9a9a9a; }
@@ -147,7 +168,7 @@ body.theme-classic {
 .theme-classic .currency .tool-btn strong { font-weight: 400; color: #555; }
 .theme-classic .avatar { display: none; }
 .theme-classic .user-meta strong { font-size: 13px; font-weight: 400; }
-.theme-classic .role-chip { margin-top: 2px; border-radius: 3px; background: #ffa534; font-weight: 500; }
+.theme-classic .role-chip { margin-top: 2px; border-radius: 3px; background: var(--accent-strong); font-weight: 500; }
 .theme-classic .dropdown-menu { border: 0; border-radius: 10px; box-shadow: var(--shadow-lg); }
 .theme-classic .dropdown-item { border-radius: 0; font-weight: 400; color: #333; }
 .theme-classic .dropdown-item:hover { background: #f5f5f5; }
@@ -175,12 +196,16 @@ body.theme-classic {
 .theme-classic .hero-card .split-row span:first-child { color: #9a9a9a; opacity: 1; }
 
 .theme-classic .stat::after { display: none; }
-.theme-classic .stat-icon { border-radius: 4px; background: #ffa534; box-shadow: none; }
+.theme-classic .stat-icon { border-radius: 4px; background: var(--accent); box-shadow: none; }
 .theme-classic .stat-icon.green { background: var(--c-green); }
 .theme-classic .stat-icon.blue { background: var(--c-cyan); }
 .theme-classic .stat-icon.violet { background: var(--c-blue); }
 .theme-classic .stat-icon.amber { background: #ffa534; }
 .theme-classic .stat-label { font-weight: 400; color: #9a9a9a; }
+/* Columns of the dashboard chart in the colour of the menu. */
+.theme-classic .chart #bar-past stop { stop-color: color-mix(in srgb, var(--accent) 45%, #fff); }
+.theme-classic .chart #bar-now stop:first-child { stop-color: var(--accent); }
+.theme-classic .chart #bar-now stop:last-child { stop-color: var(--accent-end); }
 .theme-classic .stat-value { font-weight: 300; }
 
 /* --- Buttons: outlined grey by default, filled colours for actions ------ */
@@ -245,28 +270,28 @@ body.theme-classic {
 .theme-classic .table td { border-bottom: 1px solid #ececec; }
 .theme-classic .table tbody tr:hover { background: #fafafa; }
 .theme-classic .cell-title { font-weight: 700; }
-.theme-classic a.cell-title:hover { color: #ff7f2a; }
+.theme-classic a.cell-title:hover { color: var(--accent-strong); }
 .theme-classic .list-total { font-weight: 400; color: #9a9a9a; }
 
 .theme-classic .badge { gap: 4px; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 700; }
 .theme-classic .badge-success { background: var(--c-green); color: #fff; }
 .theme-classic .badge-warning { background: var(--c-yellow); color: #333; }
 .theme-classic .badge-info { background: var(--c-cyan); color: #fff; }
-.theme-classic .badge-brand { background: #ffa534; color: #fff; }
+.theme-classic .badge-brand { background: var(--accent-strong); color: #fff; }
 .theme-classic .badge-muted { background: #e3e3e3; color: #565656; }
 .theme-classic .badge-danger { background: var(--c-red); color: #fff; }
 .theme-classic .chip { border-radius: 4px; font-weight: 400; }
-.theme-classic .chip-brand { background: #fff3e2; color: #b85d00; }
+.theme-classic .chip-brand { background: var(--accent-soft); color: var(--accent-ink); }
 
 .theme-classic .tab { font-weight: 400; }
-.theme-classic .tab.is-active { color: #333; border-bottom-color: #ffa534; }
+.theme-classic .tab.is-active { color: #333; border-bottom-color: var(--accent); }
 .theme-classic .page-link { border-radius: 4px; }
-.theme-classic .page-link.is-active { background: #ffa534; color: #fff; }
+.theme-classic .page-link.is-active { background: var(--accent-strong); color: #fff; }
 
 .theme-classic .detail { border-bottom: 1px dashed #ddd; }
 .theme-classic .detail dt { font-weight: 400; color: #9a9a9a; letter-spacing: 0; }
-.theme-classic .approach-bar-fill { background: #ffa534; }
-.theme-classic .empty-icon { background: #fff3e2; color: #ffa534; }
+.theme-classic .approach-bar-fill { background: var(--accent); }
+.theme-classic .empty-icon { background: var(--accent-soft); color: var(--accent-strong); }
 
 .theme-classic .toast { border-radius: 4px; font-weight: 400; }
 .theme-classic .toast-success { background: var(--c-green); color: #fff; }
@@ -276,7 +301,7 @@ body.theme-classic {
 .theme-classic .prep-steps { border-radius: 4px; box-shadow: var(--shadow); border: 0; }
 .theme-classic .prep-steps a { border-radius: 4px; }
 .theme-classic .prep-steps a:hover,
-.theme-classic .prep-steps a.is-current { background: #fff3e2; }
+.theme-classic .prep-steps a.is-current { background: var(--accent-soft); }
 
 /* ---------- Real estate page laid out as on the valuation portal ---------- */
 
@@ -313,7 +338,7 @@ body.theme-classic {
   color: #9a9a9a;
 }
 .theme-classic .portal-steps li.is-done .portal-step-num { border-color: var(--c-green); background: var(--c-green); color: #fff; }
-.theme-classic .portal-steps li.is-current .portal-step-num { border-color: #ffa534; background: #ffa534; color: #fff; }
+.theme-classic .portal-steps li.is-current .portal-step-num { border-color: var(--accent); background: var(--accent); color: #fff; }
 .theme-classic .portal-step-label { font-size: 12px; text-transform: uppercase; color: #9a9a9a; }
 .theme-classic .portal-steps li.is-current .portal-step-label { color: #333; font-weight: 500; }
 
@@ -332,7 +357,7 @@ body.theme-classic {
   list-style: none;
 }
 .theme-classic .portal-section > summary::-webkit-details-marker { display: none; }
-.theme-classic .portal-section > summary::before { content: '⬇'; display: inline-block; color: #ffa534; transition: transform .15s ease; }
+.theme-classic .portal-section > summary::before { content: '⬇'; display: inline-block; color: var(--accent-strong); transition: transform .15s ease; }
 .theme-classic .portal-section:not([open]) > summary::before { transform: rotate(-90deg); }
 .theme-classic .portal-section > summary:hover { background: #fafafa; }
 .theme-classic .portal-section[open] > summary { border-bottom: 1px solid #ececec; }
@@ -357,6 +382,7 @@ body.theme-classic {
 .theme-classic .portal-sub > summary { padding: 12px 0; font-size: 14px; color: #888; cursor: pointer; }
 .theme-classic .portal-box { padding: 12px 14px 4px; border: 1px solid #e3e3e3; border-radius: 4px; background: #fcfcfc; }
 .theme-classic .portal-radios { margin: 0; padding: 0; border: 0; }
+.theme-classic .area-copy .check { padding: 2px 0; border: 0; background: none; font-weight: 400; color: #666; }
 .theme-classic .radio-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
 .theme-classic .radio-row .check { padding: 9px 12px; font-weight: 400; }
 .theme-classic .radio-dot { flex: none; width: 18px; height: 18px; border: 1.5px solid #c4cad4; border-radius: 50%; }
@@ -375,9 +401,9 @@ body.theme-classic {
 
 .theme-classic .portal-files { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
 
-/* "Holat" and "Tarixi" with green heads. */
+/* "Holat" and "Tarixi" with coloured heads (green with the orange menu, as on the portal). */
 .theme-classic .portal-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; align-items: start; }
-.theme-classic .card-accent > .card-head { padding: 12px 15px; border-radius: 4px 4px 0 0; background: var(--c-green); }
+.theme-classic .card-accent > .card-head { padding: 12px 15px; border-radius: 4px 4px 0 0; background: var(--accent-head); }
 .theme-classic .card-accent > .card-head .card-title { font-size: 16px; font-weight: 400; color: #fff; }
 .theme-classic .card-accent > .card-head .card-actions { color: #fff; font-size: 13px; }
 .theme-classic .card-accent > .card-head .badge { background: #fff; color: #333; }
@@ -390,7 +416,7 @@ body.theme-classic {
 .theme-classic .portal-facts { display: flex; flex-wrap: wrap; gap: 10px 28px; padding: 14px 18px; border-radius: 4px; background: #fff; box-shadow: var(--shadow); font-size: 13px; }
 .theme-classic .portal-facts > div > span:first-child { display: block; font-size: 11px; text-transform: uppercase; color: #9a9a9a; }
 .theme-classic .portal-facts strong { font-weight: 500; color: #333; }
-.theme-classic .portal-notice { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 4px; background: #ffa534; color: #fff; }
+.theme-classic .portal-notice { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 4px; background: var(--accent-strong); color: #fff; }
 
 @media (max-width: 720px) {
   .theme-classic .portal-steps { grid-template-columns: 1fr 1fr; row-gap: 16px; }

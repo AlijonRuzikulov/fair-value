@@ -12,7 +12,7 @@ use Tests\TestCase;
 
 /**
  * The admin panel looks like the valuation portal the appraisers use (the
- * classic look) unless Settings choose the modern one.
+ * classic look, light blue or orange) unless Settings choose the modern one.
  */
 class ClassicThemeTest extends TestCase
 {
@@ -30,6 +30,18 @@ class ClassicThemeTest extends TestCase
         Setting::put(['admin_theme' => 'modern']);
         $this->get('/admin/real-estates?kind=residential')->assertOk()
             ->assertDontSee('admin-classic.css', false)->assertSee('class="admin"', false);
+    }
+
+    public function test_the_menu_is_light_blue_unless_orange_is_chosen(): void
+    {
+        $this->actingAs(User::factory()->admin()->create());
+        $this->get('/admin')->assertOk()->assertSee('class="admin theme-classic"', false);
+
+        $this->put('/admin/settings', ['name' => 'Fair Value', 'phone' => '+998 71 200-00-00', 'admin_color' => 'green'])->assertSessionHasErrors('admin_color');
+        $this->put('/admin/settings', ['name' => 'Fair Value', 'phone' => '+998 71 200-00-00', 'admin_color' => 'orange'])->assertSessionHasNoErrors();
+        $this->get('/admin')->assertOk()->assertSee('class="admin theme-classic accent-orange"', false);
+        $this->withSession(['locale' => 'uz'])->get('/admin/settings')->assertOk()
+            ->assertSee('Menyu rangi')->assertSee('<option value="orange" selected>', false);
     }
 
     public function test_the_list_has_the_columns_and_filters_of_the_portal(): void
