@@ -229,7 +229,7 @@ abstract class ValuationController extends Controller
         return [];
     }
 
-    public function edit(Request $request, string $id): View
+    public function edit(Request $request, string $id): View|RedirectResponse
     {
         $item = $this->find($id);
         Gate::authorize('edit-valuation', $item);
@@ -542,8 +542,8 @@ abstract class ValuationController extends Controller
 
     /**
      * A step of the approval: the appraiser submits the report, the director
-     * approves or returns it, reopens it for revaluation; cancelling; the
-     * customer signing the act.
+     * confirms the invoice, approves or returns the report, reopens it for
+     * revaluation; cancelling; the customer signing the act.
      */
     public function workflow(Request $request, string $id): RedirectResponse
     {
@@ -557,6 +557,7 @@ abstract class ValuationController extends Controller
         $status = $item->status;
         [$gate, $possible, $next] = match ($action) {
             'submitted' => ['finalize-valuations', in_array($status, [ValuationStatus::New, ValuationStatus::InProgress], true), ValuationStatus::Review],
+            'invoiced' => ['approve-valuations', $status !== ValuationStatus::Cancelled && ! $item->currentStep('invoiced'), null],
             'approved' => ['approve-valuations', $status === ValuationStatus::Review, ValuationStatus::Completed],
             'returned' => ['approve-valuations', $status === ValuationStatus::Review, ValuationStatus::InProgress],
             'reopened' => ['approve-valuations', $status === ValuationStatus::Completed, ValuationStatus::InProgress],

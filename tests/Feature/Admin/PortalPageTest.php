@@ -43,13 +43,31 @@ class PortalPageTest extends TestCase
     public function test_the_page_has_the_steps_and_the_sections_of_the_portal(): void
     {
         $this->actingAs($this->user)->withSession(['locale' => 'uz'])->get('/admin/real-estates/'.$this->flat->id)->assertOk()
-            ->assertSee('Ko‘chmas mulk ma’lumotlarini kiriting (Turar joy)')
-            ->assertSeeInOrder(['Ko‘chmas mulk asosiy ma’lumotlarini saqlash', 'Yondashuvlarni hisoblash', 'Muvofiqlashtirish va tasdiqlash', 'Tamom'])
-            ->assertSeeInOrder(['Ko‘chmas mulk asosiy ma’lumotlari', 'Shaxslar', 'Hujjatlar', 'Qiyosiy yondashuv', 'Daromad yondashuvi', 'Xarajat yondashuvi', 'Natijalarni muvofiqlashtirish', 'Holati', 'Tarix'])
+            ->assertSee('<title>Ko‘chmas mulkni baholash (Turar joy)', false)
+            ->assertSeeInOrder([
+                'Ko‘chmas mulk asosiy ma’lumotlarini saqlash', 'Yondashuvlarni hisoblash', 'Muvofiqlashtirish va tasdiqlash', 'Tamom',
+                'Ko‘chmas mulk ma’lumotlarini kiriting (Turar joy)', 'Mobil ilova orqali ma’lumot olish',
+                'Tegishli mulkni turi', 'Mulk egasi', 'Ishonchnoma bilan / Boshqa tashkilot buyurtmasi qatnashyaptimi',
+                'Yondashuv usullari', 'Baholash maqsadi', 'Obyekt', 'Ko‘chmas mulk kadastr raqami', 'Ma’lumotni olish',
+                'Alohida qulayliklar', 'Arxitekturaviy uslub (fasad)', 'Foydalanish maqsadi', 'Ta’mir holati',
+                'Qurilish tugallanganligi (%)', 'Baholovchi', 'Yengil konstruktiv element', 'Kontrakt summasi', 'QQS bilan',
+                'To‘langan summa', 'Identifikatsiya bo‘yicha baholovchi fikri', 'Joylashgan joyi',
+                'Ko‘chmas mulk asosiy ma’lumotlari', 'Ko‘chmas mulkni baholash uchun taqdim qilinadigan hujjatlar',
+                'Qiyosiy yondashuv', 'Daromad yondashuvi', 'Muvofiqlashtirish', 'Baholanadigan binolarni kiriting',
+                'Holat', 'Hali ko‘rilmadi', 'Baholovchi tomonidan hisobot', 'Direktor tomonidan hisob-varaq faktura',
+                'Direktor tomonidan hisobot', 'Buyurtmachi tomonidan hisob-varaq faktura', 'Tarixi', 'Sarflangan vaqt', 'Saqlash',
+            ])
             ->assertSee('(voz kechildi)')
-            ->assertSee(route('admin.real-estates.main', $this->flat->id), false)
+            ->assertSee('action="'.route('admin.real-estates.main', $this->flat->id).'"', false)
+            ->assertSee('name="owner_id" value="'.$this->flat->clients->first()->id.'"', false)
             ->assertSee('name="value_kind" value="market" checked', false)
             ->assertSee('placeholder="17-26"', false);
+
+        // A new object is added on the same page.
+        $this->get('/admin/real-estates/create?kind=nonresidential')->assertOk()
+            ->assertSee('action="'.route('admin.real-estates.store').'"', false)
+            ->assertSee('<option value="Boshqa" selected>', false)
+            ->assertSee('Hujjatlar obyekt saqlangandan keyin yuklanadi.');
 
         // The modern look keeps the page it had.
         Setting::put(['admin_theme' => 'modern']);
@@ -64,7 +82,7 @@ class PortalPageTest extends TestCase
             'total_area' => '72,4', 'floor' => '3', 'floors_total' => '9', 'letter_number' => 'X-5',
             'value_kind' => 'other', 'value_type' => 'Investitsion qiymat', 'ownership_form' => 'Davlat mulki',
             'land_rights' => '', 'function' => "Ko'p qavatli turar joy",
-        ])->assertRedirect('/admin/real-estates/'.$this->flat->id.'#main');
+        ])->assertRedirect('/admin/real-estates/'.$this->flat->id);
 
         $flat = $this->flat->fresh();
         $this->assertSame('Kvartira (3 xonali)', $flat->name);
@@ -89,6 +107,7 @@ class PortalPageTest extends TestCase
 
     public function test_the_full_form_saves_the_report_fields_too(): void
     {
+        // In the classic look the edit address shows the object page, which is its form.
         $this->actingAs($this->user)->get('/admin/real-estates/'.$this->flat->id.'/edit')->assertOk()
             ->assertSee('portal-steps', false)->assertSee('name="letter_number"', false);
 
@@ -139,6 +158,67 @@ class PortalPageTest extends TestCase
 
         $this->withSession(['locale' => 'uz'])->get('/admin/real-estates/'.$this->flat->id)->assertOk()
             ->assertSee('50,0 %')->assertSee('Muvofiqlashtirilgan qiymatni olish');
+    }
+
+    public function test_a_new_object_is_added_with_the_fields_of_the_portal(): void
+    {
+        $owner = Client::factory()->create();
+        $bank = Client::factory()->create();
+        $form = [
+            'kind' => 'nonresidential', 'property_type' => 'Bino', 'owner_id' => (string) $owner->id,
+            'persons' => [['client_id' => (string) $bank->id, 'role' => 'pledgee']],
+            'approaches' => ['', 'cost', 'comparative'], 'purpose' => 'collateral', 'name' => 'Savdo binosi',
+            'cadastral_number' => '10:09:01:02:03:0101', 'features' => ['', 'electricity', 'gas'],
+            'architecture' => 'Zamonaviy', 'function' => 'Noturar joy (savdo)', 'repair' => 'Yaxshi', 'completion' => '85.5',
+            'light' => '1', 'service_fee' => '2 000 000', 'paid_amount' => '500 000', 'identification' => 'Obyekt hujjatlarga mos keladi.',
+            'total_area' => '120,5', 'value_kind' => 'market',
+        ];
+
+        $this->actingAs($this->user)->post('/admin/real-estates', $form)->assertRedirect();
+        $object = RealEstate::where('name', 'Savdo binosi')->sole();
+
+        $this->assertSame(ValuationStatus::New, $object->status);
+        $this->assertSame(['cost', 'comparative'], $object->approaches);
+        $this->assertSame(['electricity', 'gas'], $object->features);
+        $this->assertSame(['owner' => $owner->id, 'pledgee' => $bank->id], $object->clients->mapWithKeys(fn ($c) => [$c->pivot->role => $c->id])->all());
+        $this->assertSame('Bino', $object->report['property_type']);
+        $this->assertSame('Zamonaviy', $object->report['architecture']);
+        $this->assertEquals(85.5, $object->report['completion']);
+        $this->assertTrue($object->report['light']);
+        $this->assertSame('Obyekt hujjatlarga mos keladi.', $object->report['identification']);
+        $this->assertSame('2000000.00', $object->service_fee);
+
+        // What the portal asks for is required on this page.
+        $this->post('/admin/real-estates', [...$form, 'owner_id' => '', 'approaches' => [''], 'features' => [''], 'cadastral_number' => ''])
+            ->assertSessionHasErrors(['owner_id', 'approaches', 'features', 'cadastral_number']);
+    }
+
+    public function test_the_owner_and_the_other_persons_are_changed_on_the_page(): void
+    {
+        $owner = Client::factory()->create();
+        $this->actingAs($this->user)->put('/admin/real-estates/'.$this->flat->id.'/main', [
+            'owner_id' => (string) $owner->id, 'approaches' => ['', 'comparative'], 'features' => ['', 'water'],
+            'purpose' => 'sale', 'name' => 'Kvartira', 'cadastral_number' => '1', 'property_type' => 'Kvartira',
+            'architecture' => 'Oddiy', 'function' => 'Turar joy', 'repair' => 'Yaxshi', 'completion' => '100', 'light' => '0',
+        ])->assertRedirect()->assertSessionHasNoErrors();
+
+        $flat = $this->flat->fresh();
+        $this->assertSame([$owner->id], $flat->clients->pluck('id')->all());
+        $this->assertSame(['comparative'], $flat->approaches);
+        $this->assertNull($flat->value_income);
+        $this->assertArrayNotHasKey('light', $flat->report);
+    }
+
+    public function test_the_director_confirms_the_invoice(): void
+    {
+        $director = User::factory()->admin()->create();
+        $this->actingAs($director)->post('/admin/real-estates/'.$this->flat->id.'/workflow', ['action' => 'invoiced'])->assertRedirect();
+        $this->post('/admin/real-estates/'.$this->flat->id.'/workflow', ['action' => 'invoiced'])->assertSessionHas('error');
+
+        $this->withSession(['locale' => 'uz'])->get('/admin/real-estates/'.$this->flat->id)->assertOk()
+            ->assertSeeInOrder(['Direktor tomonidan hisob-varaq faktura', 'Tasdiqlangan', 'Direktor tomonidan hisobot', 'Tasdiqlanmagan'])
+            ->assertSee('Direktor hisob-varaq fakturani tasdiqladi');
+        $this->actingAs($this->user)->post('/admin/real-estates/'.$this->flat->id.'/workflow', ['action' => 'invoiced'])->assertForbidden();
     }
 
     public function test_a_completed_valuation_is_changed_only_by_appraisers(): void

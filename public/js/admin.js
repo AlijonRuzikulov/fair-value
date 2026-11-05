@@ -250,6 +250,52 @@
 
   /* ---------- Persons editor ("Шахслар") ------------------------------ */
 
+  // A client chosen by searching for the name, passport, TIN or phone.
+  function initClientCombo(combo, searchUrl, emptyText) {
+    var input = $('[data-combo-input]', combo);
+    var value = $('[data-combo-value]', combo);
+    var selected = $('[data-combo-selected]', combo);
+
+    attachSearchList({
+      input: input,
+      emptyText: emptyText,
+      fetchItems: function (q) { return getJson(searchUrl + '?q=' + encodeURIComponent(q)); },
+      render: function (c) { return '<strong>' + escapeHtml(c.title) + '</strong><small>' + escapeHtml(c.sub) + '</small>'; },
+      onPick: function (c) {
+        value.value = c.id;
+        $('strong', selected).textContent = c.title;
+        $('small', selected).textContent = c.sub;
+        selected.hidden = false;
+        input.hidden = true;
+        input.value = '';
+      }
+    });
+
+    $('[data-combo-clear]', combo).addEventListener('click', function () {
+      value.value = '';
+      selected.hidden = true;
+      input.hidden = false;
+      input.focus();
+    });
+  }
+
+  // The owner of real estate, chosen on its own.
+  $$('[data-client-pick]').forEach(function (combo) {
+    initClientCombo(combo, combo.dataset.searchUrl, (document.querySelector('[data-combo-empty-text]') || {}).textContent);
+  });
+
+  // "By power of attorney / another organisation": the other persons; hidden ones are not sent.
+  $$('[data-others-toggle]').forEach(function (box) {
+    var others = document.querySelector('[data-others]');
+    if (!others) return;
+    function sync() {
+      others.hidden = !box.checked;
+      $$('input, select', others).forEach(function (el) { el.disabled = !box.checked; });
+    }
+    box.addEventListener('change', sync);
+    sync();
+  });
+
   $$('[data-persons]').forEach(function (box) {
     var rows = $('[data-person-rows]', box);
     var template = $('[data-person-template]', box);
@@ -257,32 +303,7 @@
     var emptyText = ($('[data-combo-empty-text]', box) || {}).textContent;
 
     function initRow(row) {
-      var combo = $('[data-combo]', row);
-      var input = $('[data-combo-input]', combo);
-      var value = $('[data-combo-value]', combo);
-      var selected = $('[data-combo-selected]', combo);
-
-      attachSearchList({
-        input: input,
-        emptyText: emptyText,
-        fetchItems: function (q) { return getJson(box.dataset.searchUrl + '?q=' + encodeURIComponent(q)); },
-        render: function (c) { return '<strong>' + escapeHtml(c.title) + '</strong><small>' + escapeHtml(c.sub) + '</small>'; },
-        onPick: function (c) {
-          value.value = c.id;
-          $('strong', selected).textContent = c.title;
-          $('small', selected).textContent = c.sub;
-          selected.hidden = false;
-          input.hidden = true;
-          input.value = '';
-        }
-      });
-
-      $('[data-combo-clear]', combo).addEventListener('click', function () {
-        value.value = '';
-        selected.hidden = true;
-        input.hidden = false;
-        input.focus();
-      });
+      initClientCombo($('[data-combo]', row), box.dataset.searchUrl, emptyText);
       $('[data-person-remove]', row).addEventListener('click', function () { row.remove(); });
     }
 
@@ -812,6 +833,56 @@
         other.disabled = !on;
         if (on) other.focus();
       });
+    });
+  });
+
+  /* ---------- Real estate page of the classic look --------------------- */
+
+  // Multiple choice shown as tags; a click outside closes the list.
+  $$('[data-multi]').forEach(function (multi) {
+    var tags = $('[data-multi-tags]', multi);
+    var placeholder = $('[data-multi-placeholder]', multi);
+    function sync() {
+      tags.innerHTML = '';
+      $$('input[type="checkbox"]', multi).forEach(function (box) {
+        if (!box.checked) return;
+        var tag = document.createElement('span');
+        tag.className = 'multi-tag';
+        tag.textContent = box.dataset.label;
+        tags.appendChild(tag);
+      });
+      placeholder.hidden = tags.children.length > 0;
+    }
+    multi.addEventListener('change', sync);
+    document.addEventListener('click', function (e) { if (multi.open && !multi.contains(e.target)) multi.open = false; });
+  });
+
+  // The contract sum with VAT, while it is typed.
+  $$('[data-vat]').forEach(function (box) {
+    var sum = $('[data-contract-sum]', box);
+    var out = $('[data-contract-vat]', box);
+    var rate = parseFloat(box.dataset.vat) || 0;
+    if (!sum || !out) return;
+    sum.addEventListener('input', function () { out.textContent = numberText(Math.round(readNumber(sum.value) * (1 + rate / 100))); });
+  });
+
+  // A button that shows a note next to it.
+  $$('[data-reveal]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      var note = document.getElementById(button.dataset.reveal);
+      if (note) note.hidden = !note.hidden;
+    });
+  });
+
+  // The folding sections stay as the person left them (in this browser only).
+  $$('details[data-remember][id]').forEach(function (section) {
+    var key = 'fv-open:' + location.pathname + '#' + section.id;
+    try {
+      var saved = localStorage.getItem(key);
+      if (saved !== null && !section.open) section.open = saved === '1';
+    } catch (e) { /* storage unavailable */ }
+    section.addEventListener('toggle', function () {
+      try { localStorage.setItem(key, section.open ? '1' : '0'); } catch (e) { /* storage unavailable */ }
     });
   });
 

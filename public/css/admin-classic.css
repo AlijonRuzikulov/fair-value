@@ -307,11 +307,83 @@ body.theme-classic.accent-orange {
 
 .theme-classic .portal { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; min-width: 0; }
 
-.theme-classic .portal-head { padding: 18px 20px 20px; }
-.theme-classic .portal-head-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.theme-classic .portal-head { padding: 4px 20px 22px; }
+.theme-classic .portal-head-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin: 26px 0 18px; padding-top: 18px; border-top: 1px solid #ececec; }
 .theme-classic .portal-head h2 { font-size: 20px; font-weight: 300; color: #333; }
-.theme-classic .portal-head-actions { display: flex; flex-wrap: wrap; gap: 8px; }
-.theme-classic .portal-head-note { margin-top: 12px; }
+.theme-classic .portal-fields { min-width: 0; margin: 0; padding: 0; border: 0; }
+
+/* "Mobil ilova orqali ma'lumot olish": the code that opens this page on a phone. */
+.theme-classic .mobile-pop { position: relative; }
+.theme-classic .mobile-pop > summary { list-style: none; }
+.theme-classic .mobile-pop > summary::-webkit-details-marker { display: none; }
+.theme-classic .mobile-pop-body {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  right: 0;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  width: min(330px, calc(100vw - 48px));
+  padding: 14px;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: var(--shadow-lg);
+  font-size: 13px;
+  color: #555;
+}
+.theme-classic .mobile-pop-body .qr { flex: none; width: 120px; height: 120px; }
+.theme-classic .mobile-pop-body .qr svg, .theme-classic .mobile-pop-body .qr canvas { width: 100%; height: 100%; }
+
+.theme-classic .label-note { text-transform: none; color: #b3b3b3; }
+.theme-classic .input-row { display: flex; gap: 8px; }
+.theme-classic .input-row .input { flex: 1; min-width: 0; }
+.theme-classic .input-row .btn { flex: none; height: 40px; }
+.theme-classic .owner-links { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 14px; margin-top: 6px; }
+.theme-classic .owner-links .check { padding: 2px 0; border: 0; background: none; font-weight: 400; color: #666; }
+.theme-classic .link-sm { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--accent-strong); }
+.theme-classic .portal-light { align-self: flex-start; margin-top: 30px; padding: 0; border: 0; background: none; font-weight: 400; }
+.theme-classic .contract-line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; font-size: 13px; color: #666; }
+.theme-classic .contract-line label { font-size: 13px !important; color: #666 !important; text-transform: none; }
+.theme-classic .contract-line .input-sm { width: 150px; height: 30px; }
+.theme-classic .portal-map-title { margin-bottom: 8px; font-size: 12px; text-transform: uppercase; color: #9a9a9a; }
+.theme-classic .portal-map .map-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+
+/* Multiple choice as tags (approaches, amenities). */
+.theme-classic .multi-field { min-width: 0; margin: 0; padding: 0; border: 0; }
+.theme-classic .multi { position: relative; }
+.theme-classic .multi-box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  height: auto;
+  min-height: 40px;
+  padding: 5px 34px 5px 8px;
+  cursor: pointer;
+  list-style: none;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center;
+}
+.theme-classic .multi-box::-webkit-details-marker { display: none; }
+.theme-classic .multi-tags { display: contents; }
+.theme-classic .multi-tag { padding: 3px 8px; border-radius: 3px; background: var(--accent-soft); color: var(--accent-ink); font-size: 13px; }
+.theme-classic .multi-placeholder { padding-left: 4px; color: #b3b3b3; }
+.theme-classic .multi-menu {
+  position: absolute;
+  z-index: 15;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 280px;
+  overflow: auto;
+  padding: 6px 0;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: var(--shadow-lg);
+}
+.theme-classic .multi-option { display: flex; align-items: center; gap: 10px; padding: 8px 14px; font-size: 14px; color: #333; cursor: pointer; }
+.theme-classic .multi-option:hover { background: var(--accent-soft); }
+.theme-classic .multi-option input { width: 16px; height: 16px; accent-color: var(--accent-strong); }
 
 /* The four steps: done green, the current one orange, the rest grey. */
 .theme-classic .portal-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 22px 0 0; padding: 0; list-style: none; counter-reset: none; }
@@ -400,6 +472,7 @@ body.theme-classic.accent-orange {
 .theme-classic .portal-value-actions { display: flex; flex-direction: row; flex-wrap: wrap; align-items: flex-start; align-self: start; gap: 8px; padding-top: 26px; }
 
 .theme-classic .portal-files { grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+.theme-classic .portal-files .btn { height: auto; min-height: 38px; padding: 8px 12px; white-space: normal; line-height: 1.25; text-align: center; }
 
 /* "Holat" and "Tarixi" with coloured heads (green with the orange menu, as on the portal). */
 .theme-classic .portal-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; align-items: start; }
@@ -407,16 +480,24 @@ body.theme-classic.accent-orange {
 .theme-classic .card-accent > .card-head .card-title { font-size: 16px; font-weight: 400; color: #fff; }
 .theme-classic .card-accent > .card-head .card-actions { color: #fff; font-size: 13px; }
 .theme-classic .card-accent > .card-head .badge { background: #fff; color: #333; }
-.theme-classic .portal-reasons { display: flex; flex-wrap: wrap; gap: 10px; }
 .theme-classic .portal-reason > summary { list-style: none; }
 .theme-classic .portal-reason > summary::-webkit-details-marker { display: none; }
 .theme-classic .portal-reason[open] > summary { opacity: .85; }
-.theme-classic .portal-reason .approval-reason { margin-top: 8px; }
 
-.theme-classic .portal-facts { display: flex; flex-wrap: wrap; gap: 10px 28px; padding: 14px 18px; border-radius: 4px; background: #fff; box-shadow: var(--shadow); font-size: 13px; }
-.theme-classic .portal-facts > div > span:first-child { display: block; font-size: 11px; text-transform: uppercase; color: #9a9a9a; }
-.theme-classic .portal-facts strong { font-weight: 500; color: #333; }
-.theme-classic .portal-notice { display: flex; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 4px; background: var(--accent-strong); color: #fff; }
+.theme-classic .portal-reason { position: relative; }
+.theme-classic .portal-reason .approval-reason { position: absolute; z-index: 10; bottom: calc(100% + 8px); right: 0; display: flex; gap: 8px; width: min(380px, calc(100vw - 48px)); padding: 10px; border-radius: 4px; background: #fff; box-shadow: var(--shadow-lg); }
+.theme-classic .portal-reason .approval-reason .input { flex: 1; }
+.theme-classic .portal-bottom { justify-content: flex-end; align-items: center; margin-top: 0; }
+.theme-classic .portal-delete { margin-left: 8px; }
+
+/* The four confirmations of "Holat". */
+.theme-classic .sign-status { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 12px; color: #555; }
+.theme-classic .sign-rows { display: grid; margin: 0 0 12px; padding: 0; list-style: none; }
+.theme-classic .sign-rows li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; padding: 9px 0; border-bottom: 1px solid #ececec; font-size: 13px; color: #333; }
+.theme-classic .sign-state { display: inline-flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: 6px; }
+.theme-classic .sign-state small { color: #9a9a9a; }
+.theme-classic .portal-notice .code { margin-left: auto; font-weight: 700; letter-spacing: .05em; }
+.theme-classic .portal-notice { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 12px 16px; border-radius: 4px; background: var(--accent-strong); color: #fff; }
 
 @media (max-width: 720px) {
   .theme-classic .portal-steps { grid-template-columns: 1fr 1fr; row-gap: 16px; }

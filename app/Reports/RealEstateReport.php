@@ -16,6 +16,7 @@ use App\Support\ComparativeCalculator;
 use App\Support\CostApproach;
 use App\Support\IncomeApproach;
 use App\Support\NumberToWords;
+use App\Support\Transliterator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
@@ -92,6 +93,8 @@ final class RealEstateReport
     public const OPTIONS = [
         // The market value, or a value other than the market one.
         'value_type' => ['Bozor qiymati', 'Investitsion qiymat', 'Tugatish qiymati', 'Utilizatsiya qiymati'],
+        // The kind of the property, as on the valuation portal.
+        'property_type' => ['Kvartira', 'Xususiy uy (hovli)', 'Bino', 'Binoning bir qismi (xona)', 'Inshoot', 'Tugallanmagan qurilish', 'Boshqa'],
         'function' => ["Ko'p qavatli turar joy", 'Turar joy (hovli)', 'Noturar joy (savdo)', 'Noturar joy (ofis)', 'Ombor', 'Ishlab chiqarish binosi'],
         'ownership_form' => ['Xususiy mulk', 'Davlat mulki', 'Jamoa mulki'],
         'rights' => ['Egalik huquqi', 'Mulk huquqi', 'Ijara huquqi', 'Doimiy foydalanish huquqi'],
@@ -108,6 +111,24 @@ final class RealEstateReport
         'landscaping' => ['Obodonlashtirilgan', 'Qisman obodonlashtirilgan', 'Obodonlashtirilmagan'],
         'surroundings' => ['Turar joy binolari', "Ko'p qavatli turar joy binolari", 'Xususiy turar joy uylari', 'Turli maqsadli binolar', 'Sanoat binolari'],
     ];
+
+    /**
+     * Choices of a select on the object page: the suggestions and the saved
+     * value when it is not one of them. The values stay in Latin (as they are
+     * printed); the labels follow the Cyrillic interface.
+     *
+     * @return array<string, string>
+     */
+    public static function choices(string $key, ?string $current = null, ?array $only = null): array
+    {
+        $options = $only ?? self::OPTIONS[$key];
+        if (filled($current) && ! in_array($current, $options, true)) {
+            $options[] = $current;
+        }
+        $cyrillic = app()->getLocale() === 'oz';
+
+        return collect($options)->mapWithKeys(fn ($o) => [$o => $cyrillic ? Transliterator::toCyrillic($o) : ReportScript::latin($o)])->all();
+    }
 
     /** Reconciliation criteria (national standard No. 6), in the order of the scores. */
     public const CRITERIA = [
@@ -158,6 +179,9 @@ final class RealEstateReport
             'limiting_conditions' => 'Mavjud emas',
             'use_restrictions' => 'Baholash hisobotini tarqatish va chop qilish taqiqlanadi (buyurtmachi bundan mustasno). Hisobotdan baholash xulosasida belgilangan maqsaddagina foydalanish mumkin.',
 
+            'property_type' => $residential ? (($object->floors_total ?? 0) > 1 ? 'Kvartira' : 'Xususiy uy (hovli)') : 'Boshqa',
+            'identification' => null,
+            'light' => false,
             'function' => $residential ? (($object->floors_total ?? 0) > 1 ? "Ko'p qavatli turar joy" : 'Turar joy') : 'Noturar joy',
             'ownership_form' => 'Xususiy mulk',
             'rights' => 'Egalik huquqi',

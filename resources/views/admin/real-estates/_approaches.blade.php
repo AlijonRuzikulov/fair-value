@@ -14,6 +14,7 @@
     @php
         $costInput = $report['cost'] ?? ['buildings' => [[
             'name' => $item->name, 'unit' => 'm2', 'quantity' => $item->total_area, 'rate' => null, 'year_built' => $item->year_built,
+            'light' => ! empty($report['light']),
         ]], 'profit' => 10, 'land' => 0];
         $cost = CostApproach::calculate($costInput, (int) ($item->valuation_date ?? now())->format('Y'));
         $buildings = array_values((array) ($costInput['buildings'] ?? []));

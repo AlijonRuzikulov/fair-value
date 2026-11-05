@@ -2,8 +2,12 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\PersonRole;
 use App\Enums\RealEstateFeature;
 use App\Enums\RealEstateKind;
+use App\Enums\ValuationApproach;
+use App\Enums\ValuationPurpose;
+use App\Enums\ValuationStatus;
 use App\Models\RealEstate;
 use App\Reports\RealEstateReport;
 use App\Support\AdminTheme;
@@ -17,6 +21,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\HtmlString;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 /**
  * "Янги кўчмас мулк" — non-residential (нотурар жой) and residential
@@ -26,14 +31,19 @@ use Illuminate\Validation\Rule;
 class RealEstateController extends ValuationController
 {
     /** Report data typed together with the main data of the object; kept with the report. */
-    public const REPORT_FIELDS = ['letter_number', 'value_type', 'function', 'ownership_form', 'land_rights'];
+    public const REPORT_FIELDS = [
+        'property_type', 'architecture', 'function', 'repair', 'completion', 'light', 'identification',
+        'letter_number', 'value_type', 'ownership_form', 'land_rights',
+    ];
 
-    /** The main data saved on the object page (the first step, as on the valuation portal). */
+    /** The data saved on the object page (the first step, as on the valuation portal). */
     private const MAIN_FIELDS = [
-        'name', 'cadastral_number', 'cadastral_value', 'region_id', 'district_id', 'landmark', 'address',
+        'owner_id', 'persons', 'persons.*.client_id', 'persons.*.role', 'approaches', 'approaches.*', 'purpose',
+        'name', 'cadastral_number', 'features', 'features.*', 'appraiser_id', 'service_fee', 'paid_amount',
+        'latitude', 'longitude', 'cadastral_value', 'region_id', 'district_id', 'landmark', 'address',
         'contract_number', 'contract_date', 'report_number', 'land_area', 'built_up_area', 'useful_area', 'total_area',
         'living_area', 'rooms', 'wall_material', 'condition', 'floors_total', 'floor', 'year_built',
-        'latitude', 'longitude', 'purpose', 'valuation_date', 'inspection_date', 'value_kind', ...self::REPORT_FIELDS,
+        'valuation_date', 'inspection_date', 'notes', 'value_kind', ...self::REPORT_FIELDS,
     ];
 
     private RealEstateKind $kind = RealEstateKind::NonResidential;
@@ -106,7 +116,7 @@ class RealEstateController extends ValuationController
 
     protected function rules(Request $request, ?Model $item): array
     {
-        return [
+        $rules = [
             'kind' => ['required', Rule::enum(RealEstateKind::class)],
             'name' => ['required', 'string', 'max:255'],
             'cadastral_number' => ['nullable', 'string', 'max:60'],
@@ -127,6 +137,14 @@ class RealEstateController extends ValuationController
             'condition' => ['nullable', 'string', 'max:255'],
             'features' => ['nullable', 'array'],
             'features.*' => [Rule::enum(RealEstateFeature::class)],
+            // The owner chosen on the page of the classic look; the other persons come in "persons".
+            'owner_id' => ['sometimes', 'required', 'integer', 'exists:clients,id'],
+            'property_type' => ['nullable', 'string', 'max:150'],
+            'architecture' => ['nullable', 'string', 'max:150'],
+            'repair' => ['nullable', 'string', 'max:150'],
+            'completion' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'light' => ['nullable', 'boolean'],
+            'identification' => ['nullable', 'string', 'max:5000'],
             'letter_number' => ['nullable', 'string', 'max:60'],
             // The market value, or another one named in "value_type".
             'value_kind' => ['nullable', 'in:market,other'],
@@ -135,32 +153,89 @@ class RealEstateController extends ValuationController
             'ownership_form' => ['nullable', 'string', 'max:150'],
             'land_rights' => ['nullable', 'string', 'max:150'],
         ];
+
+        // The page of the classic look asks for what the valuation portal asks for.
+        if ($request->exists('owner_id')) {
+            $rules['approaches'] = ['required', 'array', 'min:1'];
+            $rules['purpose'] = ['required', Rule::enum(ValuationPurpose::class)];
+            foreach (['cadastral_number', 'features', 'property_type', 'architecture', 'function', 'repair', 'completion'] as $key) {
+                $rules[$key] = ['required', ...array_diff($rules[$key], ['nullable'])];
+            }
+        }
+
+        return $rules;
+    }
+
+    protected function validated(Request $request, ?Model $item): array
+    {
+        $this->prepare($request);
+        // The page of the classic look has no status: a new valuation starts as new.
+        if (! $request->exists('status')) {
+            $request->merge(['status' => $item?->status?->value ?? ValuationStatus::New->value]);
+        }
+
+        return parent::validated($request, $item);
     }
 
     protected function persist(Model $item, array $data, Request $request): Model
     {
         $report = [...self::REPORT_FIELDS, 'value_kind'];
-        $item = parent::persist($item, Arr::except($data, $report), $request);
+        $item = parent::persist($item, Arr::except($data, [...$report, 'owner_id']), $request);
         $this->keepReportFields($item, Arr::only($data, $report), $request);
 
         return $item;
     }
 
-    /** Saves the main data typed on the object page, without the rest of the form. */
+    /**
+     * Lists sent with an empty first value (so that "none chosen" is told
+     * from "not on the form") lose it; the owner chosen on its own becomes
+     * the first person.
+     */
+    private function prepare(Request $request): void
+    {
+        foreach (['approaches', 'features'] as $list) {
+            if ($request->exists($list)) {
+                $request->merge([$list => array_values(array_filter((array) $request->input($list), 'filled'))]);
+            }
+        }
+        if ($request->exists('owner_id')) {
+            $others = array_values(array_filter((array) $request->input('persons', []), fn ($p) => is_array($p) && filled($p['client_id'] ?? null)));
+            $owner = filled($request->input('owner_id')) ? [['client_id' => $request->input('owner_id'), 'role' => PersonRole::Owner->value]] : [];
+            $request->merge(['persons' => [...$owner, ...$others]]);
+        }
+    }
+
+    /** Saves what is typed on the object page; what the page does not send stays as it is. */
     public function main(Request $request, string $id): RedirectResponse
     {
         $item = $this->find($id);
         Gate::authorize('edit-valuation', $item);
         $this->resolveKind($request, $item);
         $this->normalizeNumbers($request);
+        $this->prepare($request);
         $rules = Arr::only([...$this->baseRules($request, $item), ...$this->rules($request, $item)], self::MAIN_FIELDS);
         $data = $request->validate($rules, [], $this->attributeNames());
 
         $report = [...self::REPORT_FIELDS, 'value_kind'];
-        $item->fill(Arr::except($data, $report))->save();
-        $this->keepReportFields($item, Arr::only($data, $report), $request);
+        DB::transaction(function () use ($item, $data, $report, $request) {
+            $item->fill(Arr::except($data, [...$report, 'owner_id', 'persons', 'approaches']));
+            if ($request->exists('approaches')) {
+                // A value is kept only for the approaches that are applied.
+                $item->approaches = $data['approaches'] ?? [];
+                foreach (ValuationApproach::cases() as $approach) {
+                    if (! in_array($approach->value, $item->approaches, true)) {
+                        $item->{$approach->column()} = null;
+                    }
+                }
+            }
+            $item->save();
+            if ($request->exists('persons')) {
+                $item->syncPersons($data['persons'] ?? []);
+            }
+            $this->keepReportFields($item, Arr::only($data, $report), $request);
+        });
 
-        return redirect()->to(route('admin.real-estates.show', $item->id).'#main')->with('status', __('Changes saved.'));
+        return redirect()->route('admin.real-estates.show', $item->id)->with('status', __('Changes saved.'));
     }
 
     /**
@@ -175,6 +250,10 @@ class RealEstateController extends ValuationController
         }
         if (($data['value_kind'] ?? null) === 'market') {
             $data['value_type'] = RealEstateReport::MARKET_VALUE;
+        }
+
+        if (in_array('light', $present, true)) {
+            $data['light'] = ! empty($data['light']) ?: null;
         }
 
         $report = (array) $item->report;
@@ -196,10 +275,22 @@ class RealEstateController extends ValuationController
 
     protected function formView(): string
     {
-        return AdminTheme::classic() ? 'admin.real-estates.form' : parent::formView();
+        return AdminTheme::classic() ? 'admin.real-estates.portal' : parent::formView();
     }
 
-    /** The page of the classic look has the main data form on it. */
+    /** In the classic look the object page is its form, as on the valuation portal. */
+    public function edit(Request $request, string $id): View|RedirectResponse
+    {
+        if (AdminTheme::classic()) {
+            Gate::authorize('edit-valuation', $this->find($id));
+
+            return $this->show($request, $id);
+        }
+
+        return parent::edit($request, $id);
+    }
+
+    /** The page of the classic look has the form on it. */
     protected function showData(Model $item): array
     {
         if (! AdminTheme::classic()) {
@@ -209,13 +300,20 @@ class RealEstateController extends ValuationController
         return [
             ...$this->sharedOptions(),
             'districts' => self::districtOptions(old('region_id', $item->region_id)),
+            'personRows' => $this->personRows($item),
             ...$this->formData($item),
         ];
     }
 
     protected function attributeNames(): array
     {
-        return [...parent::attributeNames(), 'name' => __('Object name'), 'total_area' => __('Total area')];
+        return [
+            ...parent::attributeNames(), 'name' => __('Object name'), 'total_area' => __('Total area'),
+            'owner_id' => __('Owner of the property'), 'approaches' => __('Approach methods'), 'purpose' => __('Purpose of valuation'),
+            'cadastral_number' => __('Cadastral number'), 'features' => __('Special amenities'), 'property_type' => __('Type of the property'),
+            'architecture' => __('Architectural style (facade)'), 'function' => __('Purpose of use'), 'repair' => __('Repair condition'),
+            'completion' => __('Construction completed (%)'),
+        ];
     }
 
     protected function formData(Model $item): array

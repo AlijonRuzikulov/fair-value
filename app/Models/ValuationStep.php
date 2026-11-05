@@ -7,15 +7,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 /**
- * A step of the approval of a valuation: submitted by the appraiser,
- * approved or returned by the director, reopened, cancelled, or the act
- * signed by the customer.
+ * A step of the approval of a valuation: submitted by the appraiser, the
+ * invoice confirmed and the report approved or returned by the director,
+ * reopened, cancelled, or the act signed by the customer.
  */
 class ValuationStep extends Model
 {
     public const UPDATED_AT = null;
 
-    public const ACTIONS = ['submitted', 'approved', 'returned', 'reopened', 'cancelled', 'accepted'];
+    public const ACTIONS = ['submitted', 'invoiced', 'approved', 'returned', 'reopened', 'cancelled', 'accepted'];
 
     protected $fillable = ['action', 'user_id', 'comment'];
 
@@ -33,6 +33,7 @@ class ValuationStep extends Model
     {
         return match ($action) {
             'submitted' => __('Submitted for approval'),
+            'invoiced' => __('Invoice confirmed by the director'),
             'approved' => __('Approved'),
             'returned' => __('Returned for correction'),
             'reopened' => __('Reopened for revaluation'),

@@ -7,6 +7,12 @@
                 <button class="btn btn-primary btn-sm" type="submit"><x-icon name="send-horizontal" :size="14" /> {{ __('Submit for approval') }}</button>
             </form>
         @endif
+        @if ($canApprove && $status !== ValuationStatus::Cancelled && ! $item->currentStep('invoiced'))
+            <form method="post" action="{{ $route }}">
+                @csrf <input type="hidden" name="action" value="invoiced">
+                <button class="btn btn-sm" type="submit"><x-icon name="receipt" :size="14" /> {{ __('Confirm the invoice') }}</button>
+            </form>
+        @endif
         @if ($status === ValuationStatus::Review && $canApprove)
             <form method="post" action="{{ $route }}">
                 @csrf <input type="hidden" name="action" value="approved">

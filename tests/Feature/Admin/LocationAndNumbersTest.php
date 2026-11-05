@@ -101,7 +101,7 @@ class LocationAndNumbersTest extends TestCase
         $this->assertSame('61.52', $flat->built_up_area);
 
         $this->get('/admin/real-estates/'.$flat->id)->assertOk()
-            ->assertSee('/admin/map/tiles/16/45379/24495.png', false)
+            ->assertSee('data-map-picker', false)
             ->assertSee('yandex.uz/maps/?pt=69.2797,41.3111', false)
             ->assertSee('Feruza massivi')->assertSee('name="cadastral_value" type="text" value="'.Format::number(830176946.46, 2).'"', false)
             ->assertSee(Format::money(1000000));  // the debt
