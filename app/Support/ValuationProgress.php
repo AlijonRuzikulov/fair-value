@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * The four steps of a valuation on the valuation portal: the main data
  * saved, the approaches calculated, reconciled and approved, the end.
- * Shown over the object page and in the "Jarayon" column of the lists.
+ * Shown over the object page.
  */
 final class ValuationProgress
 {
@@ -18,7 +18,7 @@ final class ValuationProgress
      *
      * @return array<string, bool>
      */
-    public static function steps(Model $item, bool $short = false): array
+    public static function steps(Model $item): array
     {
         $applied = $item->exists ? $item->approachList() : [];
         $main = $item->exists && $item->region_id !== null && (! $item instanceof RealEstate || $item->total_area > 0);
@@ -28,9 +28,9 @@ final class ValuationProgress
             : $item->market_value !== null;
 
         return [
-            ($short ? __('Main data') : __('Saving the main data of the real estate')) => $main,
-            ($short ? __('Calculation') : __('Calculating the approaches')) => $calculated,
-            ($short ? __('Approval') : __('Reconciliation and approval')) => $item->market_value !== null
+            __('Saving the main data of the real estate') => $main,
+            __('Calculating the approaches') => $calculated,
+            __('Reconciliation and approval') => $item->market_value !== null
                 && in_array($item->status, [ValuationStatus::Review, ValuationStatus::Completed], true),
             __('The end') => $item->status === ValuationStatus::Completed,
         ];

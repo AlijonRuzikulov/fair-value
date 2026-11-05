@@ -174,7 +174,7 @@ abstract class ValuationController extends Controller
 
         $items = (clone $base)
             ->when($filters['status'] ?? null, fn (Builder $q, $status) => $q->where('status', $status))
-            ->with(['region', 'district', 'clients', 'appraiser', 'steps.user'])
+            ->with(['region', 'district', 'clients', 'appraiser', 'creator', 'steps.user'])
             ->withCount('attachments')
             ->latest('id')
             ->paginate(20)

@@ -1,6 +1,5 @@
 @php
     use App\Support\Format;
-    use App\Support\ValuationProgress;
     use App\Enums\PersonRole;
     // The classic look is the list of the valuation portal: its filters (applied as they change), its columns, no extras.
     $classic = \App\Support\AdminTheme::classic();
@@ -94,6 +93,10 @@
                     </thead>
                     <tbody>
                         @foreach ($items as $item)
+                            @if ($classic && $module->slugName() === 'real-estates')
+                                @include('admin.real-estates._portal-row')
+                                @continue
+                            @endif
                             <tr>
                                 <td class="muted num">{{ $item->id }}</td>
                                 <td style="min-width: 200px; max-width: 280px">
@@ -129,15 +132,11 @@
                                     </div>
                                 </td>
                                 @if ($classic)
-                                    @php
-                                        $progress = ValuationProgress::steps($item, true);
-                                        $at = ValuationProgress::current($progress);
-                                    @endphp
                                     <td>{{ $item->appraiser?->name ?? '—' }}</td>
                                     <td>{{ $item->currentStep('approved')?->user?->name ?? '—' }}</td>
-                                    <td class="process-cell">
-                                        <span class="process-bar" aria-hidden="true">@foreach ($progress as $ok)<i @class(['is-done' => $ok, 'is-current' => $loop->index === $at])></i>@endforeach</span>
-                                        <small>{{ $at === false ? __('The end') : array_keys($progress)[$at] }}</small>
+                                    <td class="row-buttons">
+                                        <a class="btn btn-sm btn-info btn-icon" href="{{ route($module->routeName('show'), $item->id) }}" title="{{ __('Photos and documents') }}" aria-label="{{ __('Photos and documents') }}"><x-icon name="image" :size="15" /></a>
+                                        @can('edit-valuation', $item)<a class="btn btn-sm btn-warning btn-icon" href="{{ route($module->routeName('edit'), $item->id) }}" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}"><x-icon name="square-pen" :size="15" /></a>@endcan
                                     </td>
                                 @else
                                 <td class="t-actions">

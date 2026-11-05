@@ -77,6 +77,15 @@ enum ValuationPurpose: string
         return $options;
     }
 
+    /** The short word of the portal's lists (under the number of the row). */
+    public function shortLabel(): string
+    {
+        return match ($this) {
+            self::Collateral => __('Pledge'),
+            default => $this->portalLabel(),
+        };
+    }
+
     /** The wording of the valuation portal. */
     public function portalLabel(): string
     {
