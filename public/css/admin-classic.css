@@ -584,3 +584,26 @@ body.theme-classic.accent-orange {
 /* Tick labels inside fields keep the portal's Title Case (the field labels above them are in capitals). */
 .theme-classic .field label.tick { font-size: 12px; font-weight: 400; letter-spacing: 0; color: #666; text-transform: capitalize; }
 .theme-classic .field label.tick-caps { text-transform: uppercase; color: #9a9a9a; }
+
+/* The list of clients of the portal: the search on the left, the two add buttons on the right. */
+.theme-classic .client-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.theme-classic .client-search { flex: 0 1 320px; }
+.theme-classic .client-actions { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 8px; }
+.theme-classic .passport-pop { position: relative; }
+.theme-classic .passport-pop > summary { list-style: none; }
+.theme-classic .passport-pop > summary::-webkit-details-marker { display: none; }
+.theme-classic .passport-pop-body {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  right: 0;
+  display: grid;
+  gap: 8px;
+  width: min(360px, calc(100vw - 48px));
+  padding: 14px;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow: var(--shadow-lg);
+}
+.theme-classic .passport-pop-body label { font-size: 12px; text-transform: uppercase; color: #9a9a9a; }
+.theme-classic .passport-pop-body .input { height: auto; padding: 8px; }

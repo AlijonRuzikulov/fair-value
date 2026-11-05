@@ -50,6 +50,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
     // Clients
     Route::get('clients/search', [Admin\ClientController::class, 'search'])->name('clients.search');
     Route::get('clients/export', [Admin\ClientController::class, 'export'])->name('clients.export');
+    Route::post('clients/passport', [Admin\ClientController::class, 'passport'])->middleware('throttle:10,1')->name('clients.passport');
     Route::resource('clients', Admin\ClientController::class);
 
     // Valuation objects

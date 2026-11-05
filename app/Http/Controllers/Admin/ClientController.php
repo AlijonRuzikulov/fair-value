@@ -7,6 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Models\Activity;
 use App\Models\Client;
 use App\Models\Region;
+use App\Services\Documents\DocumentAi;
+use App\Services\Documents\DocumentData;
 use App\Support\CsvExport;
 use App\Support\Format;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,6 +19,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Throwable;
 
 /**
  * "Мижозлар" — individuals (жисмоний шахс) and legal entities (юридик шахс).
@@ -28,7 +31,7 @@ class ClientController extends Controller
         $type = $this->type($request);
 
         $clients = $this->query($request, $type)
-            ->with(['region', 'district'])
+            ->with(['region', 'district', 'creator'])
             ->withCount(['realEstates', 'assets', 'vehicles', 'otherAssets', 'damageCases'])
             ->latest('id')
             ->paginate(20)
@@ -38,6 +41,7 @@ class ClientController extends Controller
             'clients' => $clients,
             'type' => $type,
             'regions' => Region::ordered()->get()->pluck('name', 'id'),
+            'readsPassports' => app(DocumentAi::class)->available(),
         ]);
     }
 
@@ -61,6 +65,42 @@ class ClientController extends Controller
     public function create(Request $request): View
     {
         return $this->form(new Client(['type' => $this->type($request)]));
+    }
+
+    /**
+     * "Qo'shish yangi (pasport)": the passport or ID card is read from its
+     * photo and the form of a new individual opens filled in; the person
+     * checks every value before saving. The photo is not kept.
+     */
+    public function passport(Request $request, DocumentAi $ai): RedirectResponse
+    {
+        $request->validate([
+            'files' => ['required', 'array', 'min:1', 'max:2'],
+            'files.*' => ['file', 'max:10240', 'mimes:jpg,jpeg,png,webp,pdf'],
+        ], [], ['files' => __('Photo of the passport')]);
+
+        if (! $ai->available()) {
+            return back()->with('error', __('Reading documents needs an AI key (ANTHROPIC_API_KEY in .env).'));
+        }
+
+        set_time_limit(120);
+        try {
+            $person = $ai->read(DocumentData::uploads($request->file('files')))['person'] ?? [];
+        } catch (Throwable $e) {
+            report($e);
+
+            return back()->with('error', __('The documents could not be read: :reason', ['reason' => mb_substr($e->getMessage(), 0, 200)]));
+        }
+
+        $person = array_filter(array_intersect_key($person, array_flip(DocumentData::PERSON)), 'filled');
+        Activity::record('passport_read', null, ['fields' => array_keys($person)]);
+        if ($person === []) {
+            return back()->with('error', __('Nothing was read from the photo. Take a clearer photo of the passport page or the ID card.'));
+        }
+
+        return redirect()->route('admin.clients.create', ['type' => ClientType::Individual->value])
+            ->withInput($person)
+            ->with('status', __('The passport has been read: check the data before saving.'));
     }
 
     public function store(Request $request): RedirectResponse

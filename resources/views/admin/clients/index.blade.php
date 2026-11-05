@@ -1,5 +1,78 @@
 @php use App\Support\Format; use App\Enums\ClientType; @endphp
-<x-layouts.admin :title="$type->plural()" :subtitle="__('Clients')" :nav="'clients.'.$type->value" :icon="$type === ClientType::Legal ? 'building-2' : 'user'">
+<x-layouts.admin :title="\App\Support\AdminTheme::classic() ? ($type === ClientType::Legal ? __('List of legal entities') : __('List of individuals')) : $type->plural()" :subtitle="\App\Support\AdminTheme::classic() ? null : __('Clients')" :nav="'clients.'.$type->value" :icon="$type === ClientType::Legal ? 'building-2' : 'user'">
+@if (\App\Support\AdminTheme::classic())
+    {{-- The list of the valuation portal: the search, "Qo'shish" and "Qo'shish yangi (pasport)", its columns. --}}
+    <section class="card list-card">
+        <div class="card-body client-bar">
+            <form method="get" action="{{ route('admin.clients.index') }}" class="client-search">
+                <input type="hidden" name="type" value="{{ $type->value }}">
+                <div class="search-box">
+                    <input class="input" type="search" name="q" value="{{ request('q') }}" placeholder="{{ __('Search') }}" aria-label="{{ __('Search') }}">
+                    <button type="submit" aria-label="{{ __('Search') }}"><x-icon name="search" :size="16" /></button>
+                </div>
+            </form>
+            <div class="client-actions">
+                <a class="btn btn-success" href="{{ route('admin.clients.create', ['type' => $type->value]) }}">{{ __('Add') }}</a>
+                @if ($type === ClientType::Individual)
+                    {{-- A photo of the passport or ID card is read and the form of a new client opens filled in. --}}
+                    <details class="passport-pop">
+                        <summary class="btn btn-info">{{ __('Add new (passport)') }}</summary>
+                        <form method="post" action="{{ route('admin.clients.passport') }}" enctype="multipart/form-data" class="passport-pop-body" data-busy-form>
+                            @csrf
+                            <label for="passport-files">{{ __('Photo of the passport page or both sides of the ID card') }}</label>
+                            <input id="passport-files" class="input" type="file" name="files[]" accept="image/*,application/pdf" capture="environment" multiple required>
+                            @if ($readsPassports)
+                                <p class="field-hint">{{ __('The data is read from the photo and the form opens filled in; check it before saving. The photo is not kept.') }}</p>
+                                <button class="btn btn-info" type="submit" data-busy="{{ __('Reading…') }}">{{ __('Read the passport') }}</button>
+                            @else
+                                <p class="field-hint">{{ __('Reading documents needs an AI key (ANTHROPIC_API_KEY in .env).') }}</p>
+                            @endif
+                        </form>
+                    </details>
+                @endif
+            </div>
+        </div>
+
+        @if ($clients->isEmpty())
+            <x-empty icon="users" :title="request('q') ? null : __('No clients yet')" :text="request('q') ? __('Try changing the filters or add a new record.') : __('Add the first client — it will appear here.')" />
+        @else
+            <div class="table-wrap">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>{{ $type === ClientType::Legal ? __('Name') : __('Full name (F.I.Sh.)') }}</th>
+                            <th>{{ __('Address of the client') }}</th>
+                            <th>{{ __('Category of the client') }}</th>
+                            <th>{{ __('Date entered') }}</th>
+                            <th>{{ __('Date changed') }}</th>
+                            <th>{{ __('Created by') }}</th>
+                            <th class="t-center">{{ __('Process') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($clients as $client)
+                            <tr>
+                                <td>
+                                    <a class="cell-title" href="{{ route('admin.clients.show', $client) }}">{{ $client->title }}</a>
+                                    <span class="cell-sub">{{ $type === ClientType::Legal ? ($client->inn ? __('TIN').': '.$client->inn : '') : $client->document }}</span>
+                                </td>
+                                <td style="max-width: 300px">{{ collect([$client->region?->name, $client->district?->name, $client->address])->filter()->implode(', ') ?: '—' }}</td>
+                                <td>{{ $client->type->label() }}</td>
+                                <td class="nowrap">{{ Format::datetime($client->created_at) }}</td>
+                                <td class="nowrap">{{ Format::datetime($client->updated_at) }}</td>
+                                <td>{{ $client->creator?->name ?? '—' }}</td>
+                                <td class="t-center">
+                                    <a class="btn btn-sm btn-info btn-icon" href="{{ route('admin.clients.edit', $client) }}" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}"><x-icon name="pencil" :size="14" /></a>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            {{ $clients->links() }}
+        @endif
+    </section>
+@else
     <section class="card">
         <form method="get" class="card-body" action="{{ route('admin.clients.index') }}">
             <input type="hidden" name="type" value="{{ $type->value }}">
@@ -91,4 +164,5 @@
             {{ $clients->links() }}
         @endif
     </section>
+@endif
 </x-layouts.admin>

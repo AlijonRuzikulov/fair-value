@@ -41,6 +41,12 @@ class Client extends Model
         static::creating(fn (Client $client) => $client->created_by ??= auth()->id());
     }
 
+    /** Who added the client. */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
     public function region(): BelongsTo
     {
         return $this->belongsTo(Region::class);

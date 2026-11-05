@@ -6,6 +6,7 @@ use App\Enums\DocumentKind;
 use App\Models\Attachment;
 use App\Models\District;
 use App\Models\Region;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
@@ -63,6 +64,25 @@ final class DocumentData
             } elseif ($attachment->isImage()) {
                 $files[] = ['name' => $attachment->name, 'mime' => 'image/jpeg', 'data' => base64_encode(self::jpeg($body))];
             }
+        }
+
+        return $files;
+    }
+
+    /**
+     * Images and PDFs uploaded for reading only (they are not kept), ready for DocumentAi::read().
+     *
+     * @param  list<UploadedFile>  $uploads
+     * @return list<array{name: string, mime: string, data: string}>
+     */
+    public static function uploads(array $uploads): array
+    {
+        $files = [];
+        foreach (array_slice($uploads, 0, self::MAX_FILES) as $upload) {
+            $body = (string) $upload->get();
+            $files[] = $upload->getMimeType() === 'application/pdf'
+                ? ['name' => $upload->getClientOriginalName(), 'mime' => 'application/pdf', 'data' => base64_encode($body)]
+                : ['name' => $upload->getClientOriginalName(), 'mime' => 'image/jpeg', 'data' => base64_encode(self::jpeg($body))];
         }
 
         return $files;
