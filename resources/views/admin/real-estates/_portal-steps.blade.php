@@ -1,14 +1,7 @@
 {{-- The four steps of the valuation portal over the real estate page: done green, the current one in the colour of the menu. --}}
 @php
-    use App\Enums\ValuationStatus;
-    $applied = $item->exists ? $item->approachList() : [];
-    $done = [
-        __('Saving the main data of the real estate') => $item->exists && $item->total_area > 0 && $item->region_id !== null,
-        __('Calculating the approaches') => $applied !== [] && collect($applied)->every(fn ($a) => $item->{$a->column()} !== null),
-        __('Reconciliation and approval') => $item->market_value !== null && in_array($item->status, [ValuationStatus::Review, ValuationStatus::Completed], true),
-        __('The end') => $item->status === ValuationStatus::Completed,
-    ];
-    $current = array_search(false, array_values($done), true);
+    $done = \App\Support\ValuationProgress::steps($item);
+    $current = \App\Support\ValuationProgress::current($done);
 @endphp
 <ol class="portal-steps" aria-label="{{ __('Steps') }}">
     @foreach ($done as $label => $ok)

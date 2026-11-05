@@ -131,6 +131,15 @@
     if (form.dataset && form.dataset.confirm && !window.confirm(form.dataset.confirm)) e.preventDefault();
   }, true);
 
+  /* ---------- Filters applied as they change (classic look) ------------ */
+
+  $$('form[data-auto-filter]').forEach(function (form) {
+    form.addEventListener('change', function (e) {
+      if (e.target.type === 'search') return; // the search box is sent with Enter or its button
+      if (form.requestSubmit) form.requestSubmit(); else form.submit();
+    });
+  });
+
   /* ---------- Filters on small screens -------------------------------- */
 
   $$('[data-filter-toggle]').forEach(function (btn) {

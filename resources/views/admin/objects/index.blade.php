@@ -1,6 +1,9 @@
 @php
     use App\Support\Format;
+    use App\Support\ValuationProgress;
     use App\Enums\PersonRole;
+    // The classic look is the list of the valuation portal: its filters (applied as they change), its columns, no extras.
+    $classic = \App\Support\AdminTheme::classic();
     $params = $module->routeParams();
     $currentStatus = $filters['status'] ?? null;
     $total = $statusCounts->sum();
@@ -11,38 +14,55 @@
 @endphp
 <x-layouts.admin :title="$module->title()" :nav="$nav" :icon="$module->icon()">
     <section class="card list-card">
-        <form method="get" class="card-body" action="{{ route($module->routeName('index')) }}">
+        <form method="get" class="card-body" action="{{ route($module->routeName('index')) }}" @if ($classic) data-auto-filter @endif>
             @foreach ($params as $key => $value)<input type="hidden" name="{{ $key }}" value="{{ $value }}">@endforeach
-            <div class="filters" data-filters>
+            <div @class(['filters', 'portal-filters' => $classic]) data-filters>
                 <div class="field span-3">
-                    <label for="q">{{ __('Search') }}</label>
+                    @if ($classic)
+                        <span class="field-label-space" aria-hidden="true"></span>
+                    @else
+                        <label for="q">{{ __('Search') }}</label>
+                    @endif
                     <div class="search-box">
-                        <input id="q" class="input" type="search" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="{{ __('Name, number, client…') }}">
+                        <input id="q" class="input" type="search" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="{{ $classic ? __('Search') : __('Name, number, client…') }}" aria-label="{{ __('Search') }}">
                         <button type="submit" aria-label="{{ __('Search') }}"><x-icon name="search" :size="16" /></button>
                     </div>
                 </div>
                 @includeIf('admin.'.$module->slugName().'._filters')
-                <x-select name="status" :label="__('Choose the status')" :options="collect($statuses)->map(fn ($label, $value) => $label.' ('.($statusCounts[$value] ?? 0).')')" :value="$currentStatus" placeholder="{{ __('All').' ('.$total.')' }}" span="3" />
-                <x-select name="region_id" :label="__('Region')" :options="$regions->pluck('name', 'id')" :value="$filters['region_id'] ?? null" placeholder="{{ __('All') }}" span="3" data-region-select />
-                <x-select name="district_id" :label="__('District')" :options="$districts" :value="$filters['district_id'] ?? null" placeholder="{{ __('All') }}" span="3" data-district-select />
-                <x-select name="appraiser_id" :label="__('Appraiser')" :options="$appraisers" :value="$filters['appraiser_id'] ?? null" placeholder="{{ __('All') }}" span="3" />
-                <x-field name="from" type="date" :label="__('From')" :value="$filters['from'] ?? null" span="2" />
-                <x-field name="to" type="date" :label="__('To')" :value="$filters['to'] ?? null" span="2" />
-                <div class="filter-actions span-2">
-                    <button class="btn btn-dark" type="submit"><x-icon name="filter" :size="16" /> {{ __('Filter') }}</button>
-                    <a class="btn btn-ghost btn-icon" href="{{ route($module->routeName('index'), $params) }}" title="{{ __('Reset') }}" aria-label="{{ __('Reset') }}"><x-icon name="x" :size="16" /></a>
-                </div>
+                @if ($classic)
+                    <x-select name="status" :label="__('Choose the status')" :options="$statuses" :value="$currentStatus" placeholder="" span="3" />
+                    <x-select name="region_id" :label="__('Region')" :options="$regions->pluck('name', 'id')" :value="$filters['region_id'] ?? null" placeholder="" span="3" data-region-select />
+                    <x-select name="district_id" :label="__('District')" :options="$districts" :value="$filters['district_id'] ?? null" placeholder="" span="3" data-district-select />
+                @else
+                    <x-select name="status" :label="__('Choose the status')" :options="collect($statuses)->map(fn ($label, $value) => $label.' ('.($statusCounts[$value] ?? 0).')')" :value="$currentStatus" placeholder="{{ __('All').' ('.$total.')' }}" span="3" />
+                    <x-select name="region_id" :label="__('Region')" :options="$regions->pluck('name', 'id')" :value="$filters['region_id'] ?? null" placeholder="{{ __('All') }}" span="3" data-region-select />
+                    <x-select name="district_id" :label="__('District')" :options="$districts" :value="$filters['district_id'] ?? null" placeholder="{{ __('All') }}" span="3" data-district-select />
+                    <x-select name="appraiser_id" :label="__('Appraiser')" :options="$appraisers" :value="$filters['appraiser_id'] ?? null" placeholder="{{ __('All') }}" span="3" />
+                    <x-field name="from" type="date" :label="__('From')" :value="$filters['from'] ?? null" span="2" />
+                    <x-field name="to" type="date" :label="__('To')" :value="$filters['to'] ?? null" span="2" />
+                    <div class="filter-actions span-2">
+                        <button class="btn btn-dark" type="submit"><x-icon name="filter" :size="16" /> {{ __('Filter') }}</button>
+                        <a class="btn btn-ghost btn-icon" href="{{ route($module->routeName('index'), $params) }}" title="{{ __('Reset') }}" aria-label="{{ __('Reset') }}"><x-icon name="x" :size="16" /></a>
+                    </div>
+                @endif
             </div>
             <button type="button" class="btn btn-sm filter-toggle" data-filter-toggle><x-icon name="sliders-horizontal" :size="14" /> {{ __('Filters') }}</button>
         </form>
 
-        <div class="list-toolbar">
-            <p class="list-total">{{ __('Total') }}: <strong>{{ $items->total() }}</strong></p>
-            <div class="row-flex">
-                <a class="btn" href="{{ route($module->routeName('export'), request()->query()) }}"><x-icon name="file-spreadsheet" :size="16" /> {{ __('Excel') }}</a>
-                <a class="btn btn-primary" href="{{ route($module->routeName('create'), $params) }}"><x-icon name="plus" :size="16" /> {{ __('Add') }}</a>
+        @if ($classic)
+            <div class="list-toolbar portal-list-toolbar">
+                <p class="list-total">{{ __('Total') }}: {{ $items->total() }}</p>
+                <a class="btn btn-success" href="{{ route($module->routeName('create'), $params) }}">{{ __('Add') }}</a>
             </div>
-        </div>
+        @else
+            <div class="list-toolbar">
+                <p class="list-total">{{ __('Total') }}: <strong>{{ $items->total() }}</strong></p>
+                <div class="row-flex">
+                    <a class="btn" href="{{ route($module->routeName('export'), request()->query()) }}"><x-icon name="file-spreadsheet" :size="16" /> {{ __('Excel') }}</a>
+                    <a class="btn btn-primary" href="{{ route($module->routeName('create'), $params) }}"><x-icon name="plus" :size="16" /> {{ __('Add') }}</a>
+                </div>
+            </div>
+        @endif
 
         @if ($items->isEmpty())
             @php $searching = collect(request()->except(['page', 'kind']))->filter(fn ($value) => filled($value))->isNotEmpty(); @endphp
@@ -61,9 +81,15 @@
                             @foreach ($otherColumns as $heading => $cb)<th>{{ $heading }}</th>@endforeach
                             @unless ($module->usesApproaches())<th class="t-right">{{ __('Damage amount') }}</th>@endunless
                             <th class="t-center">{{ __('Attached documents') }}</th>
-                            <th>{{ __('Status') }}</th>
+                            <th>{{ $classic ? __('Valuation status') : __('Status') }}</th>
                             <th>{{ __('Persons') }}</th>
-                            <th class="t-actions"><span class="sr-only">{{ __('Actions') }}</span></th>
+                            @if ($classic)
+                                <th>{{ __('Appraiser') }}</th>
+                                <th>{{ __('Director of the valuation') }}</th>
+                                <th>{{ __('Process') }}</th>
+                            @else
+                                <th class="t-actions"><span class="sr-only">{{ __('Actions') }}</span></th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody>
@@ -102,6 +128,18 @@
                                         @if ($item->clients->count() > 2)<span class="faint">+{{ $item->clients->count() - 2 }}</span>@endif
                                     </div>
                                 </td>
+                                @if ($classic)
+                                    @php
+                                        $progress = ValuationProgress::steps($item, true);
+                                        $at = ValuationProgress::current($progress);
+                                    @endphp
+                                    <td>{{ $item->appraiser?->name ?? '—' }}</td>
+                                    <td>{{ $item->currentStep('approved')?->user?->name ?? '—' }}</td>
+                                    <td class="process-cell">
+                                        <span class="process-bar" aria-hidden="true">@foreach ($progress as $ok)<i @class(['is-done' => $ok, 'is-current' => $loop->index === $at])></i>@endforeach</span>
+                                        <small>{{ $at === false ? __('The end') : array_keys($progress)[$at] }}</small>
+                                    </td>
+                                @else
                                 <td class="t-actions">
                                     <div class="row-actions">
                                         <a class="btn btn-sm btn-icon" href="{{ route($module->routeName('show'), $item->id) }}" title="{{ __('View') }}" aria-label="{{ __('View') }}"><x-icon name="eye" :size="16" /></a>
@@ -109,6 +147,7 @@
                                         <a class="btn btn-sm btn-icon" href="{{ route($module->routeName('print'), $item->id) }}" target="_blank" title="{{ __('Print') }}" aria-label="{{ __('Print') }}"><x-icon name="printer" :size="16" /></a>
                                     </div>
                                 </td>
+                                @endif
                             </tr>
                         @endforeach
                     </tbody>

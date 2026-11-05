@@ -273,6 +273,21 @@ body.theme-classic.accent-orange {
 .theme-classic a.cell-title:hover { color: var(--accent-strong); }
 .theme-classic .list-total { font-weight: 400; color: #9a9a9a; }
 
+/* The list of the valuation portal: filters without buttons, the total and "Qo'shish" on the right, the process column. */
+.theme-classic .portal-filters .field-label-space { display: block; height: 18px; }
+.theme-classic .portal-list-toolbar { justify-content: flex-end; gap: 14px; border-bottom: 0; }
+.theme-classic .portal-list-toolbar .list-total { font-size: 12px; font-weight: 400; letter-spacing: 0; text-transform: uppercase; color: #9a9a9a; }
+.theme-classic .list-card .table th,
+.theme-classic .list-card .table td { padding-right: 8px; padding-left: 8px; font-size: 13px; }
+.theme-classic .list-card .table .cell-title { font-size: 14px; }
+.theme-classic .list-card .table .chip { padding: 2px 6px; font-size: 12px; }
+.theme-classic .process-cell { min-width: 96px; }
+.theme-classic .process-bar { display: flex; gap: 3px; margin-bottom: 4px; }
+.theme-classic .process-bar i { flex: 1; height: 5px; border-radius: 3px; background: #e3e3e3; }
+.theme-classic .process-bar i.is-done { background: var(--c-green); }
+.theme-classic .process-bar i.is-current { background: var(--accent); }
+.theme-classic .process-cell small { font-size: 12px; color: #888; }
+
 .theme-classic .badge { gap: 4px; padding: 2px 7px; border-radius: 4px; font-size: 11px; font-weight: 700; }
 .theme-classic .badge-success { background: var(--c-green); color: #fff; }
 .theme-classic .badge-warning { background: var(--c-yellow); color: #333; }

@@ -52,8 +52,11 @@ class ClassicThemeTest extends TestCase
         RealEstate::factory()->residential()->create(['status' => ValuationStatus::Completed]);
 
         $page = $this->withSession(['locale' => 'uz'])->get('/admin/real-estates?kind=residential')->assertOk();
-        $page->assertSeeInOrder(['Maydoni', 'Yondashuvlar', 'Alohida qulayliklar', 'Ilova hujjatlari', 'Shaxslar'])
-            ->assertSee('Statusni tanlang')->assertSee('Barchasi (2)');
+        $page->assertSeeInOrder(['Kadastr raqami', 'Statusni tanlang', 'Viloyat', 'Tuman', 'Jami: 2', 'Qo‘shish',
+            '#', 'Obyekt', 'Maydoni', 'Yondashuvlar', 'Alohida qulayliklar', 'Ilova hujjatlari', 'Status', 'Shaxslar', 'Baholovchi', 'Direktor', 'Jarayon'])
+            ->assertSee('data-auto-filter', false)
+            // What the portal's list does not have.
+            ->assertDontSee('name="appraiser_id"', false)->assertDontSee('name="from"', false)->assertDontSee('Excel')->assertDontSee('row-actions', false);
 
         $this->withSession(['locale' => 'uz'])->get('/admin/real-estates?kind=residential&status=completed')->assertOk()
             ->assertSee('<option value="completed" selected>', false);

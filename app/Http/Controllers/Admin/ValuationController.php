@@ -174,7 +174,7 @@ abstract class ValuationController extends Controller
 
         $items = (clone $base)
             ->when($filters['status'] ?? null, fn (Builder $q, $status) => $q->where('status', $status))
-            ->with(['region', 'district', 'clients', 'appraiser'])
+            ->with(['region', 'district', 'clients', 'appraiser', 'steps.user'])
             ->withCount('attachments')
             ->latest('id')
             ->paginate(20)
@@ -363,7 +363,7 @@ abstract class ValuationController extends Controller
     public function export(Request $request): StreamedResponse
     {
         $query = $this->model()::query()->filter($request->only(static::FILTERS))
-            ->with(['region', 'district', 'clients', 'appraiser'])
+            ->with(['region', 'district', 'clients', 'appraiser', 'steps.user'])
             ->latest('id');
         $this->applyFilters($query, $request);
 
