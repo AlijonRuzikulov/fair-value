@@ -21,7 +21,7 @@
     $back = route($module->routeName('index'), $module->routeParams($item));
     $mainKeys = ['region_id', 'district_id', 'landmark', 'address', 'letter_number', 'contract_number', 'contract_date', 'report_number', 'cadastral_value',
         'value_type', 'land_area', 'built_up_area', 'useful_area', 'total_area', 'living_area', 'rooms', 'wall_material', 'condition', 'floors_total',
-        'floor', 'year_built', 'valuation_date', 'ownership_form', 'land_rights', 'inspection_date', 'notes'];
+        'floor', 'year_built', 'valuation_date', 'ownership_form', 'land_rights', 'market_index', 'inspection_date', 'notes'];
     // Steps with a reason, at the bottom as on the portal.
     $status = $item->status;
     $reasons = $exists && auth()->user()->can('finalize-valuations') ? array_filter([
@@ -157,8 +157,6 @@
                 <a class="btn" href="{{ route($module->routeName('print'), $item->id) }}" target="_blank"><x-icon name="printer" :size="14" /> {{ __('Certificate') }}</a>
                 @if ($canEdit)
                     <a class="btn" href="{{ route('admin.real-estates.report.edit', $item->id) }}"><x-icon name="list-checks" :size="14" /> {{ __('Prepare the report') }}</a>
-                    <a class="btn" href="{{ route('admin.real-estates.report.edit', $item->id) }}#step-inspection"><x-icon name="clipboard-check" :size="14" /> {{ __('Inspection act') }}</a>
-                    <a class="btn" href="{{ route('admin.real-estates.report.edit', $item->id) }}#survey"><x-icon name="list-checks" :size="14" /> {{ __('Questionnaire') }}</a>
                 @endif
             </div>
 

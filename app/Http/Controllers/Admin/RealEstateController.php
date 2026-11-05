@@ -32,7 +32,7 @@ class RealEstateController extends ValuationController
 {
     /** Report data typed together with the main data of the object; kept with the report. */
     public const REPORT_FIELDS = [
-        'property_type', 'architecture', 'function', 'repair', 'completion', 'light', 'identification',
+        'property_type', 'architecture', 'function', 'repair', 'completion', 'light', 'detached', 'identification',
         'letter_number', 'value_type', 'ownership_form', 'land_rights',
     ];
 
@@ -43,8 +43,11 @@ class RealEstateController extends ValuationController
         'latitude', 'longitude', 'cadastral_value', 'region_id', 'district_id', 'landmark', 'address',
         'contract_number', 'contract_date', 'report_number', 'land_area', 'built_up_area', 'useful_area', 'total_area',
         'living_area', 'rooms', 'wall_material', 'condition', 'floors_total', 'floor', 'year_built',
-        'valuation_date', 'inspection_date', 'notes', 'value_kind', ...self::REPORT_FIELDS,
+        'valuation_date', 'inspection_date', 'notes', ...self::REPORT_EXTRA, ...self::REPORT_FIELDS,
     ];
+
+    /** Form fields that only steer the report fields: the kind of value and the price index. */
+    private const REPORT_EXTRA = ['value_kind', 'use_index', 'market_index'];
 
     private RealEstateKind $kind = RealEstateKind::NonResidential;
 
@@ -111,7 +114,7 @@ class RealEstateController extends ValuationController
 
     protected function numericFields(): array
     {
-        return ['total_area', 'useful_area', 'living_area', 'land_area', 'built_up_area', 'cadastral_value', 'latitude', 'longitude'];
+        return ['total_area', 'useful_area', 'living_area', 'land_area', 'built_up_area', 'cadastral_value', 'latitude', 'longitude', 'market_index'];
     }
 
     protected function rules(Request $request, ?Model $item): array
@@ -144,6 +147,9 @@ class RealEstateController extends ValuationController
             'repair' => ['nullable', 'string', 'max:150'],
             'completion' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'light' => ['nullable', 'boolean'],
+            'detached' => ['nullable', 'boolean'],
+            'use_index' => ['nullable', 'boolean'],
+            'market_index' => ['nullable', 'numeric', 'between:-20,20', 'required_if:use_index,1'],
             'identification' => ['nullable', 'string', 'max:5000'],
             'letter_number' => ['nullable', 'string', 'max:60'],
             // The market value, or another one named in "value_type".
@@ -158,7 +164,13 @@ class RealEstateController extends ValuationController
         if ($request->exists('owner_id')) {
             $rules['approaches'] = ['required', 'array', 'min:1'];
             $rules['purpose'] = ['required', Rule::enum(ValuationPurpose::class)];
-            foreach (['cadastral_number', 'features', 'property_type', 'architecture', 'function', 'repair', 'completion'] as $key) {
+            $rules['region_id'] = ['required', 'integer', 'exists:regions,id'];
+            $rules['district_id'] = ['required', 'integer', Rule::exists('districts', 'id')->where('region_id', $request->integer('region_id'))];
+            $rules['address'] = ['required', 'string', 'max:255'];
+            foreach ([
+                'cadastral_number', 'features', 'property_type', 'architecture', 'function', 'repair', 'completion',
+                'cadastral_value', 'landmark', 'land_area', 'built_up_area', 'useful_area', 'wall_material', 'ownership_form', 'land_rights',
+            ] as $key) {
                 $rules[$key] = ['required', ...array_diff($rules[$key], ['nullable'])];
             }
         }
@@ -179,7 +191,7 @@ class RealEstateController extends ValuationController
 
     protected function persist(Model $item, array $data, Request $request): Model
     {
-        $report = [...self::REPORT_FIELDS, 'value_kind'];
+        $report = [...self::REPORT_FIELDS, ...self::REPORT_EXTRA];
         $item = parent::persist($item, Arr::except($data, [...$report, 'owner_id']), $request);
         $this->keepReportFields($item, Arr::only($data, $report), $request);
 
@@ -216,7 +228,7 @@ class RealEstateController extends ValuationController
         $rules = Arr::only([...$this->baseRules($request, $item), ...$this->rules($request, $item)], self::MAIN_FIELDS);
         $data = $request->validate($rules, [], $this->attributeNames());
 
-        $report = [...self::REPORT_FIELDS, 'value_kind'];
+        $report = [...self::REPORT_FIELDS, ...self::REPORT_EXTRA];
         DB::transaction(function () use ($item, $data, $report, $request) {
             $item->fill(Arr::except($data, [...$report, 'owner_id', 'persons', 'approaches']));
             if ($request->exists('approaches')) {
@@ -245,15 +257,15 @@ class RealEstateController extends ValuationController
     private function keepReportFields(RealEstate $item, array $data, Request $request): void
     {
         $present = array_filter(self::REPORT_FIELDS, fn ($key) => $request->exists($key) || ($key === 'value_type' && $request->exists('value_kind')));
-        if ($present === []) {
+        if ($present === [] && ! $request->exists('use_index')) {
             return;
         }
         if (($data['value_kind'] ?? null) === 'market') {
             $data['value_type'] = RealEstateReport::MARKET_VALUE;
         }
-
-        if (in_array('light', $present, true)) {
-            $data['light'] = ! empty($data['light']) ?: null;
+        // Ticks are kept only when ticked.
+        foreach (['light', 'detached'] as $flag) {
+            $data[$flag] = ! empty($data[$flag]) ?: null;
         }
 
         $report = (array) $item->report;
@@ -262,6 +274,14 @@ class RealEstateController extends ValuationController
                 $report[$key] = $data[$key];
             } else {
                 unset($report[$key]);
+            }
+        }
+        // The price index of the comparative approach, while its box is ticked.
+        if ($request->exists('use_index')) {
+            if (! empty($data['use_index']) && is_numeric($data['market_index'] ?? null)) {
+                $report['market_index'] = (float) $data['market_index'];
+            } else {
+                unset($report['market_index']);
             }
         }
         $item->report = $report;

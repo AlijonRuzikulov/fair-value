@@ -866,6 +866,25 @@
     sum.addEventListener('input', function () { out.textContent = numberText(Math.round(readNumber(sum.value) * (1 + rate / 100))); });
   });
 
+  // The price index of the comparative approach is typed while its box is ticked.
+  $$('[data-index]').forEach(function (box) {
+    var toggle = $('[data-index-toggle]', box);
+    var value = $('[data-index-value]', box);
+    var input = $('input', value);
+    toggle.addEventListener('change', function () {
+      value.hidden = !toggle.checked;
+      input.disabled = !toggle.checked;
+      if (toggle.checked) input.focus();
+    });
+  });
+
+  // A required field in a folded section: the section opens so the browser can show what is missing.
+  document.addEventListener('invalid', function (e) {
+    for (var el = e.target.parentElement; el; el = el.parentElement) {
+      if (el.tagName === 'DETAILS') el.open = true;
+    }
+  }, true);
+
   // A button that shows a note next to it.
   $$('[data-reveal]').forEach(function (button) {
     button.addEventListener('click', function () {

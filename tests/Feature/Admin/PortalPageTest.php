@@ -6,6 +6,7 @@ use App\Enums\PersonRole;
 use App\Enums\ValuationStatus;
 use App\Models\Client;
 use App\Models\RealEstate;
+use App\Models\Region;
 use App\Models\Setting;
 use App\Models\User;
 use App\Reports\RealEstateReport;
@@ -62,6 +63,15 @@ class PortalPageTest extends TestCase
             ->assertSee('name="owner_id" value="'.$this->flat->clients->first()->id.'"', false)
             ->assertSee('name="value_kind" value="market" checked', false)
             ->assertSee('placeholder="17-26"', false);
+
+        $this->withSession(['locale' => 'uz'])->get('/admin/real-estates/'.$this->flat->id)->assertSeeInOrder([
+            'Ko‘chmas mulk asosiy ma’lumotlari', 'Kadastr yoki balans qiymati', 'Viloyatni tanlang', 'Tumanni tanlang', 'Mo‘ljalni tanlang',
+            'Ko‘chmas mulk manzili', 'Xat №', 'Shartnoma №', 'Hisobot №', 'Ko‘chmas mulk umumiy yer maydoni (kv. m)',
+            'Ko‘chmas mulk umumiy qurilish osti maydoni (kv. m)', 'Ko‘chmas mulk umumiy foydali maydon (kv. m)', 'Ko‘chmas mulk umumiy maydon (kv. m)',
+            'Umumiy maydondan hisoblash', 'Qurilish turi', 'Pishiq g‘isht', 'Sendvich panel', 'Alohida qurilgan bino', 'Qavatlari soni', '60 qavat', 'Qavati',
+            'Qurilgan yili', 'Ko‘chmas mulkni aniqlanayotgan qiymat turini tanlang', 'Mulkchilik shakli', 'Yer uchastkasiga bo‘lgan mulk huquqi',
+            'Qiyosiy yondashuv indeks bo‘yicha tuzatish berish', 'Akt ma’lumotlarini kiritish', 'So‘rovnoma ma’lumotlari',
+        ]);
 
         // A new object is added on the same page.
         $this->get('/admin/real-estates/create?kind=nonresidential')->assertOk()
@@ -171,7 +181,7 @@ class PortalPageTest extends TestCase
             'cadastral_number' => '10:09:01:02:03:0101', 'features' => ['', 'electricity', 'gas'],
             'architecture' => 'Zamonaviy', 'function' => 'Noturar joy (savdo)', 'repair' => 'Yaxshi', 'completion' => '85.5',
             'light' => '1', 'service_fee' => '2 000 000', 'paid_amount' => '500 000', 'identification' => 'Obyekt hujjatlarga mos keladi.',
-            'total_area' => '120,5', 'value_kind' => 'market',
+            'total_area' => '120,5', 'value_kind' => 'market', ...$this->mainData(),
         ];
 
         $this->actingAs($this->user)->post('/admin/real-estates', $form)->assertRedirect();
@@ -189,8 +199,8 @@ class PortalPageTest extends TestCase
         $this->assertSame('2000000.00', $object->service_fee);
 
         // What the portal asks for is required on this page.
-        $this->post('/admin/real-estates', [...$form, 'owner_id' => '', 'approaches' => [''], 'features' => [''], 'cadastral_number' => ''])
-            ->assertSessionHasErrors(['owner_id', 'approaches', 'features', 'cadastral_number']);
+        $this->post('/admin/real-estates', [...$form, 'owner_id' => '', 'approaches' => [''], 'features' => [''], 'cadastral_number' => '', 'land_area' => '', 'wall_material' => '', 'region_id' => ''])
+            ->assertSessionHasErrors(['owner_id', 'approaches', 'features', 'cadastral_number', 'land_area', 'wall_material', 'region_id']);
     }
 
     public function test_the_owner_and_the_other_persons_are_changed_on_the_page(): void
@@ -200,6 +210,7 @@ class PortalPageTest extends TestCase
             'owner_id' => (string) $owner->id, 'approaches' => ['', 'comparative'], 'features' => ['', 'water'],
             'purpose' => 'sale', 'name' => 'Kvartira', 'cadastral_number' => '1', 'property_type' => 'Kvartira',
             'architecture' => 'Oddiy', 'function' => 'Turar joy', 'repair' => 'Yaxshi', 'completion' => '100', 'light' => '0',
+            ...$this->mainData(), 'detached' => '1', 'floors_total' => '9', 'floor' => '4', 'use_index' => '1', 'market_index' => '0,6',
         ])->assertRedirect()->assertSessionHasNoErrors();
 
         $flat = $this->flat->fresh();
@@ -207,6 +218,26 @@ class PortalPageTest extends TestCase
         $this->assertSame(['comparative'], $flat->approaches);
         $this->assertNull($flat->value_income);
         $this->assertArrayNotHasKey('light', $flat->report);
+        $this->assertTrue($flat->report['detached']);
+        $this->assertSame(0.6, $flat->report['market_index']);
+        $this->assertSame([9, 4], [$flat->floors_total, $flat->floor]);
+        $this->assertSame("Pishiq g'isht", $flat->wall_material);
+
+        // Unticked, the index is no longer applied.
+        $this->put('/admin/real-estates/'.$this->flat->id.'/main', ['name' => 'Kvartira', 'use_index' => '0', 'market_index' => '0,6'])->assertRedirect();
+        $this->assertArrayNotHasKey('market_index', $this->flat->fresh()->report);
+    }
+
+    /** The required fields of the main data section, as on the portal. */
+    private function mainData(): array
+    {
+        $region = Region::whereHas('districts')->first();
+
+        return [
+            'cadastral_value' => '150 000 000', 'region_id' => (string) $region->id, 'district_id' => (string) $region->districts()->first()->id,
+            'landmark' => 'Feruza massivi', 'address' => 'Navoiy ko‘chasi, 5', 'land_area' => '120', 'built_up_area' => '100', 'useful_area' => '95',
+            'wall_material' => "Pishiq g'isht", 'ownership_form' => 'Xususiy mulk', 'land_rights' => 'Doimiy foydalanish',
+        ];
     }
 
     public function test_the_director_confirms_the_invoice(): void

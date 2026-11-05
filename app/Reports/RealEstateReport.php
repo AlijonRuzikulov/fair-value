@@ -93,6 +93,11 @@ final class RealEstateReport
     public const OPTIONS = [
         // The market value, or a value other than the market one.
         'value_type' => ['Bozor qiymati', 'Investitsion qiymat', 'Tugatish qiymati', 'Utilizatsiya qiymati'],
+        // Types of construction (the walls), as on the valuation portal.
+        'construction' => [
+            "Pishiq g'isht", "Xom g'isht", 'Panel beton', "Pishiq g'isht va xom g'isht", "Yog'och (daraxt)",
+            'Shlakablok', 'Gazablok', 'Aralash', 'Metall', 'Sendvich panel',
+        ],
         // The kind of the property, as on the valuation portal.
         'property_type' => ['Kvartira', 'Xususiy uy (hovli)', 'Bino', 'Binoning bir qismi (xona)', 'Inshoot', 'Tugallanmagan qurilish', 'Boshqa'],
         'function' => ["Ko'p qavatli turar joy", 'Turar joy (hovli)', 'Noturar joy (savdo)', 'Noturar joy (ofis)', 'Ombor', 'Ishlab chiqarish binosi'],
@@ -182,6 +187,7 @@ final class RealEstateReport
             'property_type' => $residential ? (($object->floors_total ?? 0) > 1 ? 'Kvartira' : 'Xususiy uy (hovli)') : 'Boshqa',
             'identification' => null,
             'light' => false,
+            'detached' => false,
             'function' => $residential ? (($object->floors_total ?? 0) > 1 ? "Ko'p qavatli turar joy" : 'Turar joy') : 'Noturar joy',
             'ownership_form' => 'Xususiy mulk',
             'rights' => 'Egalik huquqi',
