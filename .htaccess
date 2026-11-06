@@ -1,0 +1,21 @@
+# When the whole project sits in the web folder (InfinityFree and other shared
+# hosting without SSH): every request goes to public/, nothing else is served.
+# Not used where the web root is public/ (deploy.sh, Codespaces).
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_URI} !^/\.well-known/
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# .env, .git and other hidden files are never sent.
+<FilesMatch "^\.">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Deny from all
+    </IfModule>
+</FilesMatch>
