@@ -732,3 +732,8 @@ body.theme-classic.simple-login-page { min-height: 100vh; margin: 0; background:
   .theme-classic .portal-docs,
   .theme-classic .portal-cards-half { grid-template-columns: 1fr; }
 }
+
+/* A record of a price list or of the norms, as on the portal: the fields one under the other in three quarters of the card. */
+.theme-classic .catalog-portal-fields { width: min(100%, 760px); }
+.theme-classic .catalog-portal .portal-bottom { margin-top: 40px; }
+.theme-classic .catalog-portal select:invalid { color: #b3b3b3; }

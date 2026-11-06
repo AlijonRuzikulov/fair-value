@@ -1,4 +1,6 @@
 @php
+    // The classic look keeps the portal's plain form: no notes and no explanations.
+    $classic = \App\Support\AdminTheme::classic();
     $params = $module->routeParams($item);
     $title = $item->exists ? $item->title : __('New').': '.mb_strtolower($module->singular());
     $back = $item->exists ? route($module->routeName('show'), $item->id) : route($module->routeName('index'), $params);
@@ -51,10 +53,10 @@
                             <x-field :name="'value_'.$value" :value="$item->{'value_'.$value}" money :suffix="__('sum')" span="12" :placeholder="__('Value by this approach')" data-approach-value />
                         </div>
                     @endforeach
-                    @if (in_array($item::class, \App\Services\Analogs\AnalogFinder::OBJECTS, true))
+                    @if (! $classic && in_array($item::class, \App\Services\Analogs\AnalogFinder::OBJECTS, true))
                         <p class="field-hint span-12">{{ __('With the comparative approach, similar offers are found on the listing sites and compared on the object page after saving.') }}</p>
                     @endif
-                    <x-field name="market_value" :label="__('Market value (final)')" :value="$item->market_value" money :suffix="__('sum')" span="6" :hint="__('The result of reconciling the approaches.')" />
+                    <x-field name="market_value" :label="__('Market value (final)')" :value="$item->market_value" money :suffix="__('sum')" span="6" :hint="$classic ? null : __('The result of reconciling the approaches.')" />
                 @endif
             </div>
         </x-card>
@@ -62,14 +64,16 @@
         <x-card :title="__('Contract and report')" icon="file-check">
             <div class="form-grid">
                 <x-field name="contract_number" :label="__('Contract number')" :value="$item->contract_number" span="3"
-                         :placeholder="$item->exists ? null : \App\Support\DocumentNumber::next('contract')" :hint="$item->exists ? null : __('Leave empty to get the next number.')" />
+                         :placeholder="$item->exists ? null : \App\Support\DocumentNumber::next('contract')" :hint="$item->exists || $classic ? null : __('Leave empty to get the next number.')" />
                 <x-field name="contract_date" type="date" :label="__('Contract date')" :value="$item->contract_date" span="3" />
                 <x-field name="service_fee" :label="__('Service fee')" :value="$item->service_fee" money :suffix="__('sum')" span="3" />
                 <x-field name="paid_amount" :label="__('Paid')" :value="$item->paid_amount" money :suffix="__('sum')" span="3" />
-                <x-field name="report_number" :label="__('Report number')" :value="$item->report_number" span="4" :hint="__('Assigned automatically when completed.')" />
+                <x-field name="report_number" :label="__('Report number')" :value="$item->report_number" span="4" :hint="$classic ? null : __('Assigned automatically when completed.')" />
                 <x-select name="status" :label="__('Status')" :options="$statuses" :value="$item->status" span="4" required />
                 <x-select name="appraiser_id" :label="__('Appraiser')" :options="$appraisers" :value="$item->appraiser_id" placeholder="—" span="4" />
-                <x-textarea name="notes" :label="__('Notes')" :value="$item->notes" span="12" />
+                @unless ($classic)
+                    <x-textarea name="notes" :label="__('Notes')" :value="$item->notes" span="12" />
+                @endunless
             </div>
         </x-card>
 

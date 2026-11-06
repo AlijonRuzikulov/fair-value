@@ -21,7 +21,7 @@
                 </div>
             </div>
             <button type="button" class="btn btn-sm filter-toggle" data-filter-toggle><x-icon name="sliders-horizontal" :size="14" /> {{ __('Filters') }}</button>
-            @if ($module->description())<p class="field-hint" style="margin-top: 12px">{{ $module->description() }}</p>@endif
+            @if ($module->description() && ! \App\Support\AdminTheme::classic())<p class="field-hint" style="margin-top: 12px">{{ $module->description() }}</p>@endif
         </form>
     </section>
 

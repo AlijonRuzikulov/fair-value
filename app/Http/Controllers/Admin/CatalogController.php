@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Activity;
 use App\Models\CarModel;
+use App\Support\AdminTheme;
 use App\Support\CsvExport;
 use App\Support\CsvImport;
 use App\Support\NumberInput;
@@ -81,10 +82,19 @@ abstract class CatalogController extends Controller
         return "admin.{$this->slug()}.{$action}";
     }
 
-    /** A short explanation shown above the list. */
+    /** A short explanation shown above the list (not in the classic look, as on the portal). */
     public function description(): ?string
     {
         return null;
+    }
+
+    /**
+     * Fields of the form of the classic look, as on the valuation portal:
+     * one under the other, without notes. Fields left out keep their values.
+     */
+    public function portalFields(): array
+    {
+        return array_diff_key($this->fields(), ['notes' => true]);
     }
 
     public function csvHeadings(): array
@@ -210,7 +220,7 @@ abstract class CatalogController extends Controller
 
     protected function form(Model $item): View
     {
-        return view('admin.catalogs.form', [
+        return view(AdminTheme::classic() ? 'admin.catalogs.portal-form' : 'admin.catalogs.form', [
             'item' => $item,
             'module' => $this,
         ]);

@@ -77,10 +77,14 @@ faqat viloyat/tumanlar ro‘yxati va bitta administrator. Hammasini o‘zingiz k
    parolni almashtiring — shundan keyin bu yozuv kirish sahifasidan yo‘qoladi.
 
 **Linkni boshqa odamga yuborish:** standart holatda Codespaces linki faqat sizga ochiladi
-(boshqalardan GitHub’ga kirishni so‘raydi). `serve.sh` uni avtomatik ochiq qiladi va terminalga
-`Link for other people: ...` deb yozadi. Agar bunday yozuv chiqmasa: pastdagi **Ports** bo‘limida
-8000 portini o‘ng tugma bilan bosing → **Port Visibility → Public**. Bu link faqat codespace
+(boshqalardan GitHub’ga kirishni so‘raydi). Avval **birinchi parolni almashtiring** (kirish sahifasida
+`admin12345` ko‘rinib turgani uchun, ochiq linkda uni har kim ko‘radi). Parol almashtirilgach `serve.sh`
+linkni o‘zi ochiq qiladi va terminalga `Link for other people: ...` deb yozadi; shu linkni yuborasiz.
+Agar bunday yozuv chiqmasa: pastdagi **Ports** bo‘limida 8000 portini o‘ng tugma bilan bosing →
+**Port Visibility → Public** (faqat parol almashtirilgandan keyin). Bu link faqat codespace
 ishlab turganda ochiladi — doimiy link uchun pastdagi “Serverga joylash” bo‘limiga qarang.
+Codespace GitHub serverlarida (chet elda) turadi: unga haqiqiy mijozlarning pasport ma’lumotlarini
+kiritmang, faqat sinov uchun ishlating.
 
 Shaxsiy GitHub hisobida Codespaces oyiga ~60 soat bepul. Ishlatmaganda
 *Codespaces → Stop codespace* qiling. Kiritilgan ma’lumotlar codespace o‘chirilmaguncha saqlanadi.

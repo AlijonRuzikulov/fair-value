@@ -9,7 +9,8 @@ use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Browser-side protection: scripts only from this site (inline scripts
- * need the per-request nonce), no framing by other sites, no MIME sniffing.
+ * need the per-request nonce), no framing by other sites, no MIME sniffing,
+ * and no word of the PHP version.
  */
 class SecurityHeaders
 {
@@ -46,6 +47,12 @@ class SecurityHeaders
 
         if ($request->isSecure()) {
             $headers['Strict-Transport-Security'] = 'max-age=31536000';
+        }
+
+        // The PHP version is not told to the visitors.
+        $response->headers->remove('X-Powered-By');
+        if (! headers_sent()) {
+            header_remove('X-Powered-By');
         }
 
         foreach ($headers as $name => $value) {

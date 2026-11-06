@@ -59,6 +59,16 @@ class SmallPartController extends CatalogController
         ];
     }
 
+    /** "Kichik ehtiyot qismlar qo'shish" of the portal: the name, the price and the unit. */
+    public function portalFields(): array
+    {
+        return [
+            'name' => [__('Name of the small spare part'), 'text', null, 12, true],
+            'price' => [__('Price'), 'money', null, 12, true],
+            'unit' => [__('Unit'), 'select', AssetController::units(), 12, true],
+        ];
+    }
+
     public function columns(): array
     {
         return [

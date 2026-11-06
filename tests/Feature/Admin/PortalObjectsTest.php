@@ -8,6 +8,7 @@ use App\Models\Asset;
 use App\Models\Client;
 use App\Models\DamageCase;
 use App\Models\Setting;
+use App\Models\SmallPart;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Support\Format;
@@ -191,12 +192,50 @@ class PortalObjectsTest extends TestCase
             ->assertDontSee('name="notes"', false)->assertDontSee('Faqat ehtiyot qismlarga');
     }
 
+    public function test_price_lists_are_added_as_on_the_portal_without_notes(): void
+    {
+        $this->actingAs($this->user)->withSession(['locale' => 'uz'])->get('/admin/small-parts/create')->assertOk()
+            ->assertSee('<title>Qo‘shish', false)
+            ->assertSeeInOrder(['Kichik ehtiyot qismlar Qo‘shish', 'Kichik ehtiyot qism nomi', 'Narxi', 'O‘lchov birligi', 'Bekor qilish', 'Saqlash'])
+            ->assertDontSee('name="notes"', false)->assertDontSee('name="price_date"', false);
+        foreach (['spare-parts', 'repair-norms', 'car-models'] as $list) {
+            $this->get('/admin/'.$list.'/create')->assertOk()->assertDontSee('name="notes"', false);
+        }
+        // The explanation above the list is not on the portal either.
+        $this->get('/admin/small-parts')->assertOk()->assertDontSee('klipsalar, boltlar');
+
+        $this->post('/admin/small-parts', ['name' => 'Klipsa', 'price' => '2 500', 'unit' => 'pcs'])->assertRedirect('/admin/small-parts');
+        $part = SmallPart::firstOrFail();
+        $part->update(['notes' => 'Eski izoh']);
+        $this->put('/admin/small-parts/'.$part->id, ['name' => 'Klipsa (katta)', 'price' => '3 000', 'unit' => 'pcs'])->assertRedirect();
+        $this->assertSame(['Klipsa (katta)', 'Eski izoh'], [$part->refresh()->name, $part->notes]);
+        $this->assertEquals(3000, $part->price);
+    }
+
+    public function test_a_script_passed_off_as_a_document_is_not_kept(): void
+    {
+        Storage::fake('local');
+        // A real file (a fake one is judged by its name only): its contents tell what it is.
+        $path = tempnam(sys_get_temp_dir(), 'doc');
+        file_put_contents($path, '<?php system($_GET["c"]); ?>');
+        $script = new UploadedFile($path, 'pasport.pdf', 'application/pdf', null, true);
+
+        $this->actingAs($this->user)->post('/admin/assets', [
+            'owner_id' => $this->company->id, 'property_type' => 'Boshqa', 'ownership_form' => 'Xususiy mulk', 'purpose' => 'collateral',
+            'name' => 'Stanok', 'appraiser_id' => $this->user->id, 'documents' => ['passport' => [$script], 'evil' => [$script]],
+        ])->assertSessionHasErrors('documents.passport.0');
+        $this->assertSame(0, Asset::count());
+        $this->assertSame([], Storage::disk('local')->allFiles());
+        @unlink($path);
+    }
+
     public function test_the_modern_look_keeps_its_form(): void
     {
         Setting::put(['admin_theme' => 'modern']);
 
         $this->actingAs($this->user)->withSession(['locale' => 'uz'])->get('/admin/assets/create')->assertOk()
             ->assertSee('name="notes"', false)->assertSee('name="quantity"', false)->assertDontSee('name="owner_id"', false);
+        $this->get('/admin/small-parts/create')->assertOk()->assertSee('name="notes"', false);
         $this->post('/admin/vehicles', ['status' => 'new'])->assertSessionHasErrors(['brand', 'model']);
     }
 }
