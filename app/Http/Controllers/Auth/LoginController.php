@@ -16,7 +16,14 @@ class LoginController extends Controller
 {
     public function show(): View
     {
-        return view(AdminTheme::classic() ? 'auth.login-classic' : 'auth.login', ['hint' => $this->firstSignInHint()]);
+        if (! AdminTheme::classic()) {
+            return view('auth.login', ['hint' => $this->firstSignInHint()]);
+        }
+
+        // The sign-in page of the classic look is in Uzbek (Latin) only.
+        app()->setLocale('uz');
+
+        return view('auth.login-classic', ['hint' => $this->firstSignInHint()]);
     }
 
     public function login(Request $request): RedirectResponse

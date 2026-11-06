@@ -32,8 +32,10 @@ class PassportFormatTest extends TestCase
 
     public function test_the_sign_in_page_is_the_simple_one(): void
     {
-        $this->withSession(['locale' => 'uz'])->get('/login')->assertOk()
+        // In Uzbek (Latin) whatever language was chosen, without the language links.
+        $this->withSession(['locale' => 'ru'])->get('/login')->assertOk()
             ->assertSee('simple-login', false)->assertSee('name="email"', false)->assertSee('name="password"', false)
-            ->assertSee('Yordam olish')->assertSee(route('contact'), false);
+            ->assertSee('Yordam olish')->assertSee(route('contact'), false)
+            ->assertSee('<html lang="uz-Latn">', false)->assertDontSee(route('locale', 'ru'), false);
     }
 }

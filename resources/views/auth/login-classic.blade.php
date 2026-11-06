@@ -45,11 +45,6 @@
     <p class="simple-login-foot">
         {{ $name }} · <a href="{{ route('contact') }}">{{ __('Get support') }}</a>
     </p>
-    <nav class="simple-login-langs" aria-label="{{ __('Language') }}">
-        @foreach ($locales as $code => $meta)
-            <a href="{{ route('locale', $code) }}" @class(['is-active' => $code === app()->getLocale()])>{{ $meta['short'] }}</a>
-        @endforeach
-    </nav>
 </main>
 @if ($hint)
     <script nonce="{{ Vite::cspNonce() }}">
