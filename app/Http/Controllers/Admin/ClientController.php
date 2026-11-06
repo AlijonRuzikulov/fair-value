@@ -9,6 +9,7 @@ use App\Models\Client;
 use App\Models\Region;
 use App\Services\Documents\DocumentAi;
 use App\Services\Documents\DocumentData;
+use App\Support\AdminTheme;
 use App\Support\CsvExport;
 use App\Support\Format;
 use Illuminate\Database\Eloquent\Builder;
@@ -201,7 +202,7 @@ class ClientController extends Controller
 
     private function form(Client $client): View
     {
-        return view('admin.clients.form', [
+        return view(AdminTheme::classic() ? 'admin.clients.portal-form' : 'admin.clients.form', [
             'client' => $client,
             'regions' => Region::ordered()->get(),
             'districts' => ValuationController::districtOptions(old('region_id', $client->region_id)),
@@ -212,6 +213,20 @@ class ClientController extends Controller
     {
         $type = $client?->type ?? ClientType::tryFrom((string) $request->input('type'));
         $individual = $type === ClientType::Individual;
+
+        // The form of the classic look: the passport in one box ("AA 1234567"), the head of a company in three.
+        if ($request->exists('passport')) {
+            $passport = mb_strtoupper(preg_replace('/\s+/u', '', (string) $request->input('passport')));
+            $request->merge(preg_match('/^([A-Z]{2})(\d{7})$/u', $passport, $m)
+                ? ['passport_series' => $m[1], 'passport_number' => $m[2]]
+                : ['passport_series' => null, 'passport_number' => null]);
+        }
+        if ($request->exists('director_last_name')) {
+            $request->merge(['director' => trim(implode(' ', array_filter([
+                $request->input('director_last_name'), $request->input('director_first_name'), $request->input('director_middle_name'),
+            ], 'filled'))) ?: null]);
+        }
+        $portal = $request->boolean('_portal');
 
         $request->merge([
             'passport_series' => $request->filled('passport_series') ? mb_strtoupper(trim($request->input('passport_series'))) : null,
@@ -245,7 +260,41 @@ class ClientController extends Controller
             'district_id' => ['nullable', 'integer', Rule::exists('districts', 'id')->where('region_id', $request->integer('region_id'))],
             'address' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:5000'],
+            'organization' => ['nullable', 'string', 'max:100'],
+            'management' => ['nullable', 'string', 'max:100'],
+            'director_position' => ['nullable', 'string', 'max:255'],
+            'single_tax' => ['nullable', 'boolean'],
+            // What the portal's form asks for.
+            ...($portal ? ($individual ? [
+                'middle_name' => ['required', 'string', 'max:255'],
+                'passport' => ['required', 'regex:/^\s*[A-Za-z]{2}\s*\d{7}\s*$/'],
+                'pinfl' => ['required', 'digits:14'],
+                'passport_issued_at' => ['required', 'date'],
+                'passport_issued_by' => ['required', 'string', 'max:255'],
+                'region_id' => ['required', 'integer', 'exists:regions,id'],
+                'district_id' => ['required', 'integer', Rule::exists('districts', 'id')->where('region_id', $request->integer('region_id'))],
+                'address' => ['required', 'string', 'max:255'],
+                'phone' => ['required', 'string', 'max:30'],
+            ] : [
+                'organization' => ['required', 'string', 'max:100'],
+                'management' => ['required', 'string', 'max:100'],
+                'director_last_name' => ['required', 'string', 'max:80'],
+                'director_first_name' => ['required', 'string', 'max:80'],
+                'director_middle_name' => ['required', 'string', 'max:80'],
+                'director_position' => ['required', 'string', 'max:255'],
+                'region_id' => ['required', 'integer', 'exists:regions,id'],
+                'district_id' => ['required', 'integer', Rule::exists('districts', 'id')->where('region_id', $request->integer('region_id'))],
+                'address' => ['required', 'string', 'max:255'],
+                'phone' => ['required', 'string', 'max:30'],
+                'email' => ['required', 'email', 'max:255'],
+                'bank_account' => ['required', 'digits:20'],
+                'inn' => ['required', 'digits:9'],
+                'bank_mfo' => ['required', 'digits:5'],
+                'bank_name' => ['required', 'string', 'max:255'],
+            ]) : []),
         ], [], [
+            'passport' => __('Passport series and number'),
+            'middle_name' => __('Middle name'),
             'pinfl' => __('PINFL'),
             'inn' => __('TIN'),
             'bank_mfo' => __('MFO'),
@@ -258,6 +307,11 @@ class ClientController extends Controller
         // The type of an existing client never changes.
         if ($client) {
             unset($data['type']);
+        }
+        unset($data['passport'], $data['director_last_name'], $data['director_first_name'], $data['director_middle_name']);
+        // The date of birth is written in the PINFL.
+        if (empty($data['birth_date']) && ($born = Client::birthDateFromPinfl($data['pinfl'] ?? null))) {
+            $data['birth_date'] = $born;
         }
 
         return $data;

@@ -56,13 +56,13 @@
     </td>
     <td class="row-lines row-persons">
         @foreach ($item->clients as $person)
-            <span>{{ PersonRole::labelFor($person->pivot->role) }}: <b>{{ $person->title }}</b></span>
+            <span><b>{{ PersonRole::labelFor($person->pivot->role) }}:</b> <a @class(['is-legal' => $person->isLegal()]) href="{{ route('admin.clients.show', $person) }}">{{ $person->title }}</a></span>
         @endforeach
         @if ($item->creator && $item->creator->id !== $item->appraiser_id)
-            <span>{{ __('Assistant of the appraiser') }}: <b>{{ $item->creator->name }}</b></span>
+            <span><b>{{ __('Assistant of the appraiser') }}:</b> {{ $item->creator->name }}</span>
         @endif
         @if ($item->appraiser)
-            <span>{{ __('Appraiser') }}: <b>{{ $item->appraiser->name }}</b></span>
+            <span><b>{{ __('Appraiser') }}:</b> {{ $item->appraiser->name }}</span>
         @endif
         @if ($item->clients->isEmpty() && ! $item->appraiser && ! $item->creator)<span class="muted">—</span>@endif
     </td>

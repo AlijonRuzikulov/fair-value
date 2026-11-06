@@ -916,6 +916,17 @@
     }
   }, true);
 
+  // A red reminder under a required field while it is empty, as on the valuation portal.
+  $$('[data-empty-alert]').forEach(function (input) {
+    var note = document.createElement('p');
+    note.className = 'field-alert';
+    note.textContent = input.dataset.emptyAlert;
+    (input.closest('.input-wrap') || input).after(note);
+    function sync() { note.hidden = input.value.trim() !== ''; }
+    input.addEventListener('input', sync);
+    sync();
+  });
+
   // A button that shows a note next to it.
   $$('[data-reveal]').forEach(function (button) {
     button.addEventListener('click', function () {

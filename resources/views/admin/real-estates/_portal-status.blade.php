@@ -13,12 +13,6 @@
         [__('Report by the director'), $approved ?? ($status === ValuationStatus::Completed ? true : null)],
         [__('Invoice by the customer'), $step('accepted')],
     ];
-    $statusLine = match ($status) {
-        ValuationStatus::New, ValuationStatus::InProgress => __('Not reviewed yet'),
-        ValuationStatus::Review => __('Under review'),
-        ValuationStatus::Completed => __('Approved'),
-        ValuationStatus::Cancelled => __('Cancelled'),
-    };
     $steps = $exists ? $item->steps : collect();
     // For the buttons of the steps.
     $route = $exists ? route($module->routeName('workflow'), $item->id) : null;
@@ -29,20 +23,24 @@
 <div class="portal-cards">
     <section class="card card-accent" id="status">
         <header class="card-head"><h2 class="card-title">{{ __('Status of the valuation') }}</h2></header>
-        <div class="card-body">
-            <p class="sign-status"><x-status :status="$status" /> {{ $statusLine }}</p>
+        <div class="card-body sign-body">
+            <div class="sign-status">
+                @if ($exists && $status !== ValuationStatus::New)
+                    <x-status :status="$status" />
+                    <span>{{ __('Date') }}: {{ Format::datetime($item->completed_at ?? $item->updated_at) }}</span>
+                @else
+                    <span>{{ __('Not reviewed yet') }}</span>
+                @endif
+            </div>
             <ul class="sign-rows">
                 @foreach ($rows as [$label, $done])
-                    <li @class(['is-done' => (bool) $done])>
-                        <span>{{ $label }}</span>
-                        <span class="sign-state">
-                            @if ($done)
-                                <span class="badge badge-success">{{ __('Confirmed') }}</span>
-                                @if ($done instanceof ValuationStep)<small>{{ Format::datetime($done->created_at) }} · {{ $done->user?->name ?? '—' }}</small>@endif
-                            @else
-                                <span class="badge badge-muted">{{ __('Not confirmed') }}</span>
-                            @endif
-                        </span>
+                    <li>
+                        {{ $label }}
+                        @if ($done)
+                            <span class="badge badge-info" @if ($done instanceof ValuationStep) title="{{ Format::datetime($done->created_at) }} · {{ $done->user?->name }}" @endif>{{ __('Confirmed') }}</span>
+                        @else
+                            <span class="badge badge-warning">{{ __('Not confirmed') }}</span>
+                        @endif
                     </li>
                 @endforeach
             </ul>
@@ -52,19 +50,21 @@
         </div>
     </section>
     <section class="card card-accent" id="history">
-        <header class="card-head"><h2 class="card-title">{{ __('History of the valuation') }}</h2></header>
+        <header class="card-head card-head-stack">
+            <h2 class="card-title">{{ __('History of the valuation') }}</h2>
+            <span>{{ __('Time spent') }}: {{ $exists ? $item->timeSpent() : '' }}</span>
+        </header>
         <div class="card-body">
-            <p class="sign-status">{{ __('Time spent') }}: <strong>{{ $exists ? $item->timeSpent() : '—' }}</strong></p>
-            <div class="table-wrap">
+            <div class="table-wrap history-scroll">
                 <table class="table table-compact">
                     <thead><tr><th>№</th><th>{{ __('Date') }}</th><th>{{ __('By') }}</th><th>{{ __('Step of the history') }}</th></tr></thead>
                     <tbody>
-                        @forelse ($steps as $historyStep)
+                        @forelse ($steps->reverse()->values() as $historyStep)
                             <tr>
                                 <td>{{ $loop->iteration }}</td>
                                 <td class="nowrap">{{ Format::datetime($historyStep->created_at) }}</td>
                                 <td>{{ $historyStep->user?->name ?? '—' }}</td>
-                                <td><strong>{{ ValuationStep::label($historyStep->action) }}</strong>@if ($historyStep->comment)<span class="cell-sub">{{ $historyStep->comment }}</span>@endif</td>
+                                <td>{{ ValuationStep::label($historyStep->action) }}@if ($historyStep->comment)<span class="cell-sub">{{ $historyStep->comment }}</span>@endif</td>
                             </tr>
                         @empty
                             <tr><td colspan="4" class="muted">{{ __('No approval steps yet.') }}</td></tr>

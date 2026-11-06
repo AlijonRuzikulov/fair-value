@@ -55,7 +55,7 @@ class PortalPageTest extends TestCase
                 'To‘langan summa', 'Identifikatsiya bo‘yicha baholovchi fikri', 'Joylashgan joyi',
                 'Ko‘chmas mulk asosiy ma’lumotlari', 'Ko‘chmas mulkni baholash uchun taqdim qilinadigan hujjatlar',
                 'Qiyosiy yondashuv', 'Daromad yondashuvi', 'Muvofiqlashtirish', 'Baholanadigan binolarni kiriting',
-                'Holat', 'Hali ko‘rilmadi', 'Baholovchi tomonidan hisobot', 'Direktor tomonidan hisob-varaq faktura',
+                'Holat', 'Jarayonda', 'Baholovchi tomonidan hisobot', 'Direktor tomonidan hisob-varaq faktura',
                 'Direktor tomonidan hisobot', 'Buyurtmachi tomonidan hisob-varaq faktura', 'Tarixi', 'Sarflangan vaqt', 'Saqlash',
             ])
             ->assertSee('(voz kechildi)')
@@ -79,7 +79,7 @@ class PortalPageTest extends TestCase
         $this->get('/admin/real-estates/create?kind=nonresidential')->assertOk()
             ->assertSee('action="'.route('admin.real-estates.store').'"', false)
             ->assertSee('<option value="Boshqa" selected>', false)
-            ->assertSee('Hujjatlar obyekt saqlangandan keyin yuklanadi.');
+            ->assertSee('Hujjatlar obyekt saqlangandan keyin yuklanadi.')->assertSee('Hali ko‘rilmadi');
 
         // The modern look keeps the page it had.
         Setting::put(['admin_theme' => 'modern']);

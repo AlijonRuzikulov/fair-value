@@ -1,5 +1,5 @@
 {{-- "Илова ҳужжатлари": files of a client or a valuation object. --}}
-<x-card :title="__('Attachments')" icon="paperclip">
+<x-card :title="__('Attachments')" icon="paperclip" id="files">
     <form method="post" action="{{ route('admin.attachments.store') }}" enctype="multipart/form-data" data-upload>
         @csrf
         <input type="hidden" name="type" value="{{ $owner->getMorphClass() }}">

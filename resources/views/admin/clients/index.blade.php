@@ -40,8 +40,9 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>{{ $type === ClientType::Legal ? __('Name') : __('Full name (F.I.Sh.)') }}</th>
+                            <th>{{ __('Full name (F.I.Sh.)') }}</th>
                             <th>{{ __('Address of the client') }}</th>
+                            @if ($type === ClientType::Legal)<th>{{ __('E-mail') }}</th>@endif
                             <th>{{ __('Category of the client') }}</th>
                             <th>{{ __('Date entered') }}</th>
                             <th>{{ __('Date changed') }}</th>
@@ -51,18 +52,25 @@
                     </thead>
                     <tbody>
                         @foreach ($clients as $client)
-                            <tr>
+                            <tr class="client-row">
                                 <td>
-                                    <a class="cell-title" href="{{ route('admin.clients.show', $client) }}">{{ $client->title }}</a>
-                                    <span class="cell-sub">{{ $type === ClientType::Legal ? ($client->inn ? __('TIN').': '.$client->inn : '') : $client->document }}</span>
+                                    @if ($type === ClientType::Legal)
+                                        {{-- The head first, then the company, as on the portal. --}}
+                                        <a class="client-name" href="{{ route('admin.clients.show', $client) }}">{{ $client->director ?: '. . .' }}</a>
+                                        <span class="client-company">{{ $client->company_name }}</span>
+                                    @else
+                                        <a class="client-name" href="{{ route('admin.clients.show', $client) }}">{{ $client->title }}</a>
+                                    @endif
                                 </td>
-                                <td style="max-width: 300px">{{ collect([$client->region?->name, $client->district?->name, $client->address])->filter()->implode(', ') ?: '—' }}</td>
-                                <td>{{ $client->type->label() }}</td>
-                                <td class="nowrap">{{ Format::datetime($client->created_at) }}</td>
-                                <td class="nowrap">{{ Format::datetime($client->updated_at) }}</td>
-                                <td>{{ $client->creator?->name ?? '—' }}</td>
-                                <td class="t-center">
-                                    <a class="btn btn-sm btn-info btn-icon" href="{{ route('admin.clients.edit', $client) }}" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}"><x-icon name="pencil" :size="14" /></a>
+                                <td style="max-width: 280px">{{ $client->address ?: collect([$client->region?->name, $client->district?->name])->filter()->implode(', ') ?: '—' }}</td>
+                                @if ($type === ClientType::Legal)<td>{{ $client->email ?: '—' }}</td>@endif
+                                <td><span class="badge badge-info">{{ $client->type->label() }}</span></td>
+                                <td class="nowrap">{{ Format::date($client->created_at) }}</td>
+                                <td class="nowrap">{{ Format::date($client->updated_at) }}</td>
+                                <td>{{ $client->creator?->shortName() ?? '—' }}</td>
+                                <td class="row-buttons">
+                                    <a class="btn btn-sm btn-info btn-icon" href="{{ route('admin.clients.show', $client) }}#files" title="{{ __('Photos and documents') }}" aria-label="{{ __('Photos and documents') }}"><x-icon name="image" :size="15" /></a>
+                                    <a class="btn btn-sm btn-warning btn-icon" href="{{ route('admin.clients.edit', $client) }}" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}"><x-icon name="square-pen" :size="15" /></a>
                                 </td>
                             </tr>
                         @endforeach

@@ -623,3 +623,32 @@ body.theme-classic.accent-orange {
 }
 .theme-classic .passport-pop-body label { font-size: 12px; text-transform: uppercase; color: #9a9a9a; }
 .theme-classic .passport-pop-body .input { height: auto; padding: 8px; }
+
+/* Client forms and lists of the portal. */
+.theme-classic .field-alert { margin-top: 4px; font-size: 14px; color: var(--c-red); }
+.theme-classic .field-alert[hidden] { display: none; }
+.theme-classic .portal-center { justify-content: center; }
+.theme-classic .client-row td { vertical-align: middle; }
+.theme-classic .client-name { display: block; font-weight: 700; color: var(--accent-strong); }
+.theme-classic .client-company { display: block; color: var(--c-green); text-transform: uppercase; }
+
+/* The bottom of the real estate page inside its card: Holat and Tarixi as on the portal, the buttons in the middle. */
+.theme-classic .portal-card-end { padding-top: 0; }
+.theme-classic .portal-card-end .portal-files { margin-top: 22px; }
+.theme-classic .portal-card-end .portal-cards { margin-top: 26px; }
+.theme-classic .sign-body { text-align: center; }
+.theme-classic .sign-status { display: flex; flex-direction: column; align-items: center; gap: 4px; margin-bottom: 10px; font-size: 14px; color: #333; }
+.theme-classic .sign-rows li { display: block; justify-content: center; padding: 10px 0; border-bottom: 1px solid #ececec; font-size: 13px; color: #333; }
+.theme-classic .sign-rows li .badge { margin-left: 4px; }
+.theme-classic .sign-body .approval-actions { justify-content: center; }
+.theme-classic .card-head-stack { flex-direction: column; align-items: flex-start; gap: 4px; }
+.theme-classic .card-accent > .card-head-stack span { font-size: 14px; color: #fff; }
+.theme-classic .history-scroll { max-height: 240px; overflow: auto; }
+.theme-classic .history-scroll thead th { position: sticky; top: 0; background: #f0f0f0; color: #777; }
+.theme-classic .portal-bottom { justify-content: center; margin-top: 26px; }
+.theme-classic .portal-card-end .portal-notice { margin-top: 18px; background: #ffbe7a; color: #333; }
+.theme-classic .portal-card-end .portal-notice strong { text-transform: uppercase; }
+.theme-classic .row-persons b { color: #333; }
+.theme-classic .row-persons a { color: #555; }
+.theme-classic .row-persons a.is-legal { color: #ff7f2a; text-transform: uppercase; }
+.theme-classic .input::placeholder { color: #c3c3c3; opacity: 1; }

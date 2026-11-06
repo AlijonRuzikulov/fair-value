@@ -148,70 +148,75 @@
                     </div>
                 </details>
             </div>
-        </section>
 
-        @if ($exists)
-            <div class="portal-files pdf-buttons">
-                <a class="btn" href="{{ route('admin.real-estates.report.pdf', $item->id) }}" data-pdf><x-icon name="qr-code" :size="14" /> {{ __('Report PDF with QR code') }}</a>
-                <a class="btn" href="{{ route('admin.real-estates.report.pdf', [$item->id, 'qr' => 0]) }}" data-pdf><x-icon name="file-text" :size="14" /> {{ __('Report PDF') }}</a>
-                <a class="btn" href="{{ route($module->routeName('contract.pdf'), [$item->id, 'qr' => 1]) }}" data-pdf><x-icon name="qr-code" :size="14" /> {{ __('Contract PDF with QR codes') }}</a>
-                <a class="btn" href="{{ route($module->routeName('contract.pdf'), $item->id) }}" data-pdf><x-icon name="file-pen-line" :size="14" /> {{ __('Contract PDF') }}</a>
-                <a class="btn" href="{{ route('admin.real-estates.report', $item->id) }}" target="_blank"><x-icon name="scroll-text" :size="14" /> {{ __('Valuation report') }}</a>
-                <a class="btn" href="{{ route($module->routeName('print'), $item->id) }}" target="_blank"><x-icon name="printer" :size="14" /> {{ __('Certificate') }}</a>
-                @if ($canEdit)
-                    <a class="btn" href="{{ route('admin.real-estates.report.edit', $item->id) }}"><x-icon name="list-checks" :size="14" /> {{ __('Prepare the report') }}</a>
+            {{-- The rest of the page stays in the same card, as on the portal. --}}
+            <div class="portal-card-body portal-card-end">
+                @if ($exists)
+                    <div class="portal-files pdf-buttons">
+                        <a class="btn" href="{{ route('admin.real-estates.report.pdf', $item->id) }}" data-pdf><x-icon name="qr-code" :size="14" /> {{ __('Report PDF with QR code') }}</a>
+                        <a class="btn" href="{{ route('admin.real-estates.report.pdf', [$item->id, 'qr' => 0]) }}" data-pdf><x-icon name="file-text" :size="14" /> {{ __('Report PDF') }}</a>
+                        <a class="btn" href="{{ route($module->routeName('contract.pdf'), [$item->id, 'qr' => 1]) }}" data-pdf><x-icon name="qr-code" :size="14" /> {{ __('Contract PDF with QR codes') }}</a>
+                        <a class="btn" href="{{ route($module->routeName('contract.pdf'), $item->id) }}" data-pdf><x-icon name="file-pen-line" :size="14" /> {{ __('Contract PDF') }}</a>
+                        <a class="btn" href="{{ route('admin.real-estates.report', $item->id) }}" target="_blank"><x-icon name="scroll-text" :size="14" /> {{ __('Valuation report') }}</a>
+                        <a class="btn" href="{{ route($module->routeName('print'), $item->id) }}" target="_blank"><x-icon name="printer" :size="14" /> {{ __('Certificate') }}</a>
+                        @if ($canEdit)
+                            <a class="btn" href="{{ route('admin.real-estates.report.edit', $item->id) }}"><x-icon name="list-checks" :size="14" /> {{ __('Prepare the report') }}</a>
+                        @endif
+                    </div>
+                @endif
+
+                {{-- The buildings of the cost approach. --}}
+                <details class="portal-fold" id="approach-cost" data-remember @if ($exists && in_array(ValuationApproach::Cost, $applied, true)) open @endif>
+                    <summary>
+                        {{ __('Enter the buildings to be valued') }}
+                        @if ($exists && ! in_array(ValuationApproach::Cost, $applied, true))<span class="portal-refused">{{ __('Cost approach') }} ({{ __('refused') }})</span>
+                        @elseif ($item->value_cost !== null)<span class="portal-sum">{{ Format::money($item->value_cost) }}</span>@endif
+                    </summary>
+                    <div class="portal-body portal-cards-flat">
+                        @if ($exists)
+                            @include('admin.real-estates._portal-approach', ['approach' => ValuationApproach::Cost])
+                        @else
+                            <p class="muted">{{ __('The approaches are calculated after the object is saved.') }}</p>
+                        @endif
+                    </div>
+                </details>
+
+                @include('admin.real-estates._portal-status')
+
+                <div class="portal-actions portal-bottom">
+                    @if (! $exists)
+                        <a class="btn btn-fill-danger" href="{{ $back }}">{{ __('Cancel') }}</a>
+                    @endif
+                    @foreach ($reasons as $action => [$label, $icon, $class])
+                        <details class="portal-reason">
+                            <summary class="btn {{ $class }}">{{ $label }}</summary>
+                            <form method="post" action="{{ route($module->routeName('workflow'), $item->id) }}" class="approval-reason">
+                                @csrf <input type="hidden" name="action" value="{{ $action }}">
+                                <input class="input input-sm" name="comment" required maxlength="2000" placeholder="{{ __('Reason') }}" aria-label="{{ $label }}: {{ __('Reason') }}">
+                                <button class="btn btn-sm {{ $class }}" type="submit">{{ __('Confirm') }}</button>
+                            </form>
+                        </details>
+                    @endforeach
+                    @if ($canEdit)
+                        <button class="btn btn-success" type="submit" form="object-form">{{ __('Save') }}</button>
+                    @endif
+                    @if ($exists)
+                        @can('delete-records')
+                            <form method="post" action="{{ route($module->routeName('destroy'), $item->id) }}" class="portal-delete" data-confirm="{{ __('Delete this record? It can be restored by an administrator.') }}">
+                                @csrf @method('delete')
+                                <button class="btn btn-danger btn-icon" type="submit" title="{{ __('Delete') }}" aria-label="{{ __('Delete') }}"><x-icon name="trash-2" :size="16" /></button>
+                            </form>
+                        @endcan
+                    @endif
+                </div>
+
+                @if ($exists)
+                    {{-- The portal signs with E-IMZO; here the report is confirmed by its QR code and verification code. --}}
+                    <p class="portal-notice"><x-icon name="triangle-alert" :size="16" /> <strong>{{ __('E-IMZO is not connected!') }}</strong>
+                        {{ __('The report is confirmed by its QR code and verification code on the public page.') }} <span class="code">{{ $item->verify_code }}</span></p>
                 @endif
             </div>
-
-            {{-- The buildings of the cost approach. --}}
-            <section class="card" id="approach-cost">
-                <header class="card-head">
-                    <h2 class="card-title">{{ __('Enter the buildings to be valued') }}</h2>
-                    <div class="card-actions">
-                        @if (! in_array(ValuationApproach::Cost, $applied, true))<span class="portal-refused">{{ __('Cost approach') }} ({{ __('refused') }})</span>
-                        @elseif ($item->value_cost !== null)<span class="portal-sum">{{ Format::money($item->value_cost) }}</span>@endif
-                    </div>
-                </header>
-                <div class="card-body portal-cards-flat">
-                    @include('admin.real-estates._portal-approach', ['approach' => ValuationApproach::Cost])
-                </div>
-            </section>
-        @endif
-
-        @include('admin.real-estates._portal-status')
-
-        <div class="portal-actions portal-bottom">
-            @if (! $exists)
-                <a class="btn btn-fill-danger" href="{{ $back }}">{{ __('Cancel') }}</a>
-            @endif
-            @foreach ($reasons as $action => [$label, $icon, $class])
-                <details class="portal-reason">
-                    <summary class="btn {{ $class }}"><x-icon :name="$icon" :size="16" /> {{ $label }}</summary>
-                    <form method="post" action="{{ route($module->routeName('workflow'), $item->id) }}" class="approval-reason">
-                        @csrf <input type="hidden" name="action" value="{{ $action }}">
-                        <input class="input input-sm" name="comment" required maxlength="2000" placeholder="{{ __('Reason') }}" aria-label="{{ $label }}: {{ __('Reason') }}">
-                        <button class="btn btn-sm {{ $class }}" type="submit">{{ __('Confirm') }}</button>
-                    </form>
-                </details>
-            @endforeach
-            @if ($canEdit)
-                <button class="btn btn-success" type="submit" form="object-form"><x-icon name="check" :size="16" /> {{ __('Save') }}</button>
-            @endif
-            @if ($exists)
-                @can('delete-records')
-                    <form method="post" action="{{ route($module->routeName('destroy'), $item->id) }}" class="portal-delete" data-confirm="{{ __('Delete this record? It can be restored by an administrator.') }}">
-                        @csrf @method('delete')
-                        <button class="btn btn-danger btn-icon" type="submit" title="{{ __('Delete') }}" aria-label="{{ __('Delete') }}"><x-icon name="trash-2" :size="16" /></button>
-                    </form>
-                @endcan
-            @endif
-        </div>
-
-        @if ($exists)
-            {{-- The portal signs with E-IMZO; here the report is confirmed by its QR code and verification code. --}}
-            <p class="portal-notice"><x-icon name="info" :size="16" /> {{ __('Electronic signature (E-IMZO) is not connected: the report is confirmed by its QR code and verification code on the public page.') }}
-                <span class="code">{{ $item->verify_code }}</span></p>
-        @endif
+        </section>
     </div>
 
     @push('scripts')

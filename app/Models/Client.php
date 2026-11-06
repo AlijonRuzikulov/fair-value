@@ -23,7 +23,8 @@ class Client extends Model
     protected $fillable = [
         'type', 'last_name', 'first_name', 'middle_name', 'birth_date', 'pinfl',
         'passport_series', 'passport_number', 'passport_issued_by', 'passport_issued_at',
-        'company_name', 'inn', 'director', 'oked', 'bank_name', 'bank_mfo', 'bank_account',
+        'company_name', 'organization', 'management', 'inn', 'director', 'director_position', 'oked',
+        'bank_name', 'bank_mfo', 'bank_account', 'single_tax',
         'phone', 'phone2', 'email', 'region_id', 'district_id', 'address', 'notes',
     ];
 
@@ -33,7 +34,39 @@ class Client extends Model
             'type' => ClientType::class,
             'birth_date' => 'date',
             'passport_issued_at' => 'date',
+            'single_tax' => 'boolean',
         ];
+    }
+
+    /** Kinds of organisations on the form of a legal entity (Uzbek Latin, as saved). */
+    public const ORGANIZATIONS = ['Xususiy tashkilot', 'Davlat tashkiloti', 'Bank', 'Xorijiy tashkilot', 'Boshqa'];
+
+    /** Forms of management (organisational and legal forms). */
+    public const MANAGEMENT = ['MChJ', 'AJ', 'XK', 'QK', 'OK', 'DUK', 'Davlat muassasasi', "Fermer xo'jaligi", "Dehqon xo'jaligi", 'YaTT', 'Boshqa'];
+
+    /**
+     * The head of a company as last name, first name and patronymic
+     * (kept together in "director").
+     *
+     * @return array{0: ?string, 1: ?string, 2: ?string}
+     */
+    public function directorParts(): array
+    {
+        $parts = preg_split('/\s+/u', trim((string) $this->director), 3, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        return [$parts[0] ?? null, $parts[1] ?? null, $parts[2] ?? null];
+    }
+
+    /** The date of birth written in a PINFL (its first seven digits: century and sex, day, month, year). */
+    public static function birthDateFromPinfl(?string $pinfl): ?string
+    {
+        if (! is_string($pinfl) || ! preg_match('/^([1-6])(\d{2})(\d{2})(\d{2})\d{7}$/', $pinfl, $m)) {
+            return null;
+        }
+        $century = [1 => 1800, 2 => 1800, 3 => 1900, 4 => 1900, 5 => 2000, 6 => 2000][(int) $m[1]];
+        $year = $century + (int) $m[4];
+
+        return checkdate((int) $m[3], (int) $m[2], $year) && $year <= (int) date('Y') ? sprintf('%04d-%02d-%02d', $year, $m[3], $m[2]) : null;
     }
 
     protected static function booted(): void

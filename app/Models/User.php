@@ -64,4 +64,15 @@ class User extends Authenticatable
 
         return mb_strtoupper(mb_substr($parts[0] ?? '', 0, 1).mb_substr($parts[1] ?? '', 0, 1));
     }
+
+    /** "A.SAYDALIYEV" from "Saydaliyev Asliddin …" (the last name comes first), as the portal's lists show a person. */
+    public function shortName(): string
+    {
+        $parts = preg_split('/\s+/u', trim($this->name), -1, PREG_SPLIT_NO_EMPTY);
+        if (count($parts) < 2) {
+            return mb_strtoupper(trim($this->name));
+        }
+
+        return mb_strtoupper(mb_substr($parts[1], 0, 1).'.'.$parts[0]);
+    }
 }
