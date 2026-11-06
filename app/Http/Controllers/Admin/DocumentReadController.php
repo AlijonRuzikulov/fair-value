@@ -45,7 +45,10 @@ class DocumentReadController extends Controller
             return back()->with('error', __('Choose scans of documents (images or PDF).'));
         }
 
-        set_time_limit(180);
+        // Shared hosting may forbid changing the time limit.
+        if (function_exists('set_time_limit')) {
+            set_time_limit(180);
+        }
         try {
             $result = $this->ai->read(DocumentData::files($attachments));
         } catch (Throwable $e) {

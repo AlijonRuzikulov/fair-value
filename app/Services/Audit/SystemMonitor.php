@@ -82,7 +82,7 @@ class SystemMonitor
             $add(__('Database'), 'fail', __('No connection'), mb_substr($e->getMessage(), 0, 150));
         }
 
-        $free = @disk_free_space(storage_path());
+        $free = function_exists('disk_free_space') ? @disk_free_space(storage_path()) : false;
         $add(__('Free disk space'), $free === false ? 'warn' : ($free < 1024 ** 3 ? 'warn' : 'ok'), $free === false ? '—' : self::bytes($free),
             $free !== false && $free < 1024 ** 3 ? __('Less than 1 GB left: uploaded files and the database may stop being saved.') : null);
 

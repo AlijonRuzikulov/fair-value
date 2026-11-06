@@ -55,11 +55,14 @@ set_env SESSION_SECURE_COOKIE false
 set_env ADMIN_EMAIL admin@fairvalue.uz
 set_env ADMIN_PASSWORD "$password"
 
-# The libraries already installed here are reused (Composer only takes the development ones away).
-if [ -d "$repo/vendor" ]; then
-    cp -a "$repo/vendor" vendor
-fi
-COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --optimize-autoloader --no-interaction --no-progress --quiet
+# The libraries installed here are reused; Composer takes the development ones
+# away. No class map: it would be a PHP file over the hosting's 1 MB limit.
+tar --exclude=.git -C "$repo" -cf - vendor | tar -x -C .
+composer config optimize-autoloader false
+COMPOSER_ALLOW_SUPERUSER=1 composer install --no-dev --no-interaction --no-progress --quiet
+# What a released package leaves out: tests, documents, examples, repository files.
+find vendor -depth -type d \( -name tests -o -name Tests -o -name test -o -name docs -o -name examples -o -name .github -o -name .git \) -prune -exec rm -rf {} +
+find vendor -type f \( -iname '*.md' -o -name 'phpunit.xml*' -o -name '.gitattributes' -o -name '.editorconfig' -o -name 'psalm*.xml' -o -name 'phpstan*.neon*' -o -name '.php-cs-fixer*' \) -delete
 php artisan key:generate --force --no-interaction > /dev/null
 
 : > database/database.sqlite

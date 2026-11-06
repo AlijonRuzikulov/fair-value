@@ -41,7 +41,8 @@ class PdfPrinter
         $configured = trim((string) config('fairvalue.pdf.chrome'));
 
         foreach ($configured !== '' ? [$configured] : self::PATHS as $path) {
-            if (is_file($path) && is_executable($path)) {
+            // Silenced: on shared hosting open_basedir forbids looking outside the site.
+            if (@is_file($path) && @is_executable($path)) {
                 return $path;
             }
         }

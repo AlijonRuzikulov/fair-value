@@ -84,7 +84,10 @@ class ClientController extends Controller
             return back()->with('error', __('Reading documents needs an AI key (ANTHROPIC_API_KEY in .env).'));
         }
 
-        set_time_limit(120);
+        // Shared hosting may forbid changing the time limit.
+        if (function_exists('set_time_limit')) {
+            set_time_limit(120);
+        }
         try {
             $person = $ai->read(DocumentData::uploads($request->file('files')))['person'] ?? [];
         } catch (Throwable $e) {

@@ -41,7 +41,10 @@ class AnalogController extends Controller
             if (! $this->finder->aiAvailable()) {
                 return $this->back($type, $object)->with('error', __('Automatic search needs an AI key (ANTHROPIC_API_KEY in .env).'));
             }
-            set_time_limit(150);
+            // Shared hosting may forbid changing the time limit.
+            if (function_exists('set_time_limit')) {
+                set_time_limit(150);
+            }
             try {
                 $added = $this->finder->search($object);
                 Activity::record('analogs', $object, ['mode' => 'search', 'added' => $added]);
@@ -82,7 +85,10 @@ class AnalogController extends Controller
     public function fill(Analog $analog): JsonResponse
     {
         Gate::authorize('edit-valuation', $analog->object);
-        set_time_limit(120);
+        // Shared hosting may forbid changing the time limit.
+        if (function_exists('set_time_limit')) {
+            set_time_limit(120);
+        }
 
         if ($analog->isPending()) {
             $this->finder->fill($analog);
@@ -99,7 +105,10 @@ class AnalogController extends Controller
     {
         Gate::authorize('edit-valuation', $analog->object);
         $data = $request->validate(['text' => ['required', 'string', 'max:60000']], [], ['text' => __('Text of the listing')]);
-        set_time_limit(120);
+        // Shared hosting may forbid changing the time limit.
+        if (function_exists('set_time_limit')) {
+            set_time_limit(120);
+        }
 
         $this->finder->fillFromText($analog, $data['text']);
         $analog->refresh();
