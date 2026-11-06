@@ -230,6 +230,7 @@ class ClientController extends Controller
 
         $request->merge([
             'passport_series' => $request->filled('passport_series') ? mb_strtoupper(trim($request->input('passport_series'))) : null,
+            'passport_number' => $request->filled('passport_number') ? preg_replace('/\s+/', '', $request->input('passport_number')) : null,
             'pinfl' => $request->filled('pinfl') ? preg_replace('/\D/', '', $request->input('pinfl')) : null,
             'inn' => $request->filled('inn') ? preg_replace('/\D/', '', $request->input('inn')) : null,
             'bank_account' => $request->filled('bank_account') ? preg_replace('/\D/', '', $request->input('bank_account')) : null,
@@ -242,8 +243,9 @@ class ClientController extends Controller
             'middle_name' => ['nullable', 'string', 'max:255'],
             'birth_date' => ['nullable', 'date', 'before:today'],
             'pinfl' => ['nullable', 'digits:14'],
-            'passport_series' => ['nullable', 'string', 'max:4'],
-            'passport_number' => ['nullable', 'string', 'max:12'],
+            // Two capital letters and seven digits (typed letters are made capital).
+            'passport_series' => ['nullable', 'regex:/^[A-Z]{2}$/'],
+            'passport_number' => ['nullable', 'regex:/^\d{7}$/'],
             'passport_issued_by' => ['nullable', 'string', 'max:255'],
             'passport_issued_at' => ['nullable', 'date'],
             'company_name' => [Rule::requiredIf(! $individual), 'nullable', 'string', 'max:255'],

@@ -652,3 +652,25 @@ body.theme-classic.accent-orange {
 .theme-classic .row-persons a { color: #555; }
 .theme-classic .row-persons a.is-legal { color: #ff7f2a; text-transform: uppercase; }
 .theme-classic .input::placeholder { color: #c3c3c3; opacity: 1; }
+
+/* The sign-in page of the classic look. */
+body.theme-classic.simple-login-page { min-height: 100vh; margin: 0; background: #fff; }
+.theme-classic .simple-login { display: flex; flex-direction: column; align-items: center; width: min(320px, calc(100% - 32px)); margin: 0 auto; padding: 60px 0 40px; }
+.theme-classic .simple-login-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+.theme-classic .simple-login-logo span { display: grid; font-size: 22px; font-weight: 500; line-height: 1.15; color: #1a4d7a; }
+.theme-classic .simple-login-logo small { font-size: 14px; font-weight: 400; color: #555; }
+.theme-classic .simple-login-form { display: grid; gap: 10px; width: 100%; }
+.theme-classic .login-box { display: flex; height: 42px; border: 1px solid #ccc; border-radius: 4px; overflow: hidden; }
+.theme-classic .login-box:focus-within { border-color: #66afe9; box-shadow: 0 0 0 3px rgba(102, 175, 233, .3); }
+.theme-classic .login-box-icon { display: grid; place-items: center; width: 46px; border-right: 1px solid #ccc; background: #f0f0f0; color: #333; }
+.theme-classic .login-box input { flex: 1; min-width: 0; padding: 0 14px; border: 0; outline: none; font: inherit; font-size: 17px; color: #333; }
+.theme-classic .login-box input::placeholder { color: #b3b3b3; }
+.theme-classic .simple-login-button { height: 42px; border: 0; border-radius: 4px; background: #3ebcf5; color: #fff; font: inherit; font-size: 17px; text-transform: uppercase; cursor: pointer; }
+.theme-classic .simple-login-button:hover { background: #22b0ee; }
+.theme-classic .simple-login-error { padding: 8px 12px; border-radius: 4px; background: #fdecea; color: #c62828; font-size: 13px; }
+.theme-classic .simple-login .auth-demo { font-size: 12px; }
+.theme-classic .simple-login-foot { margin-top: 18px; font-size: 13px; color: #666; }
+.theme-classic .simple-login-foot a { color: #1a9be0; }
+.theme-classic .simple-login-langs { display: flex; gap: 10px; margin-top: 10px; font-size: 12px; }
+.theme-classic .simple-login-langs a { color: #999; }
+.theme-classic .simple-login-langs a.is-active { color: #333; font-weight: 700; }

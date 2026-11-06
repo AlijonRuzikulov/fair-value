@@ -916,6 +916,15 @@
     }
   }, true);
 
+  // Passport boxes: letters become capitals while they are typed.
+  $$('[data-upper]').forEach(function (input) {
+    input.addEventListener('input', function () {
+      var at = input.selectionStart;
+      input.value = input.value.toUpperCase();
+      if (at !== null) input.setSelectionRange(at, at);
+    });
+  });
+
   // A red reminder under a required field while it is empty, as on the valuation portal.
   $$('[data-empty-alert]').forEach(function (input) {
     var note = document.createElement('p');

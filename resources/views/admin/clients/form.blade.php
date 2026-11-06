@@ -32,8 +32,8 @@
                     <x-field name="middle_name" :label="__('Middle name')" :value="$client->middle_name" span="4" />
                     <x-field name="birth_date" type="date" :label="__('Date of birth')" :value="$client->birth_date" span="3" />
                     <x-field name="pinfl" :label="__('PINFL')" :value="$client->pinfl" span="3" inputmode="numeric" maxlength="14" :hint="__('14 digits')" />
-                    <x-field name="passport_series" :label="__('Passport series')" :value="$client->passport_series" span="2" maxlength="4" placeholder="AA" />
-                    <x-field name="passport_number" :label="__('Passport number')" :value="$client->passport_number" span="4" placeholder="1234567" />
+                    <x-field name="passport_series" :label="__('Passport series')" :value="$client->passport_series" span="2" maxlength="2" placeholder="AA" data-upper pattern="[A-Za-z]{2}" title="{{ __('Two capital letters, e.g. AA') }}" />
+                    <x-field name="passport_number" :label="__('Passport number')" :value="$client->passport_number" span="4" placeholder="1234567" inputmode="numeric" maxlength="7" pattern="[0-9]{7}" title="{{ __('Seven digits, e.g. 1234567') }}" />
                     <x-field name="passport_issued_by" :label="__('Issued by')" :value="$client->passport_issued_by" span="8" />
                     <x-field name="passport_issued_at" type="date" :label="__('Date of issue')" :value="$client->passport_issued_at" span="4" />
                 </div>
