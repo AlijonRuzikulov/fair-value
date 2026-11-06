@@ -1,4 +1,4 @@
 @props(['status'])
 @if ($status)
-    <span {{ $attributes->merge(['class' => 'badge badge-'.$status->tone()]) }}><span class="badge-dot"></span>{{ $status->label() }}</span>
+    <span {{ $attributes->merge(['class' => 'badge badge-'.$status->tone()]) }}>{{ $status->label() }}</span>
 @endif

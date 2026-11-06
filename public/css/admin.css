@@ -550,7 +550,6 @@ h1, h2, h3, h4, p { margin: 0; }
   font-weight: 700;
   white-space: nowrap;
 }
-.badge-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .badge-info { background: var(--info-soft); color: var(--info); }
 .badge-warning { background: var(--warning-soft); color: var(--warning); }
 .badge-success { background: var(--success-soft); color: var(--success); }

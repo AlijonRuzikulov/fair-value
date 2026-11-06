@@ -31,8 +31,8 @@
                             <td>{{ $user->certificate_number ?? '—' }}</td>
                             <td class="nowrap">{{ $user->last_login_at ? Format::datetime($user->last_login_at) : '—' }}</td>
                             <td>
-                                @if ($user->is_active)<span class="badge badge-success"><span class="badge-dot"></span>{{ __('Active') }}</span>
-                                @else<span class="badge badge-muted"><span class="badge-dot"></span>{{ __('Inactive') }}</span>@endif
+                                @if ($user->is_active)<span class="badge badge-success">{{ __('Active') }}</span>
+                                @else<span class="badge badge-muted">{{ __('Inactive') }}</span>@endif
                             </td>
                             <td class="t-actions">
                                 <div class="row-actions">
