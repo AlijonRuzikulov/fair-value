@@ -36,11 +36,14 @@ class ClassicThemeTest extends TestCase
     public function test_the_menu_is_light_blue_unless_orange_is_chosen(): void
     {
         $this->actingAs(User::factory()->admin()->create());
-        $this->get('/admin')->assertOk()->assertSee('class="admin theme-classic"', false);
+        // No dashboard in the classic look: the list of non-residential real estate opens first.
+        $this->get('/admin')->assertRedirect(route('admin.real-estates.index', ['kind' => 'nonresidential']));
+        $this->withSession(['locale' => 'uz'])->followingRedirects()->get('/admin')->assertOk()
+            ->assertSee('class="admin theme-classic"', false)->assertDontSee('>Bosh sahifa<', false);
 
         $this->put('/admin/settings', ['name' => 'Fair Value', 'phone' => '+998 71 200-00-00', 'admin_color' => 'green'])->assertSessionHasErrors('admin_color');
         $this->put('/admin/settings', ['name' => 'Fair Value', 'phone' => '+998 71 200-00-00', 'admin_color' => 'orange'])->assertSessionHasNoErrors();
-        $this->get('/admin')->assertOk()->assertSee('class="admin theme-classic accent-orange"', false);
+        $this->followingRedirects()->get('/admin')->assertOk()->assertSee('class="admin theme-classic accent-orange"', false);
         $this->withSession(['locale' => 'uz'])->get('/admin/settings')->assertOk()
             ->assertSee('Menyu rangi')->assertSee('<option value="orange" selected>', false);
     }

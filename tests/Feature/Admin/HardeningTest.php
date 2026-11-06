@@ -33,7 +33,7 @@ class HardeningTest extends TestCase
     {
         $user = User::factory()->create(['password' => 'secret-password-1']);
 
-        $this->actingAs($user)->get('/admin')->assertOk();
+        $this->actingAs($user)->followingRedirects()->get('/admin')->assertOk();
 
         // The administrator resets the password, e.g. after a leak.
         $user->forceFill(['password' => 'another-password-2'])->save();

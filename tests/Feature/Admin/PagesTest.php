@@ -20,7 +20,7 @@ class PagesTest extends TestCase
     public static function pages(): array
     {
         return [
-            ['/admin'],
+            ['/admin/real-estates?kind=residential'],
             ['/admin/clients?type=individual'],
             ['/admin/clients?type=legal'],
             ['/admin/clients/create?type=individual'],

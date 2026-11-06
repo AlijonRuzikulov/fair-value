@@ -44,7 +44,9 @@ class AdminMenu
                 ['key' => 'other.tools', 'label' => __('Valuation plus'), 'url' => route('admin.tools')],
             ]],
             ['section' => __('Management')],
-            ['key' => 'dashboard', 'label' => __('Dashboard'), 'icon' => 'layout-dashboard', 'color' => '#818cf8', 'url' => route('admin.dashboard')],
+            ...(AdminTheme::classic() ? [] : [
+                ['key' => 'dashboard', 'label' => __('Dashboard'), 'icon' => 'layout-dashboard', 'color' => '#818cf8', 'url' => route('admin.dashboard')],
+            ]),
             ['key' => 'leads', 'label' => __('Website requests'), 'icon' => 'inbox', 'color' => '#f472b6', 'url' => route('admin.leads.index'), 'badge' => $newLeads ?: null],
         ];
 

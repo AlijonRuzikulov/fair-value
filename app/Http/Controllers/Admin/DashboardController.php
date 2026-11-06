@@ -3,13 +3,16 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\LeadStatus;
+use App\Enums\RealEstateKind;
 use App\Enums\ValuationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Client;
 use App\Models\Lead;
 use App\Models\User;
 use App\Services\CurrencyService;
+use App\Support\AdminTheme;
 use App\Support\Registry;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
@@ -28,8 +31,13 @@ class DashboardController extends Controller
         ];
     }
 
-    public function __invoke(CurrencyService $currency): View
+    public function __invoke(CurrencyService $currency): View|RedirectResponse
     {
+        // The classic look has no dashboard, as on the valuation portal: the lists open first.
+        if (AdminTheme::classic()) {
+            return redirect()->route('admin.real-estates.index', ['kind' => RealEstateKind::NonResidential->value]);
+        }
+
         $monthStart = now()->startOfMonth();
         $chartStart = now()->subMonths(11)->startOfMonth();
 

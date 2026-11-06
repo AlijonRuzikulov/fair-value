@@ -131,7 +131,7 @@ class LocationAndNumbersTest extends TestCase
         }
 
         config(['app.debug' => false]);
-        $response = $this->actingAs($this->user)->get('/admin');
+        $response = $this->actingAs($this->user)->get('/admin/real-estates/create');
         $this->assertStringContainsString("img-src 'self' data:;", $response->headers->get('Content-Security-Policy'), 'Tiles come from this site, not from the tile server.');
         $this->assertStringContainsString('geolocation=(self)', $response->headers->get('Permissions-Policy'));
     }

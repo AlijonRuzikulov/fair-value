@@ -36,7 +36,7 @@ class SecurityHeadersTest extends TestCase
         $warning = 'class="security-note"';
 
         $this->post('/login', ['email' => 'admin@fairvalue.uz', 'password' => 'admin12345'])->assertRedirect('/admin');
-        $this->get('/admin')->assertOk()->assertSee($warning, false);
+        $this->followingRedirects()->get('/admin')->assertOk()->assertSee($warning, false);
 
         $this->put('/admin/profile', [
             'name' => 'Administrator',
@@ -46,7 +46,7 @@ class SecurityHeadersTest extends TestCase
             'password_confirmation' => 'A-much-better-one-2026',
         ])->assertRedirect();
 
-        $this->get('/admin')->assertOk()->assertDontSee($warning, false);
+        $this->followingRedirects()->get('/admin')->assertOk()->assertDontSee($warning, false);
     }
 
     public function test_own_password_does_not_trigger_the_warning(): void
@@ -55,6 +55,6 @@ class SecurityHeadersTest extends TestCase
         User::factory()->create(['email' => 'a@fairvalue.uz', 'password' => 'secret-password-1']);
 
         $this->post('/login', ['email' => 'a@fairvalue.uz', 'password' => 'secret-password-1'])->assertRedirect('/admin');
-        $this->get('/admin')->assertOk()->assertDontSee('class="security-note"', false);
+        $this->followingRedirects()->get('/admin')->assertOk()->assertDontSee('class="security-note"', false);
     }
 }

@@ -72,7 +72,7 @@ class AuditTrailTest extends TestCase
     public function test_deactivation_and_password_changes_end_sessions_and_are_logged(): void
     {
         $user = User::factory()->create(['password' => 'secret-password-1']);
-        $this->actingAs($user)->get('/admin')->assertOk();
+        $this->actingAs($user)->followingRedirects()->get('/admin')->assertOk();
 
         $user->update(['is_active' => false]);
         $this->get('/admin')->assertRedirect('/login');
