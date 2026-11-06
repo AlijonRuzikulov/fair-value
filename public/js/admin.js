@@ -888,6 +888,44 @@
     document.addEventListener('click', function (e) { if (multi.open && !multi.contains(e.target)) multi.open = false; });
   });
 
+  // The document boxes of the portal: the chosen files are named in the box and saved with the page; files can be dropped on it.
+  $$('[data-portal-drop]').forEach(function (zone) {
+    var input = $('[data-portal-drop-input]', zone);
+    var text = $('[data-portal-drop-text]', zone);
+    var empty = text.textContent;
+    function sync() {
+      var names = Array.prototype.map.call(input.files, function (file) { return file.name; });
+      text.textContent = names.length ? names.join(', ') : empty;
+      zone.classList.toggle('has-files', names.length > 0);
+    }
+    input.addEventListener('change', sync);
+    ['dragenter', 'dragover'].forEach(function (ev) {
+      zone.addEventListener(ev, function (e) { e.preventDefault(); zone.classList.add('is-over'); });
+    });
+    ['dragleave', 'drop'].forEach(function (ev) {
+      zone.addEventListener(ev, function (e) { e.preventDefault(); zone.classList.remove('is-over'); });
+    });
+    zone.addEventListener('drop', function (e) {
+      if (e.dataTransfer && e.dataTransfer.files.length) {
+        input.files = e.dataTransfer.files;
+        sync();
+      }
+    });
+  });
+
+  // "Ulashish": the link of the report's public page, shared or copied.
+  $$('[data-share]').forEach(function (link) {
+    link.addEventListener('click', function (e) {
+      if (navigator.share) {
+        e.preventDefault();
+        navigator.share({ url: link.href }).catch(function () {});
+      } else if (navigator.clipboard) {
+        e.preventDefault();
+        navigator.clipboard.writeText(link.href);
+      }
+    });
+  });
+
   // The contract sum with VAT, while it is typed.
   $$('[data-vat]').forEach(function (box) {
     var sum = $('[data-contract-sum]', box);

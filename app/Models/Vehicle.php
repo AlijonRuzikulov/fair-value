@@ -17,7 +17,8 @@ class Vehicle extends Model
     protected $fillable = [
         'brand', 'model', 'year_made', 'body_type', 'color', 'vin', 'engine_number',
         'chassis_number', 'plate_number', 'tech_passport', 'mileage', 'engine_volume',
-        'fuel_type', 'transmission', 'condition', ...self::VALUATION_FIELDS,
+        'fuel_type', 'transmission', 'condition', 'property_type', 'ownership_form', 'identification', 'restrictions',
+        ...self::VALUATION_FIELDS,
     ];
 
     protected function casts(): array
@@ -34,7 +35,19 @@ class Vehicle extends Model
 
     public function getTitleAttribute(): string
     {
-        return trim($this->brand.' '.$this->model).($this->year_made ? " ({$this->year_made})" : '');
+        // Added on the portal's page before the make and model are typed.
+        $name = trim($this->brand.' '.$this->model) ?: __('Vehicle').($this->id ? ' № '.$this->id : '');
+
+        return $name.($this->year_made ? " ({$this->year_made})" : '');
+    }
+
+    /** The name in the lists of the valuation portal: make and model, year, condition. */
+    public function portalName(): string
+    {
+        $name = trim($this->brand.' '.$this->model);
+        $year = $this->year_made ? __(':year - year', ['year' => $this->year_made]) : null;
+
+        return trim(implode(' ', array_filter([$name, $year, $this->condition]))) ?: '—';
     }
 
     public function typeLabel(): string

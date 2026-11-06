@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\FuelType;
+use App\Enums\ValuationPurpose;
 use App\Models\Vehicle;
+use App\Reports\RealEstateReport;
+use App\Support\AdminTheme;
 use App\Support\Format;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -27,7 +30,46 @@ class VehicleController extends ValuationController
 
     public function title(): string
     {
-        return __('List of vehicles');
+        return AdminTheme::classic() ? __('List of motor vehicles') : __('List of vehicles');
+    }
+
+    /** As on the valuation portal: "Avtotransport qo'shish", its own page afterwards. */
+    public function usesPortal(): bool
+    {
+        return AdminTheme::classic();
+    }
+
+    public function portalTitle(Model $item): string
+    {
+        return $item->exists ? __('Vehicle').' № '.$item->id : __('Add a vehicle');
+    }
+
+    protected function portalRequired(): array
+    {
+        return ['property_type', 'ownership_form', 'purpose', 'appraiser_id'];
+    }
+
+    public function portalFilters(): array
+    {
+        return ['status', 'from', 'to'];
+    }
+
+    public function portalTotal(): bool
+    {
+        return false;
+    }
+
+    public function portalDocumentsTitle(): string
+    {
+        return __('Documents submitted for the valuation of the vehicle');
+    }
+
+    protected function newItem(Request $request): Model
+    {
+        $item = parent::newItem($request);
+        $item->property_type = RealEstateReport::OPTIONS['property_type'][0];
+
+        return $item;
     }
 
     public function singular(): string
@@ -47,9 +89,16 @@ class VehicleController extends ValuationController
 
     protected function rules(Request $request, ?Model $item): array
     {
+        // On the portal a vehicle is added before its make and model are typed.
+        $name = $request->exists('owner_id') ? 'nullable' : 'required';
+
         return [
-            'brand' => ['required', 'string', 'max:255'],
-            'model' => ['required', 'string', 'max:255'],
+            'brand' => [$name, 'string', 'max:255'],
+            'model' => [$name, 'string', 'max:255'],
+            'property_type' => ['nullable', 'string', 'max:150'],
+            'ownership_form' => ['nullable', 'string', 'max:150'],
+            'identification' => ['nullable', 'string', 'max:5000'],
+            'restrictions' => ['nullable', 'string', 'max:5000'],
             'year_made' => ['nullable', 'integer', 'min:1950', 'max:'.(now()->year + 1)],
             'body_type' => ['nullable', 'string', 'max:40'],
             'color' => ['nullable', 'string', 'max:40'],
@@ -68,7 +117,13 @@ class VehicleController extends ValuationController
 
     protected function formData(Model $item): array
     {
-        return ['fuelTypes' => FuelType::options(), 'transmissions' => self::transmissions()];
+        return [
+            'fuelTypes' => FuelType::options(),
+            'transmissions' => self::transmissions(),
+            'propertyTypes' => RealEstateReport::choices('property_type', $item->property_type),
+            'ownershipForms' => RealEstateReport::choices('ownership_form', $item->ownership_form),
+            'portalPurposes' => ValuationPurpose::portalOptions($item->purpose),
+        ];
     }
 
     public static function transmissions(): array
@@ -106,6 +161,11 @@ class VehicleController extends ValuationController
             __('Transmission') => $item->transmission ? (self::transmissions()[$item->transmission] ?? $item->transmission) : null,
             __('Technical condition') => $item->condition,
         ];
+    }
+
+    protected function attributeNames(): array
+    {
+        return [...parent::attributeNames(), 'property_type' => __('Type of the property'), 'ownership_form' => __('Form of ownership')];
     }
 
     protected function exportColumns(): array

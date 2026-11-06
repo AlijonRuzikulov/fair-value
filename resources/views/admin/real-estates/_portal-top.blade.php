@@ -7,34 +7,14 @@
     $rv = RealEstateReport::values($item);
     $residential = ($item->kind ?? null) === \App\Enums\RealEstateKind::Residential;
     $choices = fn (string $key, ?array $only = null) => RealEstateReport::choices($key, $rv[$key] ?? null, $only);
-    // The owner is chosen on its own; the other persons (by power of attorney, another organisation) under the tick.
-    $ownerRow = collect($personRows)->firstWhere('role', \App\Enums\PersonRole::Owner->value);
-    $otherRows = collect($personRows)->reject(fn ($row) => $row === $ownerRow)->values()->all();
     $applied = array_map('strval', array_filter((array) old('approaches', $item->approaches ?? []), 'filled'));
     $purpose = old('purpose', $item->purpose ?? ($item->exists ? null : ValuationPurpose::Collateral->value));
-    $vatRate = (float) \App\Models\Setting::get('vat_rate');
-    $money = fn ($v) => $v !== null && $v !== '' ? Format::number($v, fmod((float) $v, 1.0) ? 2 : 0) : '';
 @endphp
 <div class="portal-cols">
     <div class="portal-col form-grid">
         <x-select name="property_type" :label="__('Type of the property')" :options="$choices('property_type')" :value="$rv['property_type']" span="12" required />
 
-        <div class="field span-12">
-            <label for="f-owner">{{ __('Owner of the property') }}<span class="req">*</span></label>
-            <div class="combo" data-client-pick data-search-url="{{ route('admin.clients.search') }}">
-                <input type="hidden" name="owner_id" value="{{ $ownerRow['client_id'] ?? '' }}" data-combo-value>
-                <div class="combo-selected" data-combo-selected @if (! $ownerRow) hidden @endif>
-                    <span><strong>{{ $ownerRow['title'] ?? '' }}</strong><small>{{ $ownerRow['sub'] ?? '' }}</small></span>
-                    <button type="button" class="btn btn-sm btn-ghost" data-combo-clear>{{ __('Change') }}</button>
-                </div>
-                <input id="f-owner" type="search" @class(['input', 'is-invalid' => $errors->has('owner_id')]) data-combo-input placeholder="{{ __('Search by name, passport, TIN or phone…') }}" autocomplete="off" @if ($ownerRow) hidden @endif>
-            </div>
-            @error('owner_id')<p class="field-error">{{ $message }}</p>@enderror
-            <label class="tick"><input type="checkbox" data-others-toggle @checked($otherRows !== [])> <span>{{ __('By power of attorney / is an order of another organisation involved') }}</span></label>
-        </div>
-        <div class="field span-12" data-others @if ($otherRows === []) hidden @endif>
-            @include('admin.objects._persons', ['personRows' => $otherRows])
-        </div>
+        @include('admin.objects._portal-owner')
 
         <fieldset class="field span-12 portal-ticks">
             <legend>{{ __('Approach methods') }}<span class="req">*</span></legend>
@@ -76,18 +56,7 @@
             <label class="tick"><input type="checkbox" name="light" value="1" @checked(old('light', $rv['light'] ?? false))> <span>{{ __('Light structural element') }}</span></label>
         </div>
 
-        <div class="field span-12 contract-sum" data-vat="{{ $vatRate }}">
-            <label for="f-service_fee">{{ __('Contract sum') }}</label>
-            <input id="f-service_fee" name="service_fee" type="text" inputmode="decimal" data-money autocomplete="off" @class(['input', 'is-invalid' => $errors->has('service_fee')])
-                   value="{{ old('service_fee', $money($item->service_fee)) }}" data-contract-sum>
-            @error('service_fee')<p class="field-error">{{ $message }}</p>@enderror
-            <p class="contract-line">{{ __('With VAT') }}: <span data-contract-vat>{{ $item->service_fee !== null ? Format::number((float) $item->service_fee * (1 + $vatRate / 100)) : '' }}</span> {{ __('sum') }}</p>
-            <p class="contract-line">
-                <label for="f-paid_amount">{{ __('Paid amount') }}:</label>
-                <input id="f-paid_amount" name="paid_amount" type="text" inputmode="decimal" data-money autocomplete="off" class="input-plain" value="{{ old('paid_amount', $money($item->paid_amount)) }}" size="12">
-                {{ __('sum') }}
-            </p>
-        </div>
+        @include('admin.objects._portal-contract')
 
         <x-textarea name="identification" :label="__('Opinion of the appraiser on the identification')" :value="$rv['identification']" span="12" rows="2" />
 

@@ -10,6 +10,9 @@
     $columns = $module->columns();
     $firstColumns = array_slice($columns, 0, 1, true);
     $otherColumns = array_slice($columns, 1, null, true);
+    // The filters of the portal's list of this kind of object, and its own columns where it has them.
+    $portalFilters = $classic ? $module->portalFilters() : [];
+    $portalTable = $classic && view()->exists('admin.'.$module->slugName().'._portal-head');
 @endphp
 <x-layouts.admin :title="$module->title()" :nav="$nav" :icon="$module->icon()">
     <section class="card list-card">
@@ -27,12 +30,25 @@
                         <button type="submit" aria-label="{{ __('Search') }}"><x-icon name="search" :size="16" /></button>
                     </div>
                 </div>
-                @includeIf('admin.'.$module->slugName().'._filters')
                 @if ($classic)
-                    <x-select name="status" :label="__('Choose the status')" :options="$statuses" :value="$currentStatus" placeholder="" span="3" />
-                    <x-select name="region_id" :label="__('Region')" :options="$regions->pluck('name', 'id')" :value="$filters['region_id'] ?? null" placeholder="" span="3" data-region-select />
-                    <x-select name="district_id" :label="__('District')" :options="$districts" :value="$filters['district_id'] ?? null" placeholder="" span="3" data-district-select />
+                    @if (in_array('extra', $portalFilters, true))@includeIf('admin.'.$module->slugName().'._filters')@endif
+                    @if (in_array('status', $portalFilters, true))
+                        <x-select name="status" :label="__('Choose the status')" :options="$statuses" :value="$currentStatus" placeholder="" span="3" />
+                    @endif
+                    @if (in_array('region_id', $portalFilters, true))
+                        <x-select name="region_id" :label="$portalTable ? __('Its region') : __('Region')" :options="$regions->pluck('name', 'id')" :value="$filters['region_id'] ?? null" placeholder="" span="3" data-region-select />
+                    @endif
+                    @if (in_array('district_id', $portalFilters, true))
+                        <x-select name="district_id" :label="$portalTable ? __('Its district') : __('District')" :options="$districts" :value="$filters['district_id'] ?? null" placeholder="" span="3" data-district-select />
+                    @endif
+                    @if (in_array('from', $portalFilters, true))
+                        <x-field name="from" type="date" :label="__('Date (from)')" :value="$filters['from'] ?? null" span="3" />
+                    @endif
+                    @if (in_array('to', $portalFilters, true))
+                        <x-field name="to" type="date" :label="__('Date (to)')" :value="$filters['to'] ?? null" span="3" />
+                    @endif
                 @else
+                    @includeIf('admin.'.$module->slugName().'._filters')
                     <x-select name="status" :label="__('Choose the status')" :options="collect($statuses)->map(fn ($label, $value) => $label.' ('.($statusCounts[$value] ?? 0).')')" :value="$currentStatus" placeholder="{{ __('All').' ('.$total.')' }}" span="3" />
                     <x-select name="region_id" :label="__('Region')" :options="$regions->pluck('name', 'id')" :value="$filters['region_id'] ?? null" placeholder="{{ __('All') }}" span="3" data-region-select />
                     <x-select name="district_id" :label="__('District')" :options="$districts" :value="$filters['district_id'] ?? null" placeholder="{{ __('All') }}" span="3" data-district-select />
@@ -50,7 +66,7 @@
 
         @if ($classic)
             <div class="list-toolbar portal-list-toolbar">
-                <p class="list-total">{{ __('Total') }}: {{ $items->total() }}</p>
+                @if ($module->portalTotal())<p class="list-total">{{ __('Total') }}: {{ $items->total() }}</p>@endif
                 <a class="btn btn-success" href="{{ route($module->routeName('create'), $params) }}">{{ __('Add') }}</a>
             </div>
         @else
@@ -68,6 +84,18 @@
             <x-empty :icon="$module->icon()" :title="$searching ? null : __('No records yet')" :text="$searching ? __('Try changing the filters or add a new record.') : __('Add the first record — it will appear here.')">
                 <a class="btn btn-primary" href="{{ route($module->routeName('create'), $params) }}"><x-icon name="plus" :size="16" /> {{ __('Add') }}</a>
             </x-empty>
+        @elseif ($portalTable)
+            <div class="table-wrap">
+                <table class="table portal-table-list">
+                    <thead>@include('admin.'.$module->slugName().'._portal-head')</thead>
+                    <tbody>
+                        @foreach ($items as $item)
+                            @include('admin.'.$module->slugName().'._portal-row')
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            {{ $items->links() }}
         @else
             <div class="table-wrap">
                 <table class="table">

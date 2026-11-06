@@ -14,7 +14,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
@@ -43,22 +42,7 @@ class AttachmentController extends Controller
         $this->authorizeChange($owner);
 
         foreach ($request->file('files') as $file) {
-            $path = $file->storeAs(
-                'attachments/'.$data['type'].'/'.$owner->getKey(),
-                Str::uuid().'.'.strtolower($file->extension() ?: $file->getClientOriginalExtension()),
-                'local'
-            );
-
-            $name = Str::limit($file->getClientOriginalName(), 250, '');
-            $mime = $file->getMimeType();
-            $owner->attachments()->create([
-                'name' => $name,
-                'path' => $path,
-                'mime' => $mime,
-                'size' => $file->getSize(),
-                'kind' => $data['kind'] ?? DocumentKind::guess($name, str_starts_with((string) $mime, 'image/'))->value,
-                'uploaded_by' => $request->user()->id,
-            ]);
+            Attachment::keep($owner, $file, $data['kind'] ?? null, $request->user()->id);
         }
 
         Activity::record('uploaded', $owner, ['files' => array_map(fn ($file) => $file->getClientOriginalName(), $request->file('files'))]);

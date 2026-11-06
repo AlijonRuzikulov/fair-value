@@ -1,5 +1,7 @@
 @php
     use App\Support\Format;
+    // The classic look keeps the portal's plain form, without the explanations.
+    $classic = \App\Support\AdminTheme::classic();
     $rows = old('items', $lines->map(fn ($l) => [
         'type' => $l->type->value, 'name' => $l->name, 'operation' => $l->operation,
         'quantity' => (float) $l->quantity, 'hours' => $l->hours !== null ? (float) $l->hours : null, 'unit_price' => (float) $l->unit_price,
@@ -14,7 +16,7 @@
     </header>
     <div class="card-body">
         <div class="form-grid">
-            <x-field name="wear_percent" :label="__('Vehicle wear')" :value="$item->wear_percent" money suffix="%" span="3" required data-calc-wear :hint="__('Applied to spare parts only.')" />
+            <x-field name="wear_percent" :label="__('Vehicle wear')" :value="$item->wear_percent" money suffix="%" span="3" required data-calc-wear :hint="$classic ? null : __('Applied to spare parts only.')" />
             <x-field name="labor_rate" :label="__('Standard hour rate')" :value="$item->labor_rate" money :suffix="__('sum')" span="3" required data-calc-rate />
             <x-field name="commodity_loss" :label="__('Loss of commodity value')" :value="$item->commodity_loss" money :suffix="__('sum')" span="3" data-calc-uts />
         </div>
@@ -57,7 +59,7 @@
 
     <div class="card-foot">
         <div class="grid grid-2">
-            <p class="field-hint">{{ __('Total = spare parts − wear + small parts + repair work + paint + other + loss of commodity value.') }}</p>
+            <p class="field-hint">@unless ($classic){{ __('Total = spare parts − wear + small parts + repair work + paint + other + loss of commodity value.') }}@endunless</p>
             <div class="totals" data-calc-totals>
                 <div class="totals-row"><span>{{ __('Spare parts') }}</span><strong data-total="part">0</strong></div>
                 <div class="totals-row minus"><span>{{ __('Wear') }}</span><strong data-total="wear">0</strong></div>

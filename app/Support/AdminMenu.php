@@ -17,6 +17,7 @@ class AdminMenu
     {
         // The order and the groups follow the valuation portal the appraisers know;
         // what this system adds (dashboard, website requests, management) comes after.
+        $classic = AdminTheme::classic();
         $items = [
             ['key' => 'clients', 'label' => __('Clients'), 'icon' => 'puzzle', 'color' => '#38bdf8', 'children' => [
                 ['key' => 'clients.individual', 'mini' => 'P', 'label' => __('Individuals'), 'url' => route('admin.clients.index', ['type' => 'individual'])],
@@ -32,7 +33,14 @@ class AdminMenu
             ['key' => 'vehicles', 'label' => __('Vehicles'), 'icon' => 'car', 'color' => '#22d3ee', 'children' => [
                 ['key' => 'vehicles', 'mini' => 'A', 'label' => __('Vehicles'), 'url' => route('admin.vehicles.index')],
             ]],
-            ['key' => 'damage', 'label' => __('Damage caused'), 'icon' => 'wrench', 'color' => '#fb7185', 'children' => [
+            ['key' => 'damage', 'label' => __('Damage caused'), 'icon' => 'wrench', 'color' => '#fb7185', 'children' => $classic ? [
+                // As on the portal: "Avtolar ro'yxati" is the list of the cars whose damage is valued; the models with their hour rates come last.
+                ['key' => 'damage.cases', 'label' => __('List of cars'), 'url' => route('admin.damage-cases.index')],
+                ['key' => 'damage.parts', 'label' => __('Car spare parts'), 'url' => route('admin.spare-parts.index')],
+                ['key' => 'damage.small', 'label' => __('Small spare parts'), 'url' => route('admin.small-parts.index')],
+                ['key' => 'damage.norms', 'label' => __('Repair time norms of vehicle parts'), 'url' => route('admin.repair-norms.index')],
+                ['key' => 'damage.models', 'label' => __('Car models'), 'url' => route('admin.car-models.index')],
+            ] : [
                 ['key' => 'damage.cases', 'label' => __('Damage assessments'), 'url' => route('admin.damage-cases.index')],
                 ['key' => 'damage.models', 'label' => __('List of cars'), 'url' => route('admin.car-models.index')],
                 ['key' => 'damage.parts', 'label' => __('Car spare parts'), 'url' => route('admin.spare-parts.index')],
@@ -44,7 +52,7 @@ class AdminMenu
                 ['key' => 'other.tools', 'label' => __('Valuation plus'), 'url' => route('admin.tools')],
             ]],
             ['section' => __('Management')],
-            ...(AdminTheme::classic() ? [] : [
+            ...($classic ? [] : [
                 ['key' => 'dashboard', 'label' => __('Dashboard'), 'icon' => 'layout-dashboard', 'color' => '#818cf8', 'url' => route('admin.dashboard')],
             ]),
             ['key' => 'leads', 'label' => __('Website requests'), 'icon' => 'inbox', 'color' => '#f472b6', 'url' => route('admin.leads.index'), 'badge' => $newLeads ?: null],

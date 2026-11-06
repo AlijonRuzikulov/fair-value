@@ -1,5 +1,7 @@
-<x-field name="brand" :label="__('Brand')" :value="$item->brand" span="3" required list="car-brands" />
-<x-field name="model" :label="__('Model')" :value="$item->model" span="3" required />
+{{-- On the portal a vehicle is saved before its make and model are known. --}}
+@php $named = ! $module->usesPortal(); @endphp
+<x-field name="brand" :label="__('Brand')" :value="$item->brand" span="3" :required="$named" list="car-brands" />
+<x-field name="model" :label="__('Model')" :value="$item->model" span="3" :required="$named" />
 <x-field name="year_made" type="number" :label="__('Year of manufacture')" :value="$item->year_made" span="3" />
 <x-field name="color" :label="__('Color')" :value="$item->color" span="3" />
 <x-field name="plate_number" :label="__('State number')" :value="$item->plate_number" span="3" placeholder="01 A 123 BC" />

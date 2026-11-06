@@ -17,7 +17,7 @@ class Asset extends Model
 
     protected $fillable = [
         'name', 'category', 'inventory_number', 'manufacturer', 'model', 'serial_number',
-        'year_made', 'quantity', 'unit', 'condition', ...self::VALUATION_FIELDS,
+        'year_made', 'quantity', 'unit', 'condition', 'property_type', 'ownership_form', ...self::VALUATION_FIELDS,
     ];
 
     protected function casts(): array

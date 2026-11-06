@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\Enums\PersonRole;
 use App\Enums\RealEstateFeature;
 use App\Enums\RealEstateKind;
 use App\Enums\ValuationApproach;
@@ -21,7 +20,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\HtmlString;
 use Illuminate\Validation\Rule;
-use Illuminate\View\View;
 
 /**
  * "Янги кўчмас мулк" — non-residential (нотурар жой) and residential
@@ -202,22 +200,13 @@ class RealEstateController extends ValuationController
         return $item;
     }
 
-    /**
-     * Lists sent with an empty first value (so that "none chosen" is told
-     * from "not on the form") lose it; the owner chosen on its own becomes
-     * the first person.
-     */
+    /** Lists sent with an empty first value (so that "none chosen" is told from "not on the form") lose it. */
     private function prepare(Request $request): void
     {
         foreach (['approaches', 'features'] as $list) {
             if ($request->exists($list)) {
                 $request->merge([$list => array_values(array_filter((array) $request->input($list), 'filled'))]);
             }
-        }
-        if ($request->exists('owner_id')) {
-            $others = array_values(array_filter((array) $request->input('persons', []), fn ($p) => is_array($p) && filled($p['client_id'] ?? null)));
-            $owner = filled($request->input('owner_id')) ? [['client_id' => $request->input('owner_id'), 'role' => PersonRole::Owner->value]] : [];
-            $request->merge(['persons' => [...$owner, ...$others]]);
         }
     }
 
@@ -229,6 +218,7 @@ class RealEstateController extends ValuationController
         $this->resolveKind($request, $item);
         $this->normalizeNumbers($request);
         $this->prepare($request);
+        $this->prepareOwner($request);
         $rules = Arr::only([...$this->baseRules($request, $item), ...$this->rules($request, $item)], self::MAIN_FIELDS);
         $data = $request->validate($rules, [], $this->attributeNames());
 
@@ -292,41 +282,15 @@ class RealEstateController extends ValuationController
         $item->save();
     }
 
-    protected function showView(): string
-    {
-        return AdminTheme::classic() ? 'admin.real-estates.portal' : parent::showView();
-    }
-
-    protected function formView(): string
-    {
-        return AdminTheme::classic() ? 'admin.real-estates.portal' : parent::formView();
-    }
-
     /** In the classic look the object page is its form, as on the valuation portal. */
-    public function edit(Request $request, string $id): View|RedirectResponse
+    public function usesPortal(): bool
     {
-        if (AdminTheme::classic()) {
-            Gate::authorize('edit-valuation', $this->find($id));
-
-            return $this->show($request, $id);
-        }
-
-        return parent::edit($request, $id);
+        return AdminTheme::classic();
     }
 
-    /** The page of the classic look has the form on it. */
-    protected function showData(Model $item): array
+    protected function portalView(): string
     {
-        if (! AdminTheme::classic()) {
-            return [];
-        }
-
-        return [
-            ...$this->sharedOptions(),
-            'districts' => self::districtOptions(old('region_id', $item->region_id)),
-            'personRows' => $this->personRows($item),
-            ...$this->formData($item),
-        ];
+        return 'admin.real-estates.portal';
     }
 
     protected function attributeNames(): array

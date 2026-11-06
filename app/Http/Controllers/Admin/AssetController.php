@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Enums\AssetCategory;
+use App\Enums\ValuationPurpose;
 use App\Models\Asset;
+use App\Reports\RealEstateReport;
+use App\Support\AdminTheme;
 use App\Support\Format;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -27,7 +30,33 @@ class AssetController extends ValuationController
 
     public function title(): string
     {
-        return __('List of movable property');
+        return AdminTheme::classic() ? __('List of the valuation of mixed property') : __('List of movable property');
+    }
+
+    /** As on the valuation portal: "Aralash mol-mulk qo'shish", its own page afterwards. */
+    public function usesPortal(): bool
+    {
+        return AdminTheme::classic();
+    }
+
+    public function portalTitle(Model $item): string
+    {
+        return $item->exists ? __('Mixed property').' № '.$item->id : __('Add mixed property');
+    }
+
+    protected function portalRequired(): array
+    {
+        return ['property_type', 'ownership_form', 'purpose', 'appraiser_id'];
+    }
+
+    public function portalFilters(): array
+    {
+        return ['status', 'region_id', 'district_id', 'from', 'to'];
+    }
+
+    public function portalDocumentsTitle(): string
+    {
+        return __('Documents submitted for the valuation of mixed property');
     }
 
     public function singular(): string
@@ -52,16 +81,21 @@ class AssetController extends ValuationController
 
     protected function rules(Request $request, ?Model $item): array
     {
+        // The page of the portal asks only for the object; the amount and the unit stay as they are.
+        $amount = $request->exists('owner_id') ? 'sometimes' : 'required';
+
         return [
             'name' => ['required', 'string', 'max:255'],
+            'property_type' => ['nullable', 'string', 'max:150'],
+            'ownership_form' => ['nullable', 'string', 'max:150'],
             'category' => ['nullable', Rule::enum(AssetCategory::class)],
             'inventory_number' => ['nullable', 'string', 'max:60'],
             'manufacturer' => ['nullable', 'string', 'max:255'],
             'model' => ['nullable', 'string', 'max:255'],
             'serial_number' => ['nullable', 'string', 'max:80'],
             'year_made' => ['nullable', 'integer', 'min:1900', 'max:'.(now()->year + 1)],
-            'quantity' => ['required', 'numeric', 'min:0', 'max:9999999999'],
-            'unit' => ['required', Rule::in(array_keys(self::units()))],
+            'quantity' => [$amount, 'required', 'numeric', 'min:0', 'max:9999999999'],
+            'unit' => [$amount, 'required', Rule::in(array_keys(self::units()))],
             'condition' => ['nullable', 'string', 'max:255'],
         ];
     }
@@ -71,13 +105,20 @@ class AssetController extends ValuationController
         $item = parent::newItem($request);
         $item->quantity = 1;
         $item->unit = 'pcs';
+        $item->property_type = RealEstateReport::OPTIONS['property_type'][0];
 
         return $item;
     }
 
     protected function formData(Model $item): array
     {
-        return ['categories' => AssetCategory::options(), 'units' => self::units()];
+        return [
+            'categories' => AssetCategory::options(),
+            'units' => self::units(),
+            'propertyTypes' => RealEstateReport::choices('property_type', $item->property_type),
+            'ownershipForms' => RealEstateReport::choices('ownership_form', $item->ownership_form),
+            'portalPurposes' => ValuationPurpose::portalOptions($item->purpose),
+        ];
     }
 
     public static function units(): array
@@ -107,6 +148,11 @@ class AssetController extends ValuationController
             __('Quantity') => Format::number($item->quantity, fmod((float) $item->quantity, 1.0) ? 2 : 0).' '.(self::units()[$item->unit] ?? $item->unit),
             __('Technical condition') => $item->condition,
         ];
+    }
+
+    protected function attributeNames(): array
+    {
+        return [...parent::attributeNames(), 'name' => __('Object'), 'property_type' => __('Type of the property'), 'ownership_form' => __('Form of ownership')];
     }
 
     protected function exportColumns(): array

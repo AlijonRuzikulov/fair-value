@@ -674,3 +674,61 @@ body.theme-classic.simple-login-page { min-height: 100vh; margin: 0; background:
 .theme-classic .simple-login-langs { display: flex; gap: 10px; margin-top: 10px; font-size: 12px; }
 .theme-classic .simple-login-langs a { color: #999; }
 .theme-classic .simple-login-langs a.is-active { color: #333; font-weight: 700; }
+
+/* ---------- Mixed property, vehicles and damage as on the valuation portal ---------- */
+/* The documents: a heading with a dashed line, two boxes in a row, "Faylni yuklash uchun bu yerga bosing!". */
+.theme-classic .portal-docs-title { margin: 30px 0 18px; padding-bottom: 6px; border-bottom: 1px dashed #c8c8c8; font-size: 20px; font-weight: 300; color: #333; }
+.theme-classic .portal-docs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 30px; }
+.theme-classic .portal-doc-label { display: block; margin-bottom: 6px; font-size: 11px; font-weight: 500; text-transform: uppercase; color: #9a9a9a; }
+.theme-classic .portal-drop { position: relative; display: grid; place-items: center; min-height: 112px; padding: 16px; border: 1px dashed #d6d6d6; border-radius: 2px; background: #fff; font-size: 13px; text-align: center; color: #666; cursor: pointer; }
+.theme-classic .portal-drop:hover,
+.theme-classic .portal-drop.is-over { background: #f5f5f5; }
+.theme-classic .portal-drop.has-files { border-color: var(--c-cyan); color: #333; }
+.theme-classic .portal-drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.theme-classic .field label.portal-drop { font-size: 13px; font-weight: 400; letter-spacing: 0; text-transform: none; color: #666; }
+.theme-classic .portal-drop:focus-within { outline: 2px solid var(--accent-ring); }
+.theme-classic .portal-doc-files { display: grid; gap: 4px; margin: 6px 0 0; padding: 0; list-style: none; font-size: 12px; }
+.theme-classic .portal-doc-files li { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.theme-classic .portal-doc-files a { overflow: hidden; color: var(--accent-strong); text-overflow: ellipsis; white-space: nowrap; }
+.theme-classic .portal-doc-files small { color: #9a9a9a; white-space: nowrap; }
+.theme-classic .portal-cards-half { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.theme-classic .portal-cards-half .sign-rows li:first-child { border-top: 2px solid #ddd; }
+
+/* The lists: centred cells, the owner in blue (a company in orange), entered in blue and approved in orange. */
+.theme-classic .portal-table-list th { font-size: 11px; font-weight: 500; text-transform: uppercase; color: #9a9a9a; }
+.theme-classic .list-card .portal-table-list td { font-size: 12px; }
+.theme-classic .list-card .portal-table-list th,
+.theme-classic .list-card .portal-table-list td { padding-right: 4px; padding-left: 4px; }
+.theme-classic .portal-table-list .badge { font-size: 10px; white-space: normal; }
+.theme-classic .portal-table-list .row-name { min-width: 120px; }
+.theme-classic .portal-table-list .row-value { min-width: 115px; }
+.theme-classic .portal-table-list .row-status { max-width: 120px; }
+.theme-classic .portal-table-list .row-dates { min-width: 84px; }
+.theme-classic .portal-table-list .row-creator { min-width: 96px; }
+.theme-classic .portal-table-list .row-sign { min-width: 80px; }
+.theme-classic .portal-row-center td { text-align: center; }
+.theme-classic .row-id span { display: block; margin-top: 6px; color: #333; }
+.theme-classic .row-object em { font-size: 12px; }
+.theme-classic .row-object .row-paid { margin-top: 3px; }
+.theme-classic .row-owner { display: grid; gap: 2px; }
+.theme-classic .row-owner-head { color: var(--c-cyan); }
+.theme-classic .row-owner-company { color: #ff7f2a; text-transform: uppercase; }
+.theme-classic .row-name a { font-weight: 700; color: #333; }
+.theme-classic .row-value b { display: block; margin: 2px 0 8px; color: #333; }
+.theme-classic .row-value em { display: block; font-size: 12px; color: #555; }
+.theme-classic .row-value .row-paid { margin-top: 3px; }
+.theme-classic .row-sum { white-space: nowrap; }
+.theme-classic .row-dates span { display: block; margin-bottom: 14px; }
+.theme-classic .row-dates .row-date { font-weight: 700; color: var(--c-cyan); }
+.theme-classic .row-dates .row-date-end { font-weight: 700; color: var(--c-orange); }
+.theme-classic .row-took { color: var(--c-green); }
+.theme-classic .row-took.is-running { color: var(--c-red); }
+.theme-classic .row-creator span { display: block; color: var(--c-cyan); }
+.theme-classic .row-creator .row-appraiser { margin-top: 14px; color: var(--c-orange); }
+.theme-classic .badge-dark { background: #5e5e5e; color: #fff; }
+.theme-classic .btn-muted, .theme-classic .btn-muted:hover { border-color: #888; background: #888; color: #fff; }
+
+@media (max-width: 760px) {
+  .theme-classic .portal-docs,
+  .theme-classic .portal-cards-half { grid-template-columns: 1fr; }
+}

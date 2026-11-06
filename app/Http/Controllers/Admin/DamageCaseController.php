@@ -9,6 +9,7 @@ use App\Enums\ValuationPurpose;
 use App\Models\CarModel;
 use App\Models\DamageCase;
 use App\Models\Setting;
+use App\Support\AdminTheme;
 use App\Support\Format;
 use App\Support\NumberInput;
 use Illuminate\Database\Eloquent\Model;
@@ -40,7 +41,38 @@ class DamageCaseController extends ValuationController
 
     public function title(): string
     {
-        return __('Damage assessments');
+        return AdminTheme::classic() ? __('List of cars') : __('Damage assessments');
+    }
+
+    /** As on the valuation portal: one page to add the car and to work out the damage. */
+    public function usesPortal(): bool
+    {
+        return AdminTheme::classic();
+    }
+
+    public function portalTitle(Model $item): string
+    {
+        return $item->exists ? __('Car').' № '.$item->id : __('Add a car');
+    }
+
+    protected function portalRequired(): array
+    {
+        return ['purpose', 'appraiser_id'];
+    }
+
+    public function portalFilters(): array
+    {
+        return ['status'];
+    }
+
+    public function portalTotal(): bool
+    {
+        return false;
+    }
+
+    public function portalDocumentsTitle(): string
+    {
+        return __('Documents submitted for the valuation of the damage');
     }
 
     public function singular(): string
@@ -142,6 +174,7 @@ class DamageCaseController extends ValuationController
     protected function formData(Model $item): array
     {
         return [
+            'portalPurposes' => ValuationPurpose::portalOptions($item->purpose),
             'carModels' => CarModel::orderBy('brand')->orderBy('model')->get(),
             'itemTypes' => DamageItemType::options(),
             'operations' => RepairOperation::options(),

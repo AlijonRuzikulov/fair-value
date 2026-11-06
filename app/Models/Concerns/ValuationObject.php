@@ -127,11 +127,11 @@ trait ValuationObject
     }
 
     /** Time from the start of the valuation to its approval (or until now). */
-    public function timeSpent(): string
+    public function timeSpent(int $parts = 2): string
     {
         $end = $this->currentStep('approved')?->created_at ?? $this->completed_at ?? now();
 
-        return $this->created_at ? $this->created_at->diffForHumans($end, ['syntax' => CarbonInterface::DIFF_ABSOLUTE, 'parts' => 2]) : '—';
+        return $this->created_at ? $this->created_at->diffForHumans($end, ['syntax' => CarbonInterface::DIFF_ABSOLUTE, 'parts' => $parts]) : '—';
     }
 
     /** Sale offers of the comparative approach. */

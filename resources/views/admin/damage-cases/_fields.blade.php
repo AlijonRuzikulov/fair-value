@@ -6,7 +6,7 @@
             <option value="{{ $car->id }}" data-title="{{ $car->title }}" data-rate="{{ (float) $car->labor_rate }}" @selected((string) old('car_model_id', $item->car_model_id) === (string) $car->id)>{{ $car->title }}@if ($car->years) ({{ $car->years }})@endif</option>
         @endforeach
     </select>
-    <p class="field-hint">{{ __('Spare part prices and repair norms are offered for the selected model.') }}</p>
+    @unless (\App\Support\AdminTheme::classic())<p class="field-hint">{{ __('Spare part prices and repair norms are offered for the selected model.') }}</p>@endunless
 </div>
 <x-field name="vehicle_name" :label="__('Vehicle')" :value="$item->vehicle_name" span="6" required data-vehicle-name :placeholder="__('Brand and model')" />
 <x-field name="plate_number" :label="__('State number')" :value="$item->plate_number" span="3" placeholder="01 A 123 BC" />

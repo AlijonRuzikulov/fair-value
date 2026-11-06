@@ -15,6 +15,10 @@ enum DocumentKind: string
     case Cadastral = 'cadastral';
     case TechnicalPassport = 'technical_passport';
     case Contract = 'contract';
+    // Asked for movable property and vehicles on the valuation portal (sales by the enforcement bureau).
+    case Act = 'act';
+    case Decision = 'decision';
+    case Writ = 'writ';
     case Photo = 'photo';
     case Other = 'other';
 
@@ -26,6 +30,9 @@ enum DocumentKind: string
             self::Cadastral => __('Cadastral document'),
             self::TechnicalPassport => __('Technical passport'),
             self::Contract => __('Contract'),
+            self::Act => __('Act'),
+            self::Decision => __('Decision'),
+            self::Writ => __('Writ of execution'),
             self::Photo => __('Photos of the object'),
             self::Other => __('Other files'),
         };
@@ -39,6 +46,9 @@ enum DocumentKind: string
             self::Cadastral => 'landmark',
             self::TechnicalPassport => 'file-badge',
             self::Contract => 'handshake',
+            self::Act => 'file-check',
+            self::Decision => 'gavel',
+            self::Writ => 'scroll-text',
             self::Photo => 'camera',
             self::Other => 'paperclip',
         };
@@ -53,9 +63,31 @@ enum DocumentKind: string
     {
         return match ($type) {
             'real_estate' => [self::Passport, self::Application, self::Cadastral, self::TechnicalPassport, self::Photo, self::Other],
-            'vehicle', 'damage_case' => [self::Passport, self::Application, self::TechnicalPassport, self::Photo, self::Other],
+            'asset' => [self::Passport, self::Act, self::Decision, self::Writ, self::Application, self::Photo, self::Other],
+            'vehicle' => [self::Passport, self::Act, self::Decision, self::Writ, self::Application, self::TechnicalPassport, self::Photo, self::Other],
+            'damage_case' => [self::Passport, self::Application, self::TechnicalPassport, self::Photo, self::Other],
             default => [self::Passport, self::Application, self::Photo, self::Other],
         };
+    }
+
+    /**
+     * The boxes of the documents on the valuation portal's page of an object
+     * of this type; files of other kinds get a box of their own when there are any.
+     *
+     * @return list<self>
+     */
+    public static function portalSlotsFor(string $type): array
+    {
+        return match ($type) {
+            'asset', 'vehicle' => [self::Passport, self::Act, self::Decision, self::Writ],
+            default => self::slotsFor($type),
+        };
+    }
+
+    /** The name of the box on the valuation portal. */
+    public function portalLabel(): string
+    {
+        return $this === self::Passport ? __('Copy of the passport') : $this->label();
     }
 
     /**
@@ -81,6 +113,9 @@ enum DocumentKind: string
             (bool) preg_match('/kadastr|кадастр|ko.?chirma|кўчирма|выписк|guvohnoma|гувоҳнома/iu', $name) => self::Cadastral,
             (bool) preg_match('/tex.?pas|тех.?пас|texnik|техник/iu', $name) => self::TechnicalPassport,
             (bool) preg_match('/shartnoma|шартнома|dogovor|договор|contract/iu', $name) => self::Contract,
+            (bool) preg_match('/ijro|ижро|исполнит/iu', $name) => self::Writ,
+            (bool) preg_match('/qaror|қарор|карор|решени|постановлени/iu', $name) => self::Decision,
+            (bool) preg_match('/(^|[^a-zа-я])(akt|акт)([^a-zа-я]|$)|dalolatnoma|далолатнома/iu', $name) => self::Act,
             $isImage => self::Photo,
             default => self::Other,
         };

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Models\CarModel;
+use App\Support\AdminTheme;
 use App\Support\Format;
 use App\Support\NumberInput;
 use Illuminate\Database\Eloquent\Builder;
@@ -31,7 +32,7 @@ class CarModelController extends CatalogController
 
     public function title(): string
     {
-        return __('List of cars');
+        return AdminTheme::classic() ? __('Car models') : __('List of cars');
     }
 
     public function singular(): string

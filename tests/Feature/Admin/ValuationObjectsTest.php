@@ -7,6 +7,7 @@ use App\Models\Activity;
 use App\Models\Client;
 use App\Models\District;
 use App\Models\RealEstate;
+use App\Models\Setting;
 use App\Models\User;
 use Database\Seeders\RegionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -150,7 +151,13 @@ class ValuationObjectsTest extends TestCase
     {
         $client = Client::factory()->create(['last_name' => 'Egasi']);
 
+        // The page of the portal (the classic look) has the owner in its own box.
         $this->actingAs($this->user)->get('/admin/vehicles/create?client='.$client->id)
+            ->assertOk()
+            ->assertSee('name="owner_id" value="'.$client->id.'"', false);
+
+        Setting::put(['admin_theme' => 'modern']);
+        $this->get('/admin/vehicles/create?client='.$client->id)
             ->assertOk()
             ->assertSee('name="persons[0][client_id]" value="'.$client->id.'"', false);
     }

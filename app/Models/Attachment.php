@@ -6,7 +6,9 @@ use App\Enums\DocumentKind;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 /**
  * "Илова ҳужжатлари" — a file attached to a client or a valuation object.
@@ -22,6 +24,28 @@ class Attachment extends Model
             Storage::disk('local')->delete($file->path);
             Storage::disk('local')->delete(Storage::disk('local')->files('thumbs/'.$file->id));
         });
+    }
+
+    /** Keeps an uploaded file on the private disk, attached to its owner; without a kind it is told by the file name. */
+    public static function keep(Model $owner, UploadedFile $file, ?string $kind, int $userId): self
+    {
+        $type = $owner->getMorphClass();
+        $path = $file->storeAs(
+            'attachments/'.$type.'/'.$owner->getKey(),
+            Str::uuid().'.'.strtolower($file->extension() ?: $file->getClientOriginalExtension()),
+            'local'
+        );
+        $name = Str::limit($file->getClientOriginalName(), 250, '');
+        $mime = $file->getMimeType();
+
+        return $owner->attachments()->create([
+            'name' => $name,
+            'path' => $path,
+            'mime' => $mime,
+            'size' => $file->getSize(),
+            'kind' => $kind ?? DocumentKind::guess($name, str_starts_with((string) $mime, 'image/'))->value,
+            'uploaded_by' => $userId,
+        ]);
     }
 
     /** What the file is: as chosen, or told by its name. */

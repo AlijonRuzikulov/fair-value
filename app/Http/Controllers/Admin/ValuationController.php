@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\DocumentKind;
 use App\Enums\PersonRole;
 use App\Enums\UserRole;
 use App\Enums\ValuationApproach;
@@ -9,6 +10,7 @@ use App\Enums\ValuationPurpose;
 use App\Enums\ValuationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Activity;
+use App\Models\Attachment;
 use App\Models\Client;
 use App\Models\District;
 use App\Models\RealEstate;
@@ -32,6 +34,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -112,6 +115,56 @@ abstract class ValuationController extends Controller
         return true;
     }
 
+    /**
+     * Whether the object is added and valued on one page laid out as on the
+     * valuation portal (the classic look), instead of the form and the card.
+     */
+    public function usesPortal(): bool
+    {
+        return false;
+    }
+
+    /** The page of the portal. */
+    protected function portalView(): string
+    {
+        return 'admin.objects.portal';
+    }
+
+    /** Fields the page of the portal asks for (they are optional on the form of the modern look). */
+    protected function portalRequired(): array
+    {
+        return [];
+    }
+
+    /**
+     * Filters of the list of the portal, after the search: "extra" (the
+     * module's own), status, region_id, district_id, from, to.
+     *
+     * @return list<string>
+     */
+    public function portalFilters(): array
+    {
+        return ['extra', 'status', 'region_id', 'district_id'];
+    }
+
+    /** Whether the total is shown next to "Qo'shish" on the list of the portal. */
+    public function portalTotal(): bool
+    {
+        return true;
+    }
+
+    /** Heading of the boxes of the documents on the page of the portal. */
+    public function portalDocumentsTitle(): string
+    {
+        return __('Documents for the valuation');
+    }
+
+    /** Title of the page of the portal: adding a new object, or an object that is there. */
+    public function portalTitle(Model $item): string
+    {
+        return $item->exists ? $item->title : __('New').': '.mb_strtolower($this->singular());
+    }
+
     /** Query parameters that keep the context (e.g. ?kind=residential). */
     public function routeParams(?Model $item = null): array
     {
@@ -174,7 +227,7 @@ abstract class ValuationController extends Controller
 
         $items = (clone $base)
             ->when($filters['status'] ?? null, fn (Builder $q, $status) => $q->where('status', $status))
-            ->with(['region', 'district', 'clients', 'appraiser', 'creator', 'steps.user'])
+            ->with(['region', 'district', 'clients.region', 'clients.district', 'appraiser', 'creator', 'steps.user'])
             ->withCount('attachments')
             ->latest('id')
             ->paginate(20)
@@ -200,6 +253,7 @@ abstract class ValuationController extends Controller
     {
         $class = $this->model();
         $item = $this->persist(new $class, $this->validated($request, null), $request);
+        $this->keepDocuments($item, $request);
 
         return redirect()->route("admin.{$this->slug()}.show", $item->id)->with('status', __('Saved.'))->with('find_analogs', self::shouldFindAnalogs($item));
     }
@@ -223,14 +277,30 @@ abstract class ValuationController extends Controller
         ]);
     }
 
-    /** More data for the page of an object. */
+    /** More data for the page of an object; the page of the portal has the form on it. */
     protected function showData(Model $item): array
     {
-        return [];
+        if (! $this->usesPortal()) {
+            return [];
+        }
+
+        return [
+            ...$this->sharedOptions(),
+            'districts' => self::districtOptions(old('region_id', $item->region_id)),
+            'personRows' => $this->personRows($item),
+            ...$this->formData($item),
+        ];
     }
 
+    /** On the portal the page of an object is its form. */
     public function edit(Request $request, string $id): View|RedirectResponse
     {
+        if ($this->usesPortal()) {
+            Gate::authorize('edit-valuation', $this->find($id));
+
+            return $this->show($request, $id);
+        }
+
         $item = $this->find($id);
         Gate::authorize('edit-valuation', $item);
         $item->load('clients');
@@ -243,6 +313,7 @@ abstract class ValuationController extends Controller
         $item = $this->find($id);
         Gate::authorize('edit-valuation', $item);
         $this->persist($item, $this->validated($request, $item), $request);
+        $this->keepDocuments($item, $request);
 
         return redirect()->route("admin.{$this->slug()}.show", $item->id)->with('status', __('Changes saved.'))->with('find_analogs', self::shouldFindAnalogs($item));
     }
@@ -393,13 +464,13 @@ abstract class ValuationController extends Controller
     /** The page of an object; a module may have its own. */
     protected function showView(): string
     {
-        return 'admin.objects.show';
+        return $this->usesPortal() ? $this->portalView() : 'admin.objects.show';
     }
 
     /** The form of an object; a module may have its own. */
     protected function formView(): string
     {
-        return 'admin.objects.form';
+        return $this->usesPortal() ? $this->portalView() : 'admin.objects.form';
     }
 
     protected function form(Request $request, Model $item): View
@@ -482,8 +553,55 @@ abstract class ValuationController extends Controller
     protected function validated(Request $request, ?Model $item): array
     {
         $this->normalizeNumbers($request);
+        $this->prepareOwner($request);
+        // The approaches are sent with an empty first value, so that none ticked is told from none on the page.
+        if ($request->exists('approaches')) {
+            $request->merge(['approaches' => array_values(array_filter((array) $request->input('approaches'), 'filled'))]);
+        }
+        $rules = [...$this->baseRules($request, $item), ...$this->rules($request, $item)];
 
-        return $request->validate([...$this->baseRules($request, $item), ...$this->rules($request, $item)], [], $this->attributeNames());
+        // The page of the portal (it sends the owner on its own) asks for more, and has no status.
+        if ($request->exists('owner_id')) {
+            foreach ($this->portalRequired() as $key) {
+                $rules[$key] = ['required', ...array_diff($rules[$key], ['nullable', 'sometimes'])];
+            }
+            if (! $request->exists('status')) {
+                $request->merge(['status' => $item?->status?->value ?? ValuationStatus::New->value]);
+            }
+        }
+
+        return $request->validate($rules, [], $this->attributeNames());
+    }
+
+    /** The owner chosen on its own on the page of the portal becomes the first person; the others follow. */
+    protected function prepareOwner(Request $request): void
+    {
+        if (! $request->exists('owner_id')) {
+            return;
+        }
+        $others = array_values(array_filter((array) $request->input('persons', []), fn ($p) => is_array($p) && filled($p['client_id'] ?? null)));
+        $owner = filled($request->input('owner_id')) ? [['client_id' => $request->input('owner_id'), 'role' => PersonRole::Owner->value]] : [];
+        $request->merge(['persons' => [...$owner, ...$others]]);
+    }
+
+    /** Files chosen in the boxes of the documents of the portal's page, each box of its kind. */
+    protected function keepDocuments(Model $item, Request $request): void
+    {
+        $names = [];
+        foreach ((array) $request->file('documents', []) as $kind => $files) {
+            if (! $kind = DocumentKind::tryFrom((string) $kind)) {
+                continue;
+            }
+            foreach ((array) $files as $file) {
+                if ($file instanceof UploadedFile && $file->isValid()) {
+                    Attachment::keep($item, $file, $kind->value, $request->user()->id);
+                    $names[] = $file->getClientOriginalName();
+                }
+            }
+        }
+        if ($names !== []) {
+            Activity::record('uploaded', $item, ['files' => $names]);
+        }
     }
 
     /** Amounts typed with spaces and a decimal comma ("1 250 000,50") become numbers. */
@@ -524,6 +642,11 @@ abstract class ValuationController extends Controller
             'persons' => ['nullable', 'array', 'max:20'],
             'persons.*.client_id' => ['nullable', 'integer', 'exists:clients,id'],
             'persons.*.role' => ['nullable', Rule::enum(PersonRole::class)],
+            // The owner and the files of the page of the portal.
+            'owner_id' => ['sometimes', 'required', 'integer', 'exists:clients,id'],
+            'documents' => ['nullable', 'array'],
+            'documents.*' => ['array', 'max:20'],
+            'documents.*.*' => ['file', 'max:'.config('fairvalue.uploads.max_kb'), 'mimes:'.config('fairvalue.uploads.mimes')],
         ];
     }
 
@@ -590,6 +713,10 @@ abstract class ValuationController extends Controller
             'district_id' => __('District'),
             'market_value' => __('Market value'),
             'status' => __('Status'),
+            'owner_id' => __('Owner of the property'),
+            'purpose' => __('Purpose of valuation'),
+            'appraiser_id' => __('Appraiser'),
+            'documents.*.*' => __('File'),
         ];
     }
 
@@ -597,7 +724,7 @@ abstract class ValuationController extends Controller
     {
         return DB::transaction(function () use ($item, $data) {
             $persons = $data['persons'] ?? [];
-            unset($data['persons']);
+            unset($data['persons'], $data['owner_id'], $data['documents']);
 
             // A value is kept only for the approaches that were applied.
             $data['approaches'] = array_values($data['approaches'] ?? []);
