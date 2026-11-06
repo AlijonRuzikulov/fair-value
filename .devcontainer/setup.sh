@@ -6,7 +6,16 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 rm -f .devcontainer/.ready
 
-composer install --no-interaction --prefer-dist --no-progress
+# The PDF printer talks to Chromium over a socket: PHP needs its sockets extension.
+if ! php -m | grep -qi '^sockets$'; then
+    echo "Enabling PHP's sockets extension…"
+    sudo docker-php-ext-install sockets > /dev/null || echo "The sockets extension was not enabled: the PDF buttons will open the print dialog."
+fi
+if php -m | grep -qi '^sockets$'; then
+    composer install --no-interaction --prefer-dist --no-progress
+else
+    composer install --no-interaction --prefer-dist --no-progress --ignore-platform-req=ext-sockets
+fi
 
 # Chromium prints the report and the contract into PDF files (without it the
 # PDF buttons open the print dialog).

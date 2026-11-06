@@ -49,9 +49,10 @@ class PdfPrinter
         return null;
     }
 
+    /** Chromium is there and PHP can talk to it (the sockets extension). */
     public function available(): bool
     {
-        return $this->binary() !== null;
+        return extension_loaded('sockets') && $this->binary() !== null;
     }
 
     /**

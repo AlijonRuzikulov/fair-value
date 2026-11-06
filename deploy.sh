@@ -9,7 +9,14 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
-composer install --no-dev --optimize-autoloader --no-interaction --no-progress
+# PDF files need PHP's sockets extension (it talks to Chromium); without it the
+# site still works and the PDF buttons open the print dialog.
+if php -m | grep -qi '^sockets$'; then
+    composer install --no-dev --optimize-autoloader --no-interaction --no-progress
+else
+    echo "PHP's sockets extension is not enabled (needed for PDF files): the PDF buttons will open the print dialog."
+    composer install --no-dev --optimize-autoloader --no-interaction --no-progress --ignore-platform-req=ext-sockets
+fi
 
 if [ ! -f .env ]; then
     cp .env.example .env
