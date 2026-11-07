@@ -1033,4 +1033,51 @@
       window.setTimeout(function () { button.classList.remove('is-busy'); }, 8000);
     });
   });
+  // Where a passport, PINFL, TIN, cadastral number, VIN or car number was valued before
+  // in another organisation: who and when, under the field, while it is typed.
+  (function () {
+    var meta = document.querySelector('meta[name="history-url"]');
+    if (!meta) return;
+    $$('[data-history]').forEach(function (input) {
+      var note = document.createElement('div');
+      note.className = 'history-note';
+      note.hidden = true;
+      note.setAttribute('aria-live', 'polite');
+      (input.closest('.field') || input.parentNode).appendChild(note);
+      var series = input.dataset.historySeries && input.form ? input.form.elements[input.dataset.historySeries] : null;
+      var asked = '';
+      var look = function () {
+        var value = ((series ? series.value : '') + input.value).trim();
+        if (value === asked) return;
+        asked = value;
+        if (value.replace(/[^0-9A-Za-z]/g, '').length < 6) {
+          note.hidden = true;
+          return;
+        }
+        fetch(meta.content + '?field=' + encodeURIComponent(input.dataset.history) + '&value=' + encodeURIComponent(value), { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+          .then(function (r) { return r.ok ? r.json() : { items: [] }; })
+          .then(function (data) {
+            if (value !== asked) return;
+            note.textContent = '';
+            note.hidden = !data.items.length;
+            if (!data.items.length) return;
+            var title = document.createElement('strong');
+            title.textContent = meta.dataset.title;
+            var list = document.createElement('ul');
+            data.items.forEach(function (item) {
+              var li = document.createElement('li');
+              li.textContent = '«' + item.organization + '» — ' + item.date + ', ' + item.kind;
+              list.appendChild(li);
+            });
+            note.appendChild(title);
+            note.appendChild(list);
+          })
+          .catch(function () {});
+      };
+      input.addEventListener('input', debounce(look, 500));
+      input.addEventListener('change', look);
+      if (series) series.addEventListener('change', look);
+      if (input.value) look();
+    });
+  })();
 })();

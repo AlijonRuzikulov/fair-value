@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\DocumentKind;
+use App\Support\Tenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -78,5 +79,13 @@ class Attachment extends Model
     public function extension(): string
     {
         return strtoupper(pathinfo($this->name, PATHINFO_EXTENSION) ?: 'FILE');
+    }
+
+    /** A record of another workspace is not found. */
+    public function resolveRouteBinding($value, $field = null)
+    {
+        $attachment = parent::resolveRouteBinding($value, $field);
+
+        return $attachment && Tenant::owns($attachment->attachable_type, $attachment->attachable_id) ? $attachment : null;
     }
 }

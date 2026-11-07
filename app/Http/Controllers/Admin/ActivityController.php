@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\Audit\AuditChain;
 use App\Support\CsvExport;
 use App\Support\FieldNames;
+use App\Support\Tenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,7 +22,7 @@ class ActivityController extends Controller
 {
     public function index(Request $request): View
     {
-        $counts = Activity::query()
+        $counts = Tenant::constrain(Activity::query())
             ->where('created_at', '>=', now()->subDay())
             ->selectRaw('category, count(*) as total')
             ->groupBy('category')
@@ -29,7 +30,7 @@ class ActivityController extends Controller
 
         return view('admin.activity', [
             'activities' => $this->query($request)->with('user')->latest('id')->paginate(40)->withQueryString(),
-            'users' => User::orderBy('name')->pluck('name', 'id'),
+            'users' => User::inWorkspace()->orderBy('name')->pluck('name', 'id'),
             'events' => collect(Activity::EVENTS)->mapWithKeys(fn ($category, $event) => [$event => (new Activity(['event' => $event]))->eventLabel()])->all(),
             'category' => $request->query('category'),
             'counts' => $counts,
@@ -67,7 +68,7 @@ class ActivityController extends Controller
 
     private function query(Request $request): Builder
     {
-        return Activity::query()
+        return Tenant::constrain(Activity::query())
             ->when(in_array($request->query('category'), Activity::CATEGORIES, true), fn ($q) => $q->where('category', $request->query('category')))
             ->when($request->query('user_id'), fn ($q, $v) => $q->where('user_id', $v))
             ->when(array_key_exists((string) $request->query('event'), Activity::EVENTS), fn ($q) => $q->where('event', $request->query('event')))

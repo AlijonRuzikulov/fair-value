@@ -29,14 +29,14 @@
                                     <div><span class="cell-title">{{ $user->name }}</span><span class="cell-sub">{{ $user->email }}@if ($user->position) · {{ $user->position }}@endif</span></div>
                                 </div>
                             </td>
-                            <td>{{ $user->organization ?? '—' }}</td>
+                            <td>{{ $user->organization?->name ?? '—' }}</td>
                             <td><span class="badge badge-brand">{{ $user->role->label() }}</span></td>
                             <td>
-                                @if ($user->role === \App\Enums\UserRole::Admin || $user->premium)<span class="badge badge-success">{{ __('Premium') }}</span>
+                                @if ($user->isMainAdmin() || $user->premium)<span class="badge badge-success">{{ __('Premium') }}</span>
                                 @else<span class="badge badge-info">{{ __('Standard') }}</span>@endif
                             </td>
                             <td class="nowrap">
-                                @if ($user->access_until && $user->role !== \App\Enums\UserRole::Admin)
+                                @if ($user->access_until && ! $user->isMainAdmin())
                                     <span @class(['badge-text', 'is-off' => $user->access_until->endOfDay()->isPast()])>{{ $user->access_until->format('d.m.Y') }}</span>
                                 @else
                                     —

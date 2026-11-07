@@ -30,7 +30,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 trait ValuationObject
 {
-    use LogsActivity, SoftDeletes;
+    use BelongsToOrganization, LogsActivity, SoftDeletes;
 
     /** Fillable attributes common to all valuation objects. */
     public const VALUATION_FIELDS = [

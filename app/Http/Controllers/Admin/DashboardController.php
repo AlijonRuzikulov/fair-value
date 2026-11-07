@@ -15,6 +15,7 @@ use App\Support\Registry;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 class DashboardController extends Controller
@@ -39,6 +40,8 @@ class DashboardController extends Controller
         }
 
         $monthStart = now()->startOfMonth();
+        // Website requests are those of the company that runs the system.
+        $mainWorkspace = Gate::allows('main-workspace');
         $chartStart = now()->subMonths(11)->startOfMonth();
 
         $byModule = [];
@@ -87,8 +90,8 @@ class DashboardController extends Controller
             'valueThisMonth' => $valueThisMonth,
             'clientsCount' => Client::count(),
             'clientsThisMonth' => Client::where('created_at', '>=', $monthStart)->count(),
-            'newLeads' => Lead::where('status', LeadStatus::New)->latest('id')->limit(5)->get(),
-            'newLeadsCount' => Lead::where('status', LeadStatus::New)->count(),
+            'newLeads' => $mainWorkspace ? Lead::where('status', LeadStatus::New)->latest('id')->limit(5)->get() : collect(),
+            'newLeadsCount' => $mainWorkspace ? Lead::where('status', LeadStatus::New)->count() : 0,
             'workload' => $this->workload(),
             'rates' => $currency->latest(),
         ]);

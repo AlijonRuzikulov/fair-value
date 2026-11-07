@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Tenant;
 use Illuminate\Contracts\Cache\LockTimeoutException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -60,7 +61,7 @@ class Activity extends Model
 
     protected $fillable = [
         'user_id', 'user_email', 'event', 'category', 'subject_type', 'subject_id', 'subject_label',
-        'changes', 'ip_address', 'user_agent', 'url', 'prev_hash', 'hash', 'created_at',
+        'changes', 'ip_address', 'user_agent', 'url', 'prev_hash', 'hash', 'created_at', 'organization_id',
     ];
 
     protected function casts(): array
@@ -98,6 +99,8 @@ class Activity extends Model
             'ip_address' => $request?->ip(),
             'user_agent' => $request ? mb_substr((string) $request->userAgent(), 0, 255) : null,
             'url' => $request ? mb_substr($request->method().' '.$request->getRequestUri(), 0, 500) : 'console',
+            // The workspace the action was taken in (not hashed: the chain stays as it was).
+            'organization_id' => Tenant::active() ? Tenant::id() : $user?->organization_id,
         ];
 
         $write = function () use ($attributes) {

@@ -38,14 +38,16 @@
                 <p class="stat-note">{{ __('for completed valuations, sum') }}</p>
             </div>
         </div>
-        <a class="card stat" href="{{ route('admin.leads.index', ['status' => 'new']) }}">
-            <span class="stat-icon blue"><x-icon name="inbox" :size="22" /></span>
-            <div>
-                <p class="stat-label">{{ __('New requests') }}</p>
-                <p class="stat-value">{{ Format::number($newLeadsCount) }}</p>
-                <p class="stat-note">{{ __('from the website') }}</p>
-            </div>
-        </a>
+        @can('main-workspace')
+            <a class="card stat" href="{{ route('admin.leads.index', ['status' => 'new']) }}">
+                <span class="stat-icon blue"><x-icon name="inbox" :size="22" /></span>
+                <div>
+                    <p class="stat-label">{{ __('New requests') }}</p>
+                    <p class="stat-value">{{ Format::number($newLeadsCount) }}</p>
+                    <p class="stat-note">{{ __('from the website') }}</p>
+                </div>
+            </a>
+        @endcan
     </div>
 
     <div class="grid grid-main">
@@ -174,23 +176,25 @@
         </x-card>
 
         <div class="stack">
-            <x-card :title="__('New requests')" icon="inbox" flush>
-                <x-slot:actions><a class="btn btn-sm btn-ghost" href="{{ route('admin.leads.index') }}">{{ __('All') }} <x-icon name="arrow-right" :size="14" /></a></x-slot:actions>
-                @if ($newLeads->isEmpty())
-                    <x-empty icon="inbox" :title="__('No new requests')" />
-                @else
-                    <ul class="mini-list">
-                        @foreach ($newLeads as $lead)
-                            <li>
-                                <div class="grow">
-                                    <a href="{{ route('admin.leads.show', $lead) }}">{{ $lead->name }}</a>
-                                    <small>{{ Format::phone($lead->phone) }} · {{ $lead->created_at->diffForHumans() }}</small>
-                                </div>
-                            </li>
-                        @endforeach
-                    </ul>
-                @endif
-            </x-card>
+            @can('main-workspace')
+                <x-card :title="__('New requests')" icon="inbox" flush>
+                    <x-slot:actions><a class="btn btn-sm btn-ghost" href="{{ route('admin.leads.index') }}">{{ __('All') }} <x-icon name="arrow-right" :size="14" /></a></x-slot:actions>
+                    @if ($newLeads->isEmpty())
+                        <x-empty icon="inbox" :title="__('No new requests')" />
+                    @else
+                        <ul class="mini-list">
+                            @foreach ($newLeads as $lead)
+                                <li>
+                                    <div class="grow">
+                                        <a href="{{ route('admin.leads.show', $lead) }}">{{ $lead->name }}</a>
+                                        <small>{{ Format::phone($lead->phone) }} · {{ $lead->created_at->diffForHumans() }}</small>
+                                    </div>
+                                </li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </x-card>
+            @endcan
 
             @if ($workload->isNotEmpty())
                 <x-card :title="__('Appraisers workload')" icon="user-cog">

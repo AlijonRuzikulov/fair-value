@@ -55,18 +55,22 @@ class AdminMenu
             ...($classic ? [] : [
                 ['key' => 'dashboard', 'label' => __('Dashboard'), 'icon' => 'layout-dashboard', 'color' => '#818cf8', 'url' => route('admin.dashboard')],
             ]),
-            ['key' => 'leads', 'label' => __('Website requests'), 'icon' => 'inbox', 'color' => '#f472b6', 'url' => route('admin.leads.index'), 'badge' => $newLeads ?: null],
+            ...(Gate::allows('main-workspace') ? [
+                ['key' => 'leads', 'label' => __('Website requests'), 'icon' => 'inbox', 'color' => '#f472b6', 'url' => route('admin.leads.index'), 'badge' => $newLeads ?: null],
+            ] : []),
         ];
 
         if (Gate::allows('admin')) {
             $items[] = ['key' => 'users', 'label' => __('Employees'), 'icon' => 'user-cog', 'color' => '#38bdf8', 'url' => route('admin.users.index')];
+            $items[] = ['key' => 'organizations', 'label' => __('Organisations'), 'icon' => 'building-2', 'color' => '#fbbf24', 'url' => route('admin.organizations.index')];
             $items[] = ['key' => 'regions', 'label' => __('Regions and districts'), 'icon' => 'map-pin', 'color' => '#34d399', 'url' => route('admin.regions.index')];
             $items[] = ['key' => 'activity', 'label' => __('Audit log'), 'icon' => 'history', 'color' => '#fbbf24', 'url' => route('admin.activity.index')];
             $items[] = ['key' => 'system', 'label' => __('System status'), 'icon' => 'activity', 'color' => '#f87171', 'url' => route('admin.system.index')];
             $items[] = ['key' => 'settings', 'label' => __('Settings'), 'icon' => 'settings', 'color' => '#94a3b8', 'url' => route('admin.settings.edit')];
         }
 
-        return $items;
+        // The heading of the management part only when something is under it (not for the people of an organisation).
+        return end($items) === ['section' => __('Management')] ? array_slice($items, 0, -1) : $items;
     }
 
     /** Whether the item (or one of its children) is the current page. */

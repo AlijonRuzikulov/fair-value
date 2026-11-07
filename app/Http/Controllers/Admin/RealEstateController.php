@@ -11,6 +11,7 @@ use App\Models\RealEstate;
 use App\Reports\RealEstateReport;
 use App\Support\AdminTheme;
 use App\Support\Format;
+use App\Support\Tenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
@@ -139,7 +140,7 @@ class RealEstateController extends ValuationController
             'features' => ['nullable', 'array'],
             'features.*' => [Rule::enum(RealEstateFeature::class)],
             // The owner chosen on the page of the classic look; the other persons come in "persons".
-            'owner_id' => ['sometimes', 'required', 'integer', 'exists:clients,id'],
+            'owner_id' => ['sometimes', 'required', 'integer', Tenant::exists('clients')],
             'property_type' => ['nullable', 'string', 'max:150'],
             'architecture' => ['nullable', 'string', 'max:150'],
             'repair' => ['nullable', 'string', 'max:150'],

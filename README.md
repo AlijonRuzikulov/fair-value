@@ -521,6 +521,21 @@ kompaniya sanani yoki tarifni o‘zgartira olmaydi.
 Sozlamalar sahifasida kompaniyalar uchun kalit yaratadi (kompaniya nomi, tarif, muddat → **Kalit yaratish**).
 Maxfiy kalitni hech qachon kompaniyaga bermang va repozitoriyga yozmang.
 
+## Tashkilotlar (alohida ish stoli)
+
+Bitta nusxada bir nechta bank yoki baholash kompaniyasi ishlashi mumkin. Admin panel → **Tashkilotlar**da
+tashkilot qo‘shiladi (nomi, yuridik nomi, rahbari, STIR, bank rekvizitlari, shartnoma va hisobot raqamlari formati),
+**Foydalanuvchilar**da har bir odamga tashkiloti tanlanadi.
+
+- Har bir tashkilot **o‘z ish stolida** ishlaydi: uning mijozlari, obyektlari, fayllari va audit jurnali boshqa
+  tashkilotlarga ham, tizim egasiga ham ko‘rinmaydi. Shartnoma va hisobot raqamlari ham har birida o‘zidan boshlanadi.
+- Shartnoma, hisobot va hisob-fakturalarda tashkilotning o‘z rekvizitlari chiqadi; saytdagi tekshiruv sahifasida
+  hisobotni bergan tashkilot nomi ko‘rsatiladi.
+- Pasport seriyasi va raqami, JShShIR, STIR, kadastr raqami, VIN yoki davlat raqami yozilganda maydon ostida
+  **avval qaysi tashkilotda va qachon baholangani** chiqadi — faqat “kim va qachon”, hujjatning o‘zi emas.
+- Foydalanuvchilar, tashkilotlar, sozlamalar, saytdan arizalar va narxlar kataloglarini faqat tizim egasining
+  administratori (tashkiloti tanlanmagan) boshqaradi.
+
 ## Birinchi sozlashlar
 
 Admin panel → **Sozlamalar**:

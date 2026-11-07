@@ -16,7 +16,7 @@
             <x-card :title="__('Company details')" icon="building-2">
                 <div class="form-grid">
                     <x-field name="company_name" :label="__('Company name')" :value="$client->company_name" span="8" required placeholder='"Example" MChJ' />
-                    <x-field name="inn" :label="__('TIN')" :value="$client->inn" span="4" inputmode="numeric" maxlength="9" placeholder="123456789" />
+                    <x-field name="inn" :label="__('TIN')" :value="$client->inn" span="4" data-history="inn" inputmode="numeric" maxlength="9" placeholder="123456789" />
                     <x-field name="director" :label="__('Director')" :value="$client->director" span="6" />
                     <x-field name="oked" :label="__('OKED')" :value="$client->oked" span="3" />
                     <x-field name="bank_mfo" :label="__('MFO')" :value="$client->bank_mfo" span="3" inputmode="numeric" maxlength="5" />
@@ -31,9 +31,9 @@
                     <x-field name="first_name" :label="__('First name')" :value="$client->first_name" span="4" required />
                     <x-field name="middle_name" :label="__('Middle name')" :value="$client->middle_name" span="4" />
                     <x-field name="birth_date" type="date" :label="__('Date of birth')" :value="$client->birth_date" span="3" />
-                    <x-field name="pinfl" :label="__('PINFL')" :value="$client->pinfl" span="3" inputmode="numeric" maxlength="14" :hint="__('14 digits')" />
+                    <x-field name="pinfl" :label="__('PINFL')" :value="$client->pinfl" span="3" data-history="pinfl" inputmode="numeric" maxlength="14" :hint="__('14 digits')" />
                     <x-field name="passport_series" :label="__('Passport series')" :value="$client->passport_series" span="2" maxlength="2" placeholder="AA" data-upper pattern="[A-Za-z]{2}" title="{{ __('Two capital letters, e.g. AA') }}" />
-                    <x-field name="passport_number" :label="__('Passport number')" :value="$client->passport_number" span="4" placeholder="1234567" inputmode="numeric" maxlength="7" pattern="[0-9]{7}" title="{{ __('Seven digits, e.g. 1234567') }}" />
+                    <x-field name="passport_number" :label="__('Passport number')" :value="$client->passport_number" span="4" data-history="passport" data-history-series="passport_series" placeholder="1234567" inputmode="numeric" maxlength="7" pattern="[0-9]{7}" title="{{ __('Seven digits, e.g. 1234567') }}" />
                     <x-field name="passport_issued_by" :label="__('Issued by')" :value="$client->passport_issued_by" span="8" />
                     <x-field name="passport_issued_at" type="date" :label="__('Date of issue')" :value="$client->passport_issued_at" span="4" />
                 </div>

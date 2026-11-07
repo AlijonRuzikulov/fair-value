@@ -20,7 +20,7 @@ class VerifyController extends Controller
         $input = trim((string) $request->query('code'));
         $code = VerifyCode::normalize($input);
         $object = $code !== '' ? Registry::findByVerifyCode($code) : null;
-        $object?->load(['region', 'district', 'appraiser']);
+        $object?->load(['region', 'district', 'appraiser', 'workspace']);
 
         // Who checks reports (a bank, a notary…) is kept in the audit log; once per address and code an hour.
         if ($code !== '' && Cache::add('audit:verify:'.$request->ip().':'.$code, true, now()->addHour())) {
@@ -32,6 +32,8 @@ class VerifyController extends Controller
             'code' => $code,
             'object' => $object,
             'searched' => $input !== '',
+            // A report of an organisation the system is given to names that organisation.
+            'issuer' => $object?->workspace?->setting('legal_name'),
         ]);
     }
 }

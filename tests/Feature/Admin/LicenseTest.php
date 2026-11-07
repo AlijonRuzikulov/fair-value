@@ -6,6 +6,7 @@ use App\Enums\ValuationStatus;
 use App\Models\Activity;
 use App\Models\Asset;
 use App\Models\Client;
+use App\Models\Organization;
 use App\Models\User;
 use App\Models\Vehicle;
 use App\Services\Analogs\ClaudeListingAi;
@@ -147,16 +148,18 @@ class LicenseTest extends TestCase
     {
         config(['services.anthropic.key' => 'test-key']);
         $this->actingAs($this->admin)->withSession(['locale' => 'uz']);
+        $xalq = Organization::create(['name' => 'Xalq banki']);
+        $ishonch = Organization::create(['name' => 'Ishonch Baho MChJ']);
 
         // The administrator gives a bank employee Standard until a day, a valuer Premium.
         $this->get('/admin/users/create')->assertOk()
             ->assertSee('<title>Yangi foydalanuvchi', false)
             ->assertSeeInOrder(['Tashkilot', 'Kirish huquqi', 'Premium', 'Amal qilish muddati']);
-        $form = ['email' => 'bank@xalqbank.uz', 'name' => 'Karimov Anvar', 'organization' => 'Xalq banki', 'role' => 'operator',
+        $form = ['email' => 'bank@xalqbank.uz', 'name' => 'Karimov Anvar', 'organization_id' => $xalq->id, 'role' => 'operator',
             'is_active' => '1', 'premium' => '0', 'access_until' => now()->addDays(10)->toDateString(),
             'password' => 'Parol12345abc', 'password_confirmation' => 'Parol12345abc'];
         $this->post('/admin/users', $form)->assertRedirect('/admin/users');
-        $this->post('/admin/users', ['email' => 'baho@ishonch.uz', 'name' => 'Toshmatov Ali', 'organization' => 'Ishonch Baho MChJ', 'premium' => '1'] + $form)->assertRedirect('/admin/users');
+        $this->post('/admin/users', ['email' => 'baho@ishonch.uz', 'name' => 'Toshmatov Ali', 'organization_id' => $ishonch->id, 'premium' => '1'] + $form)->assertRedirect('/admin/users');
         $bank = User::where('email', 'bank@xalqbank.uz')->sole();
         $valuer = User::where('email', 'baho@ishonch.uz')->sole();
         $this->assertSame([false, true], [$bank->premium, $valuer->premium]);

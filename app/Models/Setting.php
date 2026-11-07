@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Support\Tenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
 /**
  * Key-value settings edited on the Settings page. Defaults come from
- * config/fairvalue.php ("company" section).
+ * config/fairvalue.php ("company" section). In the workspace of an
+ * organisation its own company details are read instead (Organization::OWN_SETTINGS).
  */
 class Setting extends Model
 {
@@ -22,6 +24,17 @@ class Setting extends Model
     private const CACHE_KEY = 'settings.all';
 
     public static function get(string $key, ?string $default = null): ?string
+    {
+        $organization = Tenant::organization();
+        if ($organization && in_array($key, Organization::OWN_SETTINGS, true)) {
+            return $organization->setting($key, $default);
+        }
+
+        return self::main($key, $default);
+    }
+
+    /** A setting of the company that runs the system, whatever the workspace. */
+    public static function main(string $key, ?string $default = null): ?string
     {
         $values = Cache::rememberForever(self::CACHE_KEY, fn () => static::query()->pluck('value', 'key')->all());
 

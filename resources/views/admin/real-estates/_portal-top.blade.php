@@ -33,7 +33,7 @@
         <div class="field span-12">
             <label for="f-cadastral_number">{{ __('Cadastral number of the real estate') }}<span class="req">*</span><span class="label-alert">({{ __('Press the button to get the cadastral data!') }})</span></label>
             <div class="input-row joined">
-                <input id="f-cadastral_number" name="cadastral_number" value="{{ old('cadastral_number', $item->cadastral_number) }}" @class(['input', 'is-invalid' => $errors->has('cadastral_number')])>
+                <input id="f-cadastral_number" name="cadastral_number" data-history="cadastral" value="{{ old('cadastral_number', $item->cadastral_number) }}" @class(['input', 'is-invalid' => $errors->has('cadastral_number')])>
                 <button type="button" class="btn btn-info" data-reveal="cadastre-note">{{ __('Get the data') }}</button>
             </div>
             @error('cadastral_number')<p class="field-error">{{ $message }}</p>@enderror

@@ -9,8 +9,8 @@
     @unless (\App\Support\AdminTheme::classic())<p class="field-hint">{{ __('Spare part prices and repair norms are offered for the selected model.') }}</p>@endunless
 </div>
 <x-field name="vehicle_name" :label="__('Vehicle')" :value="$item->vehicle_name" span="6" required data-vehicle-name :placeholder="__('Brand and model')" />
-<x-field name="plate_number" :label="__('State number')" :value="$item->plate_number" span="3" placeholder="01 A 123 BC" />
-<x-field name="vin" :label="__('Body number (VIN)')" :value="$item->vin" span="3" />
+<x-field name="plate_number" :label="__('State number')" :value="$item->plate_number" span="3" data-history="plate" placeholder="01 A 123 BC" />
+<x-field name="vin" :label="__('Body number (VIN)')" :value="$item->vin" span="3" data-history="vin" />
 <x-field name="year_made" type="number" :label="__('Year of manufacture')" :value="$item->year_made" span="3" />
 <x-field name="color" :label="__('Color')" :value="$item->color" span="3" />
 <x-field name="mileage" :label="__('Mileage')" :value="$item->mileage" money :suffix="__('km')" span="3" />

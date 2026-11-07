@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ClientType;
+use App\Models\Concerns\BelongsToOrganization;
 use App\Models\Concerns\LogsActivity;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -18,7 +19,7 @@ use Illuminate\Support\Facades\DB;
  */
 class Client extends Model
 {
-    use HasFactory, LogsActivity, SoftDeletes;
+    use BelongsToOrganization, HasFactory, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'type', 'last_name', 'first_name', 'middle_name', 'birth_date', 'pinfl',

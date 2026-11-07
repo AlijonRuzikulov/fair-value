@@ -6,7 +6,7 @@
             <div class="form-grid">
                 <x-field name="name" :label="__('Full name')" :value="$user->name" span="6" required />
                 <x-field name="position" :label="__('Position')" :value="$user->position" span="6" />
-                <x-field name="organization" :label="__('Organisation')" :value="$user->organization" span="12" :placeholder="__('Bank, valuation company or department')" />
+                <x-select name="organization_id" :label="__('Organisation')" :options="$organizations" :value="$user->organization_id" span="12" :placeholder="\App\Models\Setting::main('name')" :hint="__('Each organisation works in its own workspace: the others do not see its clients and objects.')" />
                 <x-field name="email" type="email" :label="__('E-mail (login)')" :value="$user->email" span="6" required autocomplete="off" />
                 <x-field name="phone" type="tel" :label="__('Phone')" :value="$user->phone" span="6" />
                 <x-select name="role" :label="__('Role')" :options="\App\Enums\UserRole::options()" :value="$user->role" span="6" required />

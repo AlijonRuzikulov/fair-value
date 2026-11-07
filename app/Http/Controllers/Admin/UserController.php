@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\Activity;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,12 +20,12 @@ class UserController extends Controller
 {
     public function index(): View
     {
-        return view('admin.users.index', ['users' => User::orderByDesc('is_active')->orderBy('name')->get()]);
+        return view('admin.users.index', ['users' => User::with('organization')->orderByDesc('is_active')->orderBy('name')->get()]);
     }
 
     public function create(): View
     {
-        return view('admin.users.form', ['user' => new User(['role' => UserRole::Appraiser, 'is_active' => true])]);
+        return view('admin.users.form', ['user' => new User(['role' => UserRole::Appraiser, 'is_active' => true]), 'organizations' => $this->organizations()]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -37,7 +38,7 @@ class UserController extends Controller
 
     public function edit(User $user): View
     {
-        return view('admin.users.form', ['user' => $user]);
+        return view('admin.users.form', ['user' => $user, 'organizations' => $this->organizations()]);
     }
 
     public function update(Request $request, User $user): RedirectResponse
@@ -49,6 +50,7 @@ class UserController extends Controller
             $data['role'] = UserRole::Admin->value;
             $data['is_active'] = true;
             $data['access_until'] = null;
+            $data['organization_id'] = null;
         }
 
         $user->update($data);
@@ -81,7 +83,7 @@ class UserController extends Controller
             'phone' => ['nullable', 'string', 'max:30'],
             'role' => ['required', Rule::enum(UserRole::class)],
             'position' => ['nullable', 'string', 'max:255'],
-            'organization' => ['nullable', 'string', 'max:150'],
+            'organization_id' => ['nullable', 'integer', 'exists:organizations,id'],
             'premium' => ['boolean'],
             'access_until' => ['nullable', 'date'],
             'certificate_number' => ['nullable', 'string', 'max:60'],
@@ -93,6 +95,7 @@ class UserController extends Controller
 
         $data['is_active'] = $request->boolean('is_active');
         $data['premium'] = $request->boolean('premium');
+        $data['organization_id'] = $data['organization_id'] ?? null;
         if (blank($data['password'] ?? null)) {
             unset($data['password']);
         }
@@ -100,11 +103,17 @@ class UserController extends Controller
         return $data;
     }
 
+    /** @return array<int, string> */
+    private function organizations(): array
+    {
+        return Organization::orderBy('name')->pluck('name', 'id')->all();
+    }
+
     /** Changed fields for the activity log; the password itself is never written there. */
     private function logged(User $user): array
     {
         $changes = $user->wasRecentlyCreated ? $user->getAttributes() : $user->getChanges();
-        $changes = array_intersect_key($changes, array_flip(['name', 'email', 'role', 'position', 'organization', 'is_active', 'premium', 'access_until', 'password']));
+        $changes = array_intersect_key($changes, array_flip(['name', 'email', 'role', 'position', 'organization_id', 'is_active', 'premium', 'access_until', 'password']));
         if (array_key_exists('password', $changes)) {
             $changes['password'] = '••••••';
         }

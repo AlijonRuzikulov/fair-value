@@ -41,7 +41,7 @@
                         <x-field name="phone" type="tel" :label="__('Phone number')" :value="$client->phone" span="12" required placeholder="+998 (XX) XXX XXXX" data-empty-alert="{{ __('Enter the phone number!') }}" />
                         <x-field name="email" type="email" :label="__('E-mail')" :value="$client->email" span="12" required />
                         <x-field name="bank_account" :label="__('Account number')" :value="$client->bank_account" span="12" required inputmode="numeric" maxlength="24" data-empty-alert="{{ __('Enter the account number!') }}" />
-                        <x-field name="inn" :label="__('TIN (INN)')" :value="$client->inn" span="12" required inputmode="numeric" maxlength="9" data-empty-alert="{{ __('Enter the TIN!') }}" />
+                        <x-field name="inn" :label="__('TIN (INN)')" :value="$client->inn" span="12" data-history="inn" required inputmode="numeric" maxlength="9" data-empty-alert="{{ __('Enter the TIN!') }}" />
                         <x-field name="bank_mfo" :label="__('MFO')" :value="$client->bank_mfo" span="12" required inputmode="numeric" maxlength="5" data-empty-alert="{{ __('Enter the MFO!') }}" />
                         <x-field name="bank_name" :label="__('Name of the bank')" :value="$client->bank_name" span="12" required />
                         <div class="field span-12">
@@ -60,9 +60,9 @@
                     </div>
                     <div class="portal-col form-grid">
                         <x-field name="phone" type="tel" :label="__('Phone number')" :value="$client->phone" span="12" required placeholder="+998 (XX) XXX XXXX" data-empty-alert="{{ __('Enter the phone number!') }}" />
-                        <x-field name="passport" :label="__('Passport series and number')" :value="old('passport', $passport ?: (old('passport_series') ? old('passport_series').' '.old('passport_number') : null))" span="12" required placeholder="AA 1234567" data-empty-alert="{{ __('Enter the passport series and number!') }}"
+                        <x-field name="passport" data-history="passport" :label="__('Passport series and number')" :value="old('passport', $passport ?: (old('passport_series') ? old('passport_series').' '.old('passport_number') : null))" span="12" required placeholder="AA 1234567" data-empty-alert="{{ __('Enter the passport series and number!') }}"
                                  data-upper pattern="\s*[A-Za-z]{2}\s*[0-9]{7}\s*" title="{{ __('Two capital letters and seven digits, e.g. AA 1234567') }}" />
-                        <x-field name="pinfl" :label="__('Personal identification number of the individual (PINFL, 14 digits)')" :value="$client->pinfl" span="12" required inputmode="numeric" maxlength="14" />
+                        <x-field name="pinfl" :label="__('Personal identification number of the individual (PINFL, 14 digits)')" :value="$client->pinfl" span="12" data-history="pinfl" required inputmode="numeric" maxlength="14" />
                         <x-field name="passport_issued_at" type="date" :label="__('Date the passport was issued')" :value="$client->passport_issued_at" span="12" required />
                         <x-field name="passport_issued_by" :label="__('Issued by')" :value="$client->passport_issued_by" span="12" required />
                     </div>

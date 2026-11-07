@@ -4,7 +4,9 @@ use App\Http\Middleware\EnsureLicenseAllowsChanges;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
+use App\Http\Middleware\SetWorkspace;
 use App\Services\Audit\SystemMonitor;
+use Illuminate\Contracts\Session\Middleware\AuthenticatesSessions;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -21,7 +23,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Outside local development only the APP_URL domain is answered.
         $middleware->trustHosts();
         $middleware->web(append: [SetLocale::class]);
-        $middleware->alias(['active' => EnsureUserIsActive::class, 'license' => EnsureLicenseAllowsChanges::class]);
+        $middleware->alias(['active' => EnsureUserIsActive::class, 'license' => EnsureLicenseAllowsChanges::class, 'workspace' => SetWorkspace::class]);
+        // The workspace is set before route bindings, so that a record of another organisation is not found.
+        $middleware->appendToPriorityList(AuthenticatesSessions::class, SetWorkspace::class);
         $middleware->redirectUsersTo(fn () => route('admin.dashboard'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -15,6 +15,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="robots" content="noindex, nofollow">
     <meta name="districts-url" content="{{ route('admin.districts') }}">
+    <meta name="history-url" content="{{ route('admin.history') }}" data-title="{{ __('Valued before in another organisation:') }}">
     <title>{{ $title }} — {{ \App\Models\Setting::get('name') }}</title>
     <link rel="icon" href="{{ asset('images/favicon.svg') }}" type="image/svg+xml">
     <link rel="stylesheet" href="{{ asset('css/fonts.css') }}">

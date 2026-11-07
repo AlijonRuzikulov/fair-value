@@ -45,7 +45,7 @@ Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->
 
 // auth.session signs out other devices when a password is changed.
 // "license": after the licence ends the panel is open for viewing only.
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'active', 'license'])->group(function () {
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'active', 'workspace', 'license'])->group(function () {
     Route::get('/', Admin\DashboardController::class)->name('dashboard');
 
     // Clients
@@ -136,7 +136,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
     Route::get('tools', Admin\ToolsController::class)->name('tools');
 
     // Website requests
-    Route::resource('leads', Admin\LeadController::class)->only(['index', 'show', 'update', 'destroy']);
+    Route::resource('leads', Admin\LeadController::class)->only(['index', 'show', 'update', 'destroy'])->middleware('can:main-workspace');
 
     // Attachments
     Route::post('attachments', [Admin\AttachmentController::class, 'store'])->name('attachments.store');
@@ -146,6 +146,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
     Route::post('attachments/{attachment}/rotate', [Admin\AttachmentController::class, 'rotate'])->middleware('throttle:60,1')->name('attachments.rotate');
 
     Route::get('districts', Admin\DistrictLookupController::class)->name('districts');
+    Route::get('history', Admin\HistoryController::class)->middleware('throttle:60,1')->name('history');
 
     Route::get('profile', [Admin\ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('profile', [Admin\ProfileController::class, 'update'])->middleware('throttle:10,1')->name('profile.update');
@@ -153,6 +154,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
     // Administrators only
     Route::middleware('can:admin')->group(function () {
         Route::resource('users', Admin\UserController::class)->except('show');
+        Route::resource('organizations', Admin\OrganizationController::class)->except('show');
         Route::get('settings', [Admin\SettingController::class, 'edit'])->name('settings.edit');
         Route::put('settings', [Admin\SettingController::class, 'update'])->name('settings.update');
         Route::post('settings/currency', [Admin\SettingController::class, 'refreshRates'])->name('settings.currency');

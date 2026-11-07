@@ -2,7 +2,6 @@
 
 namespace App\Support;
 
-use App\Enums\UserRole;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 
@@ -10,7 +9,8 @@ use Carbon\CarbonImmutable;
  * What the signed-in person may use: the licence of this copy, narrowed by
  * their own account — the people the system is given to (employees of a
  * bank or a valuation company) get Premium by a tick and work until the day
- * written on their account. Administrators have all that the licence gives.
+ * written on their account. Administrators of the company that runs the
+ * system have all that the licence gives.
  */
 final class Access
 {
@@ -29,9 +29,10 @@ final class Access
         return new self(License::current(), $user);
     }
 
+    /** An administrator of the company that runs the system (those of an organisation get their access as the others). */
     private function isAdmin(): bool
     {
-        return $this->user === null || $this->user->role === UserRole::Admin;
+        return $this->user === null || $this->user->isMainAdmin();
     }
 
     /** The day the person's own access ends (none for administrators). */

@@ -31,10 +31,11 @@
                             <span class="mark"><x-icon :name="$completed ? 'check' : 'clock'" :size="26" /></span>
                             <div>
                                 <h2>{{ $completed ? __('The report is genuine') : __('The valuation is not completed yet') }}</h2>
-                                <p>{{ $completed ? __('The report was issued by our company. Compare the details below with the document.') : __('This code belongs to a valuation that is still in progress. A final report has not been issued.') }}</p>
+                                <p>{{ $completed ? ($issuer ? __('The report was issued by :company. Compare the details below with the document.', ['company' => $issuer]) : __('The report was issued by our company. Compare the details below with the document.')) : __('This code belongs to a valuation that is still in progress. A final report has not been issued.') }}</p>
                             </div>
                         </div>
                         <dl class="verify-facts">
+                            @if ($issuer)<div><dt>{{ __('Valuation company') }}</dt><dd>{{ $issuer }}</dd></div>@endif
                             <div><dt>{{ __('Report number') }}</dt><dd>{{ $object->report_number ?? '—' }}</dd></div>
                             <div><dt>{{ __('Verification code') }}</dt><dd class="code" style="font-family: ui-monospace, Menlo, monospace">{{ $object->verify_code }}</dd></div>
                             <div><dt>{{ __('Valuation date') }}</dt><dd>{{ Format::date($object->valuation_date) }}</dd></div>

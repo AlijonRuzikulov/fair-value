@@ -3,16 +3,18 @@
 namespace App\Models;
 
 use App\Enums\UserRole;
+use App\Support\Tenant;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'phone', 'role', 'position', 'organization', 'certificate_number', 'certificate_date', 'certificate_issuer', 'is_active', 'premium', 'access_until', 'password'])]
+#[Fillable(['name', 'email', 'phone', 'role', 'position', 'organization_id', 'certificate_number', 'certificate_date', 'certificate_issuer', 'is_active', 'premium', 'access_until', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -49,6 +51,24 @@ class User extends Authenticatable
         return $this->role === UserRole::Admin;
     }
 
+    /** The organisation the person works for; none for the company that runs the system. */
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
+    }
+
+    /** An administrator of the company that runs the system: manages users, organisations and settings. */
+    public function isMainAdmin(): bool
+    {
+        return $this->isAdmin() && $this->organization_id === null;
+    }
+
+    /** People of the current workspace. */
+    public function scopeInWorkspace(Builder $query): Builder
+    {
+        return Tenant::constrain($query, $query->qualifyColumn('organization_id'));
+    }
+
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
@@ -57,7 +77,7 @@ class User extends Authenticatable
     /** Users who can be assigned as appraiser of an object. */
     public function scopeAppraisers(Builder $query): Builder
     {
-        return $query->active()->whereIn('role', [UserRole::Admin->value, UserRole::Appraiser->value])->orderBy('name');
+        return $query->inWorkspace()->active()->whereIn('role', [UserRole::Admin->value, UserRole::Appraiser->value])->orderBy('name');
     }
 
     public function initials(): string

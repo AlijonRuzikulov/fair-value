@@ -29,6 +29,7 @@ use App\Support\CsvExport;
 use App\Support\DocumentNumber;
 use App\Support\Format;
 use App\Support\NumberInput;
+use App\Support\Tenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
@@ -636,14 +637,14 @@ abstract class ValuationController extends Controller
                 ->when(! self::canComplete($request->user(), $item), fn ($rule) => $rule->except([ValuationStatus::Completed]))],
             // An active appraiser or administrator (or the one already assigned).
             'appraiser_id' => ['nullable', 'integer', Rule::exists('users', 'id')->where(fn ($query) => $query
-                ->where(fn ($q) => $q->where('is_active', true)->whereIn('role', [UserRole::Admin->value, UserRole::Appraiser->value]))
+                ->where(fn ($q) => Tenant::constrain($q->where('is_active', true)->whereIn('role', [UserRole::Admin->value, UserRole::Appraiser->value])))
                 ->when($item?->appraiser_id, fn ($q, $current) => $q->orWhere('id', $current)))],
             'notes' => ['nullable', 'string', 'max:5000'],
             'persons' => ['nullable', 'array', 'max:20'],
-            'persons.*.client_id' => ['nullable', 'integer', 'exists:clients,id'],
+            'persons.*.client_id' => ['nullable', 'integer', Tenant::exists('clients')],
             'persons.*.role' => ['nullable', Rule::enum(PersonRole::class)],
             // The owner and the files of the page of the portal.
-            'owner_id' => ['sometimes', 'required', 'integer', 'exists:clients,id'],
+            'owner_id' => ['sometimes', 'required', 'integer', Tenant::exists('clients')],
             'documents' => ['nullable', 'array'],
             'documents.*' => ['array', 'max:20'],
             'documents.*.*' => ['file', 'max:'.config('fairvalue.uploads.max_kb'), 'mimes:'.config('fairvalue.uploads.mimes')],

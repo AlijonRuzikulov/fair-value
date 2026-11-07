@@ -719,6 +719,9 @@ select.input {
 }
 .field-error { font-size: 12px; font-weight: 600; color: var(--danger); }
 .field-hint { font-size: 12px; color: var(--muted); }
+/* Where it was valued before in another organisation (who and when). */
+.history-note { margin-top: 6px; padding: 7px 10px; border: 1px solid #f3d38a; border-radius: 6px; background: #fff8e5; color: #7a4f00; font-size: 12.5px; line-height: 1.45; }
+.history-note ul { margin: 3px 0 0; padding-left: 18px; }
 
 .check-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
 .check {

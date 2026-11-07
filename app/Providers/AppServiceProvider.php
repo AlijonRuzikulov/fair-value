@@ -104,13 +104,16 @@ class AppServiceProvider extends ServiceProvider
 
         Paginator::defaultView('components.pagination');
 
-        // Administrators manage users, settings, directories and the activity log.
-        Gate::define('admin', fn (User $user) => $user->role === UserRole::Admin);
+        // Administrators of the company that runs the system manage users, organisations,
+        // settings, directories and the activity log; those of an organisation work in its workspace.
+        Gate::define('admin', fn (User $user) => $user->isMainAdmin());
+        // Website requests and the shared catalogues belong to the company that runs the system.
+        Gate::define('main-workspace', fn (User $user) => $user->organization_id === null);
 
         // Operators register clients and objects but do not delete them
         // and do not edit the price catalogues.
         Gate::define('delete-records', fn (User $user) => $user->role !== UserRole::Operator);
-        Gate::define('manage-catalogs', fn (User $user) => $user->role !== UserRole::Operator);
+        Gate::define('manage-catalogs', fn (User $user) => $user->role !== UserRole::Operator && $user->organization_id === null);
 
         // Completed reports can be checked on the website, so only appraisers
         // and administrators complete them or change them afterwards.
@@ -147,7 +150,7 @@ class AppServiceProvider extends ServiceProvider
             $view->with('currencyRates', app(CurrencyService::class)->latest());
         });
         View::composer('components.layouts.admin', function ($view) {
-            $view->with('newLeadsCount', Lead::where('status', LeadStatus::New)->count());
+            $view->with('newLeadsCount', Gate::allows('main-workspace') ? Lead::where('status', LeadStatus::New)->count() : 0);
         });
     }
 }

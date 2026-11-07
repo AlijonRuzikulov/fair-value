@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Tenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -80,5 +81,13 @@ class Analog extends Model
         $host = $this->url ? parse_url($this->url, PHP_URL_HOST) : null;
 
         return $host ? preg_replace('/^(www|m)\./', '', $host) : null;
+    }
+
+    /** A record of another workspace is not found. */
+    public function resolveRouteBinding($value, $field = null)
+    {
+        $analog = parent::resolveRouteBinding($value, $field);
+
+        return $analog && Tenant::owns($analog->object_type, $analog->object_id) ? $analog : null;
     }
 }

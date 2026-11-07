@@ -11,7 +11,7 @@
     </div>
 </div>
 <x-field name="name" :label="__('Object name')" :value="$item->name" span="6" required :placeholder="__('e.g. Non-residential building (shop)')" />
-<x-field name="cadastral_number" :label="__('Cadastral number')" :value="$item->cadastral_number" span="3" placeholder="10:01:05:01:02:0123" />
+<x-field name="cadastral_number" :label="__('Cadastral number')" :value="$item->cadastral_number" span="3" data-history="cadastral" placeholder="10:01:05:01:02:0123" />
 <x-field name="year_built" type="number" :label="__('Year built')" :value="$item->year_built" span="3" min="1800" />
 <x-field name="total_area" :label="__('Total area')" :value="$item->total_area" money :suffix="__('m²')" span="3" />
 <x-field name="useful_area" :label="__('Useful area')" :value="$item->useful_area" money :suffix="__('m²')" span="3" />
