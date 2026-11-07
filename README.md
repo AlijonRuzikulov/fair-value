@@ -170,29 +170,6 @@ kiritiladi; bo‘sh qoldirilsa saytda ko‘rinmaydi.
 
 ---
 
-## Bepul hostingga joylash (InfinityFree va shunga o‘xshash, SSH’siz)
-
-Kompyuter yoniq turmasa ham ishlaydigan bepul link kerak bo‘lsa. Bunday hostingda SSH va Composer yo‘q,
-hamma narsa `htdocs` papkasida turadi — shuning uchun sayt oldindan tayyor paket qilib yig‘iladi:
-
-```bash
-bash shared-hosting.sh http://SAYTINGIZ.infinityfreeapp.com
-```
-
-Natija `build/shared-hosting/` papkasida: `htdocs/` (yuklanadigan fayllar), `fair-value-htdocs.zip`
-va 10 MB dan kichik `htdocs-part-*.zip` qismlar. Ichida kutubxonalar, tayyor SQLite baza (birinchi
-administrator bilan) va ishlab chiqarish uchun `.env` bor; administrator paroli oxirida ekranga chiqadi.
-Ildizdagi `.htaccess` barcha so‘rovlarni `public/` ga yuboradi, qolgan papkalar (`.env`, baza, kod) yopiq.
-
-Yuklash: FileZilla bilan `htdocs/` ichidagi hamma narsani hostingning `htdocs` papkasiga ko‘chiring
-(yoki `htdocs-part-*.zip` larni fayl menejeri orqali yuklab, joyida oching). So‘ng `htdocs/.env` da
-`APP_URL` ni saytingiz manziliga to‘g‘rilang; https ishlagach `APP_URL=https://...` va
-`SESSION_SECURE_COOKIE=true` qiling. Bunday hostingda PDF fayl (Chromium), navbat va rejali
-vazifalar yo‘q: PDF tugmasi chop etish oynasini ochadi. Server chet elda bo‘lgani uchun haqiqiy
-mijozlarning pasport ma’lumotlarini kiritmang — faqat sinov uchun.
-
----
-
 ## Serverga joylash — o‘z domeningizda (masalan, fairvalue.uz)
 
 Mijozga oddiy link (`https://fairvalue.uz`) yuborish uchun sayt doimiy ishlaydigan serverda turishi kerak.

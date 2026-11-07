@@ -5,7 +5,6 @@ Laravel 13 / PHP 8.3 / SQLite. Website + admin panel of a valuation company. Tal
 ## Work rules
 - Branch `claude/amazing-bohr-4qrtrr`; commit as `git -c user.name="Alijon Ruzikulov" -c user.email="alijonruziqulov.1996@gmail.com" commit`, push to origin. No PRs unless asked.
 - Before a commit: `vendor/bin/pint --dirty` and `php artisan test --compact` (prints JSON; ~300 tests, ~70 s). Run single files with `--filter` while working.
-- Free hosting without SSH (InfinityFree): `bash shared-hosting.sh <url>` builds `build/shared-hosting/` (htdocs, zip, parts < 10 MB; vendor pruned, no class map — PHP files must stay < 1 MB). Root `.htaccess` sends everything to `public/`. Keep runtime code working with `open_basedir` and disabled `set_time_limit`/`proc_open`.
 - Translations: add keys to `lang/uz.json` and `lang/ru.json` (sorted, `ensure_ascii=False`, indent 4), then `php artisan lang:cyrillic` builds `lang/oz.json`. Tests default to `oz`; use `withSession(['locale' => 'uz'])`.
 - Icons: Lucide sprite `public/images/icons.svg` (`<x-icon name>`); add missing ones from `lucide-static` (npm) by rebuilding the sprite.
 - Never access clients-app.baxolash.uz directly; the user sends screenshots or pasted text of it. Copy its layout, fields and wording, not its code, name or logo.
