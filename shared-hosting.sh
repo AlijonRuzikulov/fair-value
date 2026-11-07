@@ -4,9 +4,9 @@
 #
 #     bash shared-hosting.sh [address of the site]
 #
-# The result is build/shared-hosting/htdocs (and fair-value-htdocs.zip next to
-# it): the libraries, a ready SQLite database with the first administrator and
-# an .env for production. Upload the contents of htdocs into the hosting's
+# The result is build/shared-hosting/htdocs (with fair-value-htdocs.zip and
+# htdocs-part-*.zip under 10 MB next to it): the libraries, a ready SQLite
+# database with the first administrator and an .env for production. Upload the contents of htdocs into the hosting's
 # htdocs folder. The administrator's password is printed at the end.
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -24,7 +24,7 @@ mkdir -p "$site"
 # The committed files only: no tests, development tools or local data.
 git archive HEAD | tar -x -C "$site"
 cd "$site"
-for path in tests .devcontainer .github deploy.sh shared-hosting.sh phpunit.xml .editorconfig .gitattributes CLAUDE.md; do
+for path in tests tools .devcontainer .github deploy.sh shared-hosting.sh phpunit.xml .editorconfig .gitattributes CLAUDE.md; do
     if [ -e "$path" ]; then
         mkdir -p "$out/left-out"
         mv "$path" "$out/left-out/"
@@ -89,6 +89,8 @@ fi
 
 files=$(find . -type f | wc -l)
 (cd "$site" && zip -qr -9 "$out/fair-value-htdocs.zip" .)
+# The same in parts under 10 MB, for a file manager that refuses bigger uploads.
+python3 "$repo/tools/split-zip.py" "$site" "$out" 9
 echo
 echo "Ready: $site ($files files) and $out/fair-value-htdocs.zip"
 echo "Site address in .env: $url (change APP_URL in htdocs/.env if it is different)"
