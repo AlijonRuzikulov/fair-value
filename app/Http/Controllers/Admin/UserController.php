@@ -48,6 +48,7 @@ class UserController extends Controller
         if ($user->is($request->user())) {
             $data['role'] = UserRole::Admin->value;
             $data['is_active'] = true;
+            $data['access_until'] = null;
         }
 
         $user->update($data);
@@ -80,6 +81,9 @@ class UserController extends Controller
             'phone' => ['nullable', 'string', 'max:30'],
             'role' => ['required', Rule::enum(UserRole::class)],
             'position' => ['nullable', 'string', 'max:255'],
+            'organization' => ['nullable', 'string', 'max:150'],
+            'premium' => ['boolean'],
+            'access_until' => ['nullable', 'date'],
             'certificate_number' => ['nullable', 'string', 'max:60'],
             'certificate_date' => ['nullable', 'date', 'before_or_equal:today'],
             'certificate_issuer' => ['nullable', 'string', 'max:255'],
@@ -88,6 +92,7 @@ class UserController extends Controller
         ]);
 
         $data['is_active'] = $request->boolean('is_active');
+        $data['premium'] = $request->boolean('premium');
         if (blank($data['password'] ?? null)) {
             unset($data['password']);
         }
@@ -99,7 +104,7 @@ class UserController extends Controller
     private function logged(User $user): array
     {
         $changes = $user->wasRecentlyCreated ? $user->getAttributes() : $user->getChanges();
-        $changes = array_intersect_key($changes, array_flip(['name', 'email', 'role', 'position', 'is_active', 'password']));
+        $changes = array_intersect_key($changes, array_flip(['name', 'email', 'role', 'position', 'organization', 'is_active', 'premium', 'access_until', 'password']));
         if (array_key_exists('password', $changes)) {
             $changes['password'] = '••••••';
         }

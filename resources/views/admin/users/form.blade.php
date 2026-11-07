@@ -6,6 +6,7 @@
             <div class="form-grid">
                 <x-field name="name" :label="__('Full name')" :value="$user->name" span="6" required />
                 <x-field name="position" :label="__('Position')" :value="$user->position" span="6" />
+                <x-field name="organization" :label="__('Organisation')" :value="$user->organization" span="12" :placeholder="__('Bank, valuation company or department')" />
                 <x-field name="email" type="email" :label="__('E-mail (login)')" :value="$user->email" span="6" required autocomplete="off" />
                 <x-field name="phone" type="tel" :label="__('Phone')" :value="$user->phone" span="6" />
                 <x-select name="role" :label="__('Role')" :options="\App\Enums\UserRole::options()" :value="$user->role" span="6" required />
@@ -20,6 +21,20 @@
                         <span>{{ __('Can sign in') }}</span>
                     </label>
                 </div>
+            </div>
+        </x-card>
+        {{-- What the person gets: Premium by a tick, and the day their access ends. --}}
+        <x-card :title="__('Access')" icon="badge-check">
+            <div class="form-grid">
+                <div class="field span-6">
+                    <input type="hidden" name="premium" value="0">
+                    <label class="check" style="max-width: 320px">
+                        <input type="checkbox" name="premium" value="1" @checked(old('premium', $user->premium))>
+                        <span class="check-box"><x-icon name="check" :size="14" /></span>
+                        <span>{{ __('Premium') }} — {{ __('reading documents with AI') }}</span>
+                    </label>
+                </div>
+                <x-field name="access_until" type="date" :label="__('Access until')" :value="$user->access_until" span="6" />
             </div>
         </x-card>
         <x-card :title="__('Password')" icon="key-round">

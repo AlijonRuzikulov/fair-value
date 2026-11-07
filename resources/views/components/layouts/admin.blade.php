@@ -82,16 +82,17 @@
             </div>
 
             <div class="topbar-tools">
-                {{-- The plan and the end of the licence, always in sight (not in the seller's own copy). --}}
-                @php $license = \App\Support\License::current(); @endphp
-                @if ($license->state !== 'seller')
-                    <a @class(['tool-btn', 'license-chip', 'is-premium' => $license->isPremium(), 'is-soon' => $license->endsSoon(), 'is-off' => ! $license->allowsChanges()])
-                       href="{{ $user->can('admin') ? route('admin.settings.edit').'#license' : '#' }}"
-                       title="{{ $license->company }}">
-                        @if ($license->until)
-                            <strong>{{ $license->planLabel() }}</strong> <span class="hide-sm">· {{ __('until :date', ['date' => $license->until->format('d.m.Y')]) }}</span>
-                        @else
+                {{-- The plan and the end of the access, always in sight (not to the administrator of the seller's own copy). --}}
+                @php $access = \App\Support\Access::current(); $license = $access->license; @endphp
+                @if ($access->shown())
+                    <a @class(['tool-btn', 'license-chip', 'is-premium' => $access->isPremium(), 'is-soon' => $access->endsSoon(), 'is-off' => ! $access->allowsChanges()])
+                       href="{{ $user->can('admin') ? route('admin.settings.edit').'#license' : route('admin.profile.edit') }}"
+                       title="{{ $user->organization ?: $license->company }}">
+                        @if (in_array($license->state, ['missing', 'invalid'], true))
                             <strong>{{ __('No licence') }}</strong>
+                        @else
+                            <strong>{{ $access->planLabel() }}</strong>
+                            @if ($access->until())<span class="hide-sm">· {{ __('until :date', ['date' => $access->until()->format('d.m.Y')]) }}</span>@endif
                         @endif
                     </a>
                 @endif
@@ -147,16 +148,18 @@
         </header>
 
         <main class="content">
-            @if ($license->endsSoon())
+            @if ($access->endsSoon())
                 <div class="license-note is-soon" role="status"><x-icon name="clock" :size="18" />
-                    <span>{{ trans_choice('The licence ends in :count day (:date). Ask the seller for a new key in time.|The licence ends in :count days (:date). Ask the seller for a new key in time.', $license->daysLeft(), ['count' => $license->daysLeft(), 'date' => $license->until->format('d.m.Y')]) }}</span>
+                    <span>@if ($access->userUntil() && $access->until()->equalTo($access->userUntil()))
+                        {{ trans_choice('Your access ends in :count day (:date). Ask the administrator to extend it.|Your access ends in :count days (:date). Ask the administrator to extend it.', $access->daysLeft(), ['count' => $access->daysLeft(), 'date' => $access->until()->format('d.m.Y')]) }}
+                    @else
+                        {{ trans_choice('The licence ends in :count day (:date). Ask the seller for a new key in time.|The licence ends in :count days (:date). Ask the seller for a new key in time.', $access->daysLeft(), ['count' => $access->daysLeft(), 'date' => $access->until()->format('d.m.Y')]) }}
+                    @endif</span>
                 </div>
-            @elseif (! $license->allowsChanges())
+            @elseif (! $access->allowsChanges())
                 <div class="license-note is-off" role="alert"><x-icon name="lock" :size="18" />
-                    <span>{{ $license->state === 'expired'
-                        ? __('The licence ended on :date: the system is open for viewing only.', ['date' => $license->until->format('d.m.Y')])
-                        : __('No valid licence key: the system is open for viewing only.') }}
-                        {{ __('Enter the new key from the seller under Settings → Plan and licence.') }}</span>
+                    <span>{{ $access->lockedMessage() }}
+                        {{ $access->userEnded() ? __('Ask the administrator to extend it.') : __('Enter the new key from the seller under Settings → Plan and licence.') }}</span>
                 </div>
             @endif
             @if (session('status'))

@@ -2,14 +2,14 @@
 
 namespace App\Http\Middleware;
 
-use App\Support\License;
+use App\Support\Access;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Without a valid licence (it ended, or no key was entered) the panel is
- * open for viewing only: everything can be seen, printed and downloaded,
+ * Without a valid licence (it ended, or no key was entered), or once the
+ * person's own access has ended, the panel is open for viewing only: everything can be seen, printed and downloaded,
  * nothing can be added or changed — except entering a new licence key,
  * one's own password and the security tools.
  */
@@ -20,8 +20,8 @@ class EnsureLicenseAllowsChanges
 
     public function handle(Request $request, Closure $next): Response
     {
-        $license = License::current();
-        if ($license->allowsChanges()) {
+        $access = Access::current();
+        if ($access->allowsChanges()) {
             return $next($request);
         }
 
@@ -31,9 +31,7 @@ class EnsureLicenseAllowsChanges
             return $next($request);
         }
 
-        $message = $license->state === 'expired'
-            ? __('The licence ended on :date: the system is open for viewing only.', ['date' => $license->until->format('d.m.Y')])
-            : __('No valid licence key: the system is open for viewing only.');
+        $message = $access->lockedMessage();
         if ($request->expectsJson()) {
             return response()->json(['message' => $message], 403);
         }

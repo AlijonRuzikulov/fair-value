@@ -1576,3 +1576,4 @@ summary.btn::-webkit-details-marker { display: none; }
 .ai-fill .btn { cursor: pointer; }
 .btn.is-disabled { opacity: .55; pointer-events: none; }
 .ai-fill-note { font-size: 13px; color: var(--muted); }
+.badge-text.is-off { color: var(--danger); font-weight: 600; }

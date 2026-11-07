@@ -166,10 +166,10 @@ final class License
         return $this->allowsChanges() && $this->plan === self::PREMIUM;
     }
 
-    /** Premium features (reading documents with AI) are available in this copy. */
+    /** Premium features (reading documents with AI) are available to the signed-in person (see Access). */
     public static function premium(): bool
     {
-        return self::current()->isPremium();
+        return Access::current()->isPremium();
     }
 
     public function daysLeft(): ?int

@@ -33,6 +33,7 @@ class UserFactory extends Factory
             'position' => 'Baholovchi',
             'certificate_number' => 'BB-'.fake()->numerify('####'),
             'is_active' => true,
+            'premium' => true,
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),

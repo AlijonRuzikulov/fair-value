@@ -9,7 +9,10 @@
                 <thead>
                     <tr>
                         <th>{{ __('Employee') }}</th>
+                        <th>{{ __('Organisation') }}</th>
                         <th>{{ __('Role') }}</th>
+                        <th>{{ __('Plan') }}</th>
+                        <th>{{ __('Access until') }}</th>
                         <th>{{ __('Phone') }}</th>
                         <th>{{ __('Qualification certificate') }}</th>
                         <th>{{ __('Last sign-in') }}</th>
@@ -26,7 +29,19 @@
                                     <div><span class="cell-title">{{ $user->name }}</span><span class="cell-sub">{{ $user->email }}@if ($user->position) · {{ $user->position }}@endif</span></div>
                                 </div>
                             </td>
+                            <td>{{ $user->organization ?? '—' }}</td>
                             <td><span class="badge badge-brand">{{ $user->role->label() }}</span></td>
+                            <td>
+                                @if ($user->role === \App\Enums\UserRole::Admin || $user->premium)<span class="badge badge-success">{{ __('Premium') }}</span>
+                                @else<span class="badge badge-info">{{ __('Standard') }}</span>@endif
+                            </td>
+                            <td class="nowrap">
+                                @if ($user->access_until && $user->role !== \App\Enums\UserRole::Admin)
+                                    <span @class(['badge-text', 'is-off' => $user->access_until->endOfDay()->isPast()])>{{ $user->access_until->format('d.m.Y') }}</span>
+                                @else
+                                    —
+                                @endif
+                            </td>
                             <td class="nowrap">{{ $user->phone ? Format::phone($user->phone) : '—' }}</td>
                             <td>{{ $user->certificate_number ?? '—' }}</td>
                             <td class="nowrap">{{ $user->last_login_at ? Format::datetime($user->last_login_at) : '—' }}</td>

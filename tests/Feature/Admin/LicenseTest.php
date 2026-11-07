@@ -12,6 +12,7 @@ use App\Services\Analogs\ClaudeListingAi;
 use App\Services\Documents\ClaudeDocumentAi;
 use App\Services\Documents\DocumentAi;
 use App\Services\Documents\DocumentData;
+use App\Support\Access;
 use App\Support\License;
 use Database\Seeders\RegionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -140,6 +141,48 @@ class LicenseTest extends TestCase
         $this->get('/admin/vehicles/'.$car->id)->assertOk()->assertSee('Texpasportdan to‘ldirish')->assertSee('Bu imkoniyat Premium tarifda.');
         $this->post('/admin/vehicles/'.$car->id.'/tech-passport', ['files' => [UploadedFile::fake()->image('texpasport.jpg')]])
             ->assertSessionHas('error', 'Bu imkoniyat Premium tarifda.');
+    }
+
+    public function test_each_person_gets_premium_by_a_tick_and_works_until_their_own_day(): void
+    {
+        config(['services.anthropic.key' => 'test-key']);
+        $this->actingAs($this->admin)->withSession(['locale' => 'uz']);
+
+        // The administrator gives a bank employee Standard until a day, a valuer Premium.
+        $this->get('/admin/users/create')->assertOk()
+            ->assertSee('<title>Yangi foydalanuvchi', false)
+            ->assertSeeInOrder(['Tashkilot', 'Kirish huquqi', 'Premium', 'Amal qilish muddati']);
+        $form = ['email' => 'bank@xalqbank.uz', 'name' => 'Karimov Anvar', 'organization' => 'Xalq banki', 'role' => 'operator',
+            'is_active' => '1', 'premium' => '0', 'access_until' => now()->addDays(10)->toDateString(),
+            'password' => 'Parol12345abc', 'password_confirmation' => 'Parol12345abc'];
+        $this->post('/admin/users', $form)->assertRedirect('/admin/users');
+        $this->post('/admin/users', ['email' => 'baho@ishonch.uz', 'name' => 'Toshmatov Ali', 'organization' => 'Ishonch Baho MChJ', 'premium' => '1'] + $form)->assertRedirect('/admin/users');
+        $bank = User::where('email', 'bank@xalqbank.uz')->sole();
+        $valuer = User::where('email', 'baho@ishonch.uz')->sole();
+        $this->assertSame([false, true], [$bank->premium, $valuer->premium]);
+        $this->get('/admin/users')->assertOk()->assertSee('Foydalanuvchilar')
+            ->assertSeeInOrder(['Karimov Anvar', 'Xalq banki', 'Oddiy', now()->addDays(10)->format('d.m.Y')]);
+
+        // Each sees their own plan and day; only the ticked one reads documents with AI.
+        // (A new session for each person: the panel signs out a session that belonged to someone else.)
+        $this->flushSession();
+        $this->actingAs($bank)->withSession(['locale' => 'uz'])->get('/admin/assets')->assertOk()
+            ->assertSee('Oddiy')->assertSee(now()->addDays(10)->format('d.m.Y').' gacha')
+            ->assertSee('Foydalanish muddatingiz tugashiga 10 kun qoldi');
+        $this->assertFalse(app(ClaudeDocumentAi::class)->available());
+        $this->actingAs($valuer);
+        $this->assertTrue(app(ClaudeDocumentAi::class)->available());
+
+        // After their day the person can only look; the others go on working.
+        $bank->update(['access_until' => now()->subDay()->toDateString()]);
+        $this->flushSession();
+        $this->actingAs($bank->refresh())->withSession(['locale' => 'uz'])->get('/admin/assets')->assertOk()->assertSee('Sizning foydalanish muddatingiz');
+        $this->from('/admin/assets')->post('/admin/assets', ['name' => 'Stanok'])->assertRedirect('/admin/assets')->assertSessionHas('error');
+        $this->assertTrue(Access::for($valuer)->allowsChanges());
+
+        // The plan of the copy still limits everybody.
+        $this->license(License::STANDARD, now()->addYear()->toDateString());
+        $this->assertFalse(Access::for($valuer)->isPremium());
     }
 
     public function test_a_vehicle_is_filled_in_from_its_registration_certificate(): void
