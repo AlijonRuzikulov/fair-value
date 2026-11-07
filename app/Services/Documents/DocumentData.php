@@ -24,6 +24,11 @@ final class DocumentData
         'passport_issued_by', 'passport_issued_at', 'address',
     ];
 
+    /** Text fields read from a vehicle's registration certificate. */
+    public const VEHICLE_TEXT = [
+        'brand', 'model', 'color', 'plate_number', 'vin', 'engine_number', 'chassis_number', 'body_type', 'fuel_type', 'tech_passport', 'owner_name',
+    ];
+
     /** Longest side of an image sent to the AI; larger photos are scaled down. */
     private const MAX_SIDE = 2000;
 
@@ -163,7 +168,44 @@ final class DocumentData
             }
         }
 
-        return ['documents' => $documents, 'person' => $person, 'property' => $property, 'notes' => $text($data['notes'] ?? null, 1000)];
+        return ['documents' => $documents, 'person' => $person, 'property' => $property, 'vehicle' => self::vehicle((array) ($data['vehicle'] ?? []), $text), 'notes' => $text($data['notes'] ?? null, 1000)];
+    }
+
+    /**
+     * The vehicle's data as the vehicle form takes it: the make and model in
+     * capitals as usual, numbers without spaces, the engine in litres, the fuel
+     * as one of the kinds of the form.
+     */
+    private static function vehicle(array $v, \Closure $text): array
+    {
+        $vehicle = [];
+        foreach (self::VEHICLE_TEXT as $key) {
+            $vehicle[$key] = $text($v[$key] ?? null, 80);
+        }
+        foreach (['plate_number', 'vin', 'engine_number', 'chassis_number'] as $key) {
+            $vehicle[$key] = $vehicle[$key] !== null ? mb_strtoupper(str_replace([' ', '-'], '', $vehicle[$key])) : null;
+        }
+        $vehicle['brand'] = $vehicle['brand'] !== null ? mb_convert_case(mb_strtolower($vehicle['brand']), MB_CASE_TITLE) : null;
+        $year = is_numeric($v['year_made'] ?? null) ? (int) $v['year_made'] : null;
+        $vehicle['year_made'] = $year && $year >= 1950 && $year <= (int) date('Y') + 1 ? $year : null;
+        // Printed in cubic centimetres (1485); the form takes litres (1.5).
+        $volume = is_numeric($v['engine_volume'] ?? null) ? (float) $v['engine_volume'] : null;
+        $volume = $volume !== null && $volume > 50 ? $volume / 1000 : $volume;
+        $vehicle['engine_volume'] = $volume !== null && $volume > 0 && $volume < 20 ? round($volume, 1) : null;
+        $fuel = mb_strtolower((string) $vehicle['fuel_type']);
+        $vehicle['fuel_type'] = match (true) {
+            $fuel === '' => null,
+            (bool) preg_match('/elektr|электр/u', $fuel) && (bool) preg_match('/benzin|бензин|gibrid|гибрид|hybrid/u', $fuel) => 'hybrid',
+            (bool) preg_match('/gibrid|гибрид|hybrid/u', $fuel) => 'hybrid',
+            (bool) preg_match('/elektr|электр|electric/u', $fuel) => 'electric',
+            (bool) preg_match('/dizel|дизел|diesel/u', $fuel) => 'diesel',
+            (bool) preg_match('/metan|метан|cng/u', $fuel) => 'methane',
+            (bool) preg_match('/propan|пропан|lpg|gaz|газ/u', $fuel) => 'propane',
+            (bool) preg_match('/benzin|бензин|petrol|gasoline/u', $fuel) => 'petrol',
+            default => null,
+        };
+
+        return $vehicle;
     }
 
     /** The region and district named in a document, found in the directory. */

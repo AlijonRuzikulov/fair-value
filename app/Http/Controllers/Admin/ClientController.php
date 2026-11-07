@@ -12,6 +12,7 @@ use App\Services\Documents\DocumentData;
 use App\Support\AdminTheme;
 use App\Support\CsvExport;
 use App\Support\Format;
+use App\Support\License;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -81,7 +82,7 @@ class ClientController extends Controller
         ], [], ['files' => __('Photo of the passport')]);
 
         if (! $ai->available()) {
-            return back()->with('error', __('Reading documents needs an AI key (ANTHROPIC_API_KEY in .env).'));
+            return back()->with('error', License::premium() ? __('Reading documents needs an AI key (ANTHROPIC_API_KEY in .env).') : License::premiumOnly());
         }
 
         set_time_limit(120);

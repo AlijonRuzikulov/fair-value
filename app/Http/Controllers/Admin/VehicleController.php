@@ -2,16 +2,25 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\DocumentKind;
 use App\Enums\FuelType;
 use App\Enums\ValuationPurpose;
+use App\Models\Activity;
+use App\Models\Attachment;
 use App\Models\Vehicle;
 use App\Reports\RealEstateReport;
+use App\Services\Documents\DocumentAi;
+use App\Services\Documents\DocumentData;
 use App\Support\AdminTheme;
 use App\Support\Format;
+use App\Support\License;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\HtmlString;
 use Illuminate\Validation\Rule;
+use Throwable;
 
 /**
  * "Автотранспорт"
@@ -62,6 +71,54 @@ class VehicleController extends ValuationController
     public function portalDocumentsTitle(): string
     {
         return __('Documents submitted for the valuation of the vehicle');
+    }
+
+    /** Fields of the vehicle form filled in from its registration certificate. */
+    private const CERTIFICATE_FIELDS = [
+        'brand', 'model', 'year_made', 'color', 'plate_number', 'vin', 'engine_number', 'chassis_number',
+        'tech_passport', 'body_type', 'engine_volume', 'fuel_type',
+    ];
+
+    /**
+     * Premium: the registration certificate (texpasport) is read from its
+     * photos and the vehicle's page opens with its fields filled in; nothing
+     * changes until the appraiser checks them and saves. The photos are kept
+     * with the vehicle's documents.
+     */
+    public function techPassport(Request $request, string $id, DocumentAi $ai): RedirectResponse
+    {
+        $item = $this->find($id);
+        Gate::authorize('edit-valuation', $item);
+        $request->validate([
+            'files' => ['required', 'array', 'min:1', 'max:2'],
+            'files.*' => ['file', 'max:10240', 'mimes:jpg,jpeg,png,webp,pdf'],
+        ], [], ['files' => __('Photo of the registration certificate')]);
+        $back = route($this->routeName('show'), $item->id).'#object-data';
+
+        if (! $ai->available()) {
+            return redirect()->to($back)->with('error', License::premium() ? __('Reading documents needs an AI key (ANTHROPIC_API_KEY in .env).') : License::premiumOnly());
+        }
+
+        set_time_limit(120);
+        try {
+            $read = $ai->read(DocumentData::uploads($request->file('files')))['vehicle'] ?? [];
+        } catch (Throwable $e) {
+            report($e);
+
+            return redirect()->to($back)->with('error', __('The documents could not be read: :reason', ['reason' => mb_substr($e->getMessage(), 0, 200)]));
+        }
+
+        foreach ($request->file('files') as $file) {
+            Attachment::keep($item, $file, DocumentKind::TechnicalPassport->value, $request->user()->id);
+        }
+        $fields = array_filter(array_intersect_key((array) $read, array_flip(self::CERTIFICATE_FIELDS)), fn ($value) => $value !== null && $value !== '');
+        Activity::record('documents_read', $item, ['files' => array_map(fn ($file) => $file->getClientOriginalName(), $request->file('files')), 'fields' => array_keys($fields)]);
+
+        if ($fields === []) {
+            return redirect()->to($back)->with('error', __('Nothing was read from the photo. Take a clearer photo of the registration certificate.'));
+        }
+
+        return redirect()->to($back)->withInput($fields)->with('status', __('The registration certificate has been read: check the data and save.'));
     }
 
     protected function newItem(Request $request): Model

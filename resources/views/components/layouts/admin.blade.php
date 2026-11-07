@@ -82,6 +82,19 @@
             </div>
 
             <div class="topbar-tools">
+                {{-- The plan and the end of the licence, always in sight (not in the seller's own copy). --}}
+                @php $license = \App\Support\License::current(); @endphp
+                @if ($license->state !== 'seller')
+                    <a @class(['tool-btn', 'license-chip', 'is-premium' => $license->isPremium(), 'is-soon' => $license->endsSoon(), 'is-off' => ! $license->allowsChanges()])
+                       href="{{ $user->can('admin') ? route('admin.settings.edit').'#license' : '#' }}"
+                       title="{{ $license->company }}">
+                        @if ($license->until)
+                            <strong>{{ $license->planLabel() }}</strong> <span class="hide-sm">· {{ __('until :date', ['date' => $license->until->format('d.m.Y')]) }}</span>
+                        @else
+                            <strong>{{ __('No licence') }}</strong>
+                        @endif
+                    </a>
+                @endif
                 @if ($usd)
                     <details class="dropdown currency">
                         <summary class="tool-btn" title="{{ __('Central Bank rate on :date', ['date' => $usd->rate_date->format('d.m.Y')]) }}">
@@ -134,6 +147,18 @@
         </header>
 
         <main class="content">
+            @if ($license->endsSoon())
+                <div class="license-note is-soon" role="status"><x-icon name="clock" :size="18" />
+                    <span>{{ trans_choice('The licence ends in :count day (:date). Ask the seller for a new key in time.|The licence ends in :count days (:date). Ask the seller for a new key in time.', $license->daysLeft(), ['count' => $license->daysLeft(), 'date' => $license->until->format('d.m.Y')]) }}</span>
+                </div>
+            @elseif (! $license->allowsChanges())
+                <div class="license-note is-off" role="alert"><x-icon name="lock" :size="18" />
+                    <span>{{ $license->state === 'expired'
+                        ? __('The licence ended on :date: the system is open for viewing only.', ['date' => $license->until->format('d.m.Y')])
+                        : __('No valid licence key: the system is open for viewing only.') }}
+                        {{ __('Enter the new key from the seller under Settings → Plan and licence.') }}</span>
+                </div>
+            @endif
             @if (session('status'))
                 <div class="toast toast-success" role="status" data-toast><x-icon name="circle-check" :size="18" /> {{ session('status') }}</div>
             @endif

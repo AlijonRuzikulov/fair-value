@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureLicenseAllowsChanges;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetLocale;
@@ -20,7 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Outside local development only the APP_URL domain is answered.
         $middleware->trustHosts();
         $middleware->web(append: [SetLocale::class]);
-        $middleware->alias(['active' => EnsureUserIsActive::class]);
+        $middleware->alias(['active' => EnsureUserIsActive::class, 'license' => EnsureLicenseAllowsChanges::class]);
         $middleware->redirectUsersTo(fn () => route('admin.dashboard'));
     })
     ->withExceptions(function (Exceptions $exceptions): void {

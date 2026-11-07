@@ -44,7 +44,8 @@ Route::post('/logout', [LoginController::class, 'logout'])->middleware('auth')->
 */
 
 // auth.session signs out other devices when a password is changed.
-Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'active'])->group(function () {
+// "license": after the licence ends the panel is open for viewing only.
+Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'active', 'license'])->group(function () {
     Route::get('/', Admin\DashboardController::class)->name('dashboard');
 
     // Clients
@@ -69,6 +70,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
         Route::post("{$uri}/{id}/workflow", [$controller, 'workflow'])->whereNumber('id')->name("{$uri}.workflow");
         Route::resource($uri, $controller)->parameters([$uri => 'id']);
     }
+
+    // Premium: a vehicle's fields from the photo of its registration certificate.
+    Route::post('vehicles/{id}/tech-passport', [Admin\VehicleController::class, 'techPassport'])->whereNumber('id')->middleware('throttle:10,1')->name('vehicles.tech-passport');
 
     // Damage catalogues
     $catalogs = [
@@ -154,6 +158,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
         Route::post('settings/currency', [Admin\SettingController::class, 'refreshRates'])->name('settings.currency');
         Route::post('settings/documents', [Admin\SettingController::class, 'storeDocuments'])->name('settings.documents.store');
         Route::delete('settings/documents/{index}', [Admin\SettingController::class, 'destroyDocument'])->whereNumber('index')->name('settings.documents.destroy');
+        Route::put('settings/license', [Admin\SettingController::class, 'license'])->middleware('throttle:10,1')->name('settings.license');
+        Route::post('settings/license/issue', [Admin\SettingController::class, 'issueLicense'])->middleware('throttle:30,1')->name('settings.license.issue');
         Route::get('report-texts', [Admin\ReportTextController::class, 'edit'])->name('report-texts.edit');
         Route::put('report-texts', [Admin\ReportTextController::class, 'update'])->name('report-texts.update');
         Route::get('activity', [Admin\ActivityController::class, 'index'])->name('activity.index');

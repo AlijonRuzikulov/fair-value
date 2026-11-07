@@ -4,6 +4,7 @@ namespace App\Services\Analogs;
 
 use Anthropic\Client;
 use App\Enums\RealEstateFeature;
+use App\Support\License;
 use RuntimeException;
 
 /**
@@ -40,9 +41,10 @@ class ClaudeListingAi implements ListingAi
 
     public function __construct(private ?Client $client = null) {}
 
+    /** With an AI key, and only in the Premium plan. */
     public function available(): bool
     {
-        return $this->client !== null || filled(config('services.anthropic.key'));
+        return License::premium() && ($this->client !== null || filled(config('services.anthropic.key')));
     }
 
     public function extract(string $digest): array

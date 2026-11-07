@@ -427,7 +427,12 @@
   // A select (or a file field) that sends its form as soon as it is changed.
   $$('[data-submit-on-change]').forEach(function (input) {
     input.addEventListener('change', function () {
-      if (input.form && (input.type !== 'file' || input.files.length)) input.form.submit();
+      if (input.form && (input.type !== 'file' || input.files.length)) {
+        // A long reading: its label says so.
+        var target = input.dataset.busyText && input.closest('label') && input.closest('label').querySelector('[data-busy-target]');
+        if (target) target.textContent = input.dataset.busyText;
+        input.form.submit();
+      }
     });
   });
 
@@ -924,6 +929,11 @@
         navigator.clipboard.writeText(link.href);
       }
     });
+  });
+
+  // A generated key is selected at once, ready to copy.
+  $$('[data-select-all]').forEach(function (box) {
+    box.addEventListener('focus', function () { box.select(); });
   });
 
   // The contract sum with VAT, while it is typed.

@@ -3,6 +3,7 @@
 namespace App\Services\Documents;
 
 use Anthropic\Client;
+use App\Support\License;
 use RuntimeException;
 
 /**
@@ -18,7 +19,8 @@ class ClaudeDocumentAi implements DocumentAi
         You read documents for a licensed real-estate appraiser in Uzbekistan. The files are scans or phone photos of:
         - an ID card or biometric passport of the Republic of Uzbekistan (front and back; the back has the personal number, PINFL, 14 digits);
         - an extract from the state register of rights to real estate ("Davlat Reyestridan KO'CHIRMA", issued by the Cadastre Agency);
-        - a technical (cadastral) passport, a purchase or gift contract, or another document.
+        - a technical (cadastral) passport, a purchase or gift contract, or another document;
+        - the registration certificate of a vehicle ("Transport vositasini qayd etish guvohnomasi", the "texpasport"), front and back.
         Copy every value exactly as the document shows it. Use null for anything that is not visible or not readable. Never guess.
         person: the owner of the property / the holder of the ID document. Names in Latin letters as printed on the ID card
         (last_name = surname, first_name = given name, middle_name = patronymic). Dates as YYYY-MM-DD.
@@ -28,14 +30,19 @@ class ClaudeDocumentAi implements DocumentAi
         region and district separately (e.g. "Toshkent viloyati", "Chirchiq shahri"). Areas in square metres as numbers; built_up_area is the area under the building ("qurilish osti maydoni").
         rights_basis: the document that establishes the right, as written (e.g. "notarial idoraning 27.10.2025 yildagi ... son oldi-sotdi shartnomasi").
         encumbrances: mortgage, arrest or other restrictions as written, or null if the field is empty.
-        documents: for every file (numbered from 0 in the order given) say what it is.
+        vehicle: from the registration certificate only, otherwise all null. brand and model separately (e.g. "Chevrolet", "Cobalt");
+        year_made as a number; plate_number as printed without spaces (e.g. "01A123BC"); vin is the body (VIN) number;
+        engine_volume in cubic centimetres as printed (e.g. 1485); fuel_type as printed; tech_passport is the series and number of the certificate (e.g. "AAF 1234567");
+        owner_name as printed.
+        documents: for every file (numbered from 0 in the order given) say what it is (technical_passport also for a vehicle's registration certificate).
         TXT;
 
     public function __construct(private ?Client $client = null) {}
 
+    /** With an AI key, and only in the Premium plan. */
     public function available(): bool
     {
-        return config('fairvalue.ai.documents') && ($this->client !== null || filled(config('services.anthropic.key')));
+        return License::premium() && config('fairvalue.ai.documents') && ($this->client !== null || filled(config('services.anthropic.key')));
     }
 
     public function read(array $files): array
@@ -110,6 +117,11 @@ class ClaudeDocumentAi implements DocumentAi
                 ...$strings(['cadastral_number', 'object_type', 'name', 'address', 'region', 'district', 'owner_name', 'share', 'rights_type', 'registration_date', 'rights_basis', 'encumbrances']),
                 ...array_fill_keys(['total_area', 'living_area', 'useful_area', 'land_area', 'built_up_area'], $nullable('number')),
                 ...array_fill_keys(['floors_total', 'floor', 'rooms', 'year_built'], $nullable('integer')),
+            ]),
+            'vehicle' => $object([
+                ...$strings(DocumentData::VEHICLE_TEXT),
+                'year_made' => $nullable('integer'),
+                'engine_volume' => $nullable('number'),
             ]),
             'notes' => $nullable('string'),
         ]);

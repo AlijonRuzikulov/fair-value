@@ -49,6 +49,11 @@
                 @includeIf('admin.'.$slug.'._portal-more')
             </form>
 
+            {{-- Forms the page needs outside its own (a form cannot hold another). --}}
+            @if ($exists)
+                @includeIf('admin.'.$slug.'._portal-forms')
+            @endif
+
             @foreach ($deletable as $file)
                 <form method="post" action="{{ route('admin.attachments.destroy', $file) }}" id="delete-file-{{ $file->id }}" data-confirm="{{ __('Delete this file?') }}" hidden>
                     @csrf @method('delete')

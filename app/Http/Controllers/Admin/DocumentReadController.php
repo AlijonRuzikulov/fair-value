@@ -10,6 +10,7 @@ use App\Models\Client;
 use App\Models\RealEstate;
 use App\Services\Documents\DocumentAi;
 use App\Services\Documents\DocumentData;
+use App\Support\License;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -35,7 +36,7 @@ class DocumentReadController extends Controller
         $data = $request->validate(['files' => ['required', 'array', 'min:1', 'max:6'], 'files.*' => ['integer']], [], ['files' => __('Documents')]);
 
         if (! $this->ai->available()) {
-            return back()->with('error', __('Reading documents needs an AI key (ANTHROPIC_API_KEY in .env).'));
+            return back()->with('error', License::premium() ? __('Reading documents needs an AI key (ANTHROPIC_API_KEY in .env).') : License::premiumOnly());
         }
 
         $attachments = $item->attachments()->whereIn('id', $data['files'])
