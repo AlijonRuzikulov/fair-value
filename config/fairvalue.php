@@ -120,6 +120,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | A temporary link to this computer
+    |--------------------------------------------------------------------------
+    |
+    | "php artisan share" (LINK-OCHISH.bat on Windows) opens the system that
+    | runs on this computer to the internet through a Cloudflare quick tunnel.
+    | cloudflared is looked for beside the system and on the PATH, and
+    | downloaded once when it is not found; CLOUDFLARED_PATH points to it.
+    |
+    */
+
+    'share' => [
+        'cloudflared' => env('CLOUDFLARED_PATH'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Analogues for the comparative approach
     |--------------------------------------------------------------------------
     |

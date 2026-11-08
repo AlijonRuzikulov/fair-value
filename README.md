@@ -512,6 +512,19 @@ ogohlantirish chiqadi, tugagach u odam faqat ko‘ra oladi. Tizim egasining admi
 Sun’iy intellekt imkoniyatlari (pasport rasmidan mijozni, kadastr hujjatlaridan ko‘chmas mulkni, texpasport rasmidan
 avtomobilni to‘ldirish, qiyosiy yondashuv uchun analoglarni topish) hamma uchun ochiq — faqat `ANTHROPIC_API_KEY` kerak.
 
+## Vaqtincha havola (o‘z kompyuteringizdan)
+
+Tizim kompyuteringizda ishlab turganda uni boshqa odamga havola orqali ochish mumkin:
+
+```bash
+php artisan share            # Windows paketida: LINK-OCHISH.bat
+```
+
+Cloudflare orqali `https://….trycloudflare.com` havolasi ochiladi (bepul, ro‘yxatdan o‘tmasdan; `cloudflared`
+birinchi marta o‘zi yuklanadi). Havola kompyuter yoniq va oyna ochiq turganda ishlaydi, har safar yangi bo‘ladi.
+Boshlang‘ich parol (`ADMIN_PASSWORD`) bilan kiradigan hisob bor ekan, havola ochilmaydi. Doimiy havola uchun
+server kerak (yuqoridagi “Serverga joylash” bo‘limi).
+
 ## Tashkilotlar (alohida ish stoli)
 
 Bitta nusxada bir nechta bank yoki baholash kompaniyasi ishlashi mumkin. Admin panel → **Tashkilotlar**da
