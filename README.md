@@ -503,23 +503,14 @@ Saytdan har bir yangi ariza shu guruhga keladi.
 
 ---
 
-## Litsenziya
+## Foydalanish muddati
 
-Har bir kompaniyaga tizimning alohida nusxasi beriladi va unga sotuvchidan **litsenziya kaliti** kerak.
-Kalitda kompaniya nomi va amal qilish muddati yozilgan, u imzolangan — kompaniya sanani o‘zgartira olmaydi.
+Tizim litsenziya kalitisiz ishlaydi. Har bir foydalanuvchiga, xohlasangiz, oxirgi kun qo‘yiladi
+(**Foydalanuvchilar → Amal qilish muddati**): panelning yuqorisida u doim ko‘rinib turadi, tugashiga 30 kun qolganda
+ogohlantirish chiqadi, tugagach u odam faqat ko‘ra oladi. Tizim egasining administratoriga muddat qo‘yilmaydi.
 
-- Panelning yuqorisida muddat doim ko‘rinib turadi; muddat tugashiga 30 kun qolganda ogohlantirish chiqadi.
-  Har bir foydalanuvchiga ham alohida muddat qo‘yish mumkin (**Foydalanuvchilar → Amal qilish muddati**).
-- Muddat tugasa (yoki kalit kiritilmagan bo‘lsa) tizim **faqat ko‘rish** rejimida ishlaydi: ma’lumotlar, hisobotlar,
-  chop etish ochiladi, yangi narsa qo‘shib yoki o‘zgartirib bo‘lmaydi.
-- Yangi kalit **Sozlamalar → Litsenziya** bo‘limiga kiritiladi (yoki `.env` dagi `LICENSE_KEY` ga).
-- Sun’iy intellekt imkoniyatlari hamma uchun ochiq: pasport rasmidan mijozni, kadastr hujjatlaridan
-  ko‘chmas mulkni, texpasport rasmidan avtomobilni to‘ldirish va qiyosiy yondashuv uchun analoglarni avtomatik topish
-  (`ANTHROPIC_API_KEY` ham kerak).
-
-**Sotuvchining nusxasi:** `.env` ga `LICENSE_SECRET_KEY` (maxfiy kalit) yozilgan nusxa doim to‘liq ishlaydi va
-Sozlamalar sahifasida kompaniyalar uchun kalit yaratadi (kompaniya nomi, muddat → **Kalit yaratish**).
-Maxfiy kalitni hech qachon kompaniyaga bermang va repozitoriyga yozmang.
+Sun’iy intellekt imkoniyatlari (pasport rasmidan mijozni, kadastr hujjatlaridan ko‘chmas mulkni, texpasport rasmidan
+avtomobilni to‘ldirish, qiyosiy yondashuv uchun analoglarni topish) hamma uchun ochiq — faqat `ANTHROPIC_API_KEY` kerak.
 
 ## Tashkilotlar (alohida ish stoli)
 

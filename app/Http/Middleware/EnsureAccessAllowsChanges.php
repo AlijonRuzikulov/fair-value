@@ -8,15 +8,14 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
- * Without a valid licence (it ended, or no key was entered), or once the
- * person's own access has ended, the panel is open for viewing only: everything can be seen, printed and downloaded,
- * nothing can be added or changed — except entering a new licence key,
- * one's own password and the security tools.
+ * Once the person's access has ended (the day on their account), the panel
+ * is open to them for viewing only: everything can be seen, printed and
+ * downloaded, nothing can be added or changed — except their own password.
  */
-class EnsureLicenseAllowsChanges
+class EnsureAccessAllowsChanges
 {
-    /** Routes that work without a licence. */
-    private const ALWAYS = ['admin.settings.license', 'admin.profile.update', 'admin.activity.verify', 'admin.system.sessions.destroy'];
+    /** Routes that work after the end. */
+    private const ALWAYS = ['admin.profile.update'];
 
     public function handle(Request $request, Closure $next): Response
     {

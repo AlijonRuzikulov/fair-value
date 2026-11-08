@@ -2,9 +2,6 @@
 
 namespace Tests\Feature\Admin;
 
-use App\Enums\ValuationStatus;
-use App\Models\Activity;
-use App\Models\Asset;
 use App\Models\Client;
 use App\Models\Organization;
 use App\Models\User;
@@ -14,7 +11,6 @@ use App\Services\Documents\ClaudeDocumentAi;
 use App\Services\Documents\DocumentAi;
 use App\Services\Documents\DocumentData;
 use App\Support\Access;
-use App\Support\License;
 use Database\Seeders\RegionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -22,11 +18,11 @@ use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
- * Every company's copy works on a licence key from the seller: its end is
- * always in sight and after the end the panel is for viewing only. Reading
- * documents with AI is open to everyone who works on a licence.
+ * The system needs no licence key: it always works. The people it is given
+ * to may get a last day on their account, after which they can only look.
+ * Reading documents with AI is open to everyone.
  */
-class LicenseTest extends TestCase
+class AccessTest extends TestCase
 {
     use RefreshDatabase;
 
@@ -39,95 +35,18 @@ class LicenseTest extends TestCase
         $this->admin = User::factory()->admin()->create();
     }
 
-    public function test_the_end_of_the_licence_is_in_sight(): void
+    public function test_the_system_works_without_any_licence_key(): void
     {
-        $this->license(now()->addDays(200)->toDateString());
         $this->actingAs($this->admin)->withSession(['locale' => 'uz'])->get('/admin/assets')->assertOk()
-            ->assertSee('license-chip', false)->assertSee(now()->addDays(200)->format('d.m.Y').' gacha')
-            ->assertDontSee('Premium')->assertDontSee('license-note', false);
-
-        // A month before the end a warning appears.
-        $this->license(now()->addDays(12)->toDateString());
-        $this->get('/admin/assets')->assertOk()
-            ->assertSee('license-chip is-soon', false)
-            ->assertSee('Litsenziya muddati tugashiga 12 kun qoldi');
-        $this->get('/admin/settings')->assertOk()->assertDontSee('Premium')
-            ->assertSeeInOrder(['Litsenziya', 'Kompaniya', 'Sinov MChJ', 'Amal qilish muddati', 'Holati', '12 kun qoldi', 'Yangi litsenziya kaliti']);
+            ->assertDontSee('license-chip', false)->assertDontSee('license-note', false);
+        $this->get('/admin/clients/create?type=individual')->assertOk();
+        $this->post('/admin/clients', ['type' => 'individual', 'last_name' => 'Sinov', 'first_name' => 'Mijoz', 'phone' => '+998901234567'])->assertRedirect();
+        $this->assertSame(1, Client::count());
+        $this->get('/admin/settings')->assertOk()->assertDontSee('litsenziya kaliti');
+        $this->put('/admin/settings/license', ['license_key' => 'FV1.x.y'])->assertNotFound();
     }
 
-    public function test_after_the_end_the_panel_is_for_viewing_only(): void
-    {
-        $asset = Asset::factory()->create(['name' => 'Stanok', 'status' => ValuationStatus::New]);
-        $this->license(now()->subDay()->toDateString());
-        $this->actingAs($this->admin)->withSession(['locale' => 'uz']);
-
-        // Everything can be seen and printed.
-        $this->get('/admin/assets')->assertOk()->assertSee('Stanok')
-            ->assertSee('license-chip is-off', false)->assertSee('Litsenziya muddati '.now()->subDay()->format('d.m.Y').' da tugagan');
-        $this->get('/admin/assets/'.$asset->id)->assertOk();
-        $this->get('/admin/assets/'.$asset->id.'/contract')->assertOk();
-
-        // Nothing can be added or changed, and the forms do not open.
-        $this->from('/admin/assets')->post('/admin/assets', ['name' => 'Yangi'])->assertRedirect('/admin/assets')->assertSessionHas('error');
-        $this->from('/admin/assets/'.$asset->id)->put('/admin/assets/'.$asset->id, ['name' => 'O‘zgardi'])->assertRedirect('/admin/assets/'.$asset->id);
-        $this->from('/admin/clients?type=individual')->get('/admin/clients/create?type=individual')->assertRedirect('/admin/clients?type=individual');
-        $this->delete('/admin/assets/'.$asset->id)->assertRedirect();
-        $this->assertSame('Stanok', $asset->refresh()->name);
-        $this->assertSame(1, Asset::count());
-        $this->assertSame(0, Client::count());
-        $this->postJson('/admin/assets', [])->assertForbidden();
-
-        // A new key from the seller opens it again.
-        $key = $this->license(now()->addYear()->toDateString(), 'Baholash Servis MChJ');
-        $this->license(now()->subDay()->toDateString());
-        $this->put('/admin/settings/license', ['license_key' => $key])->assertRedirect()
-            ->assertSessionHas('status', 'Litsenziya saqlandi: '.now()->addYear()->format('d.m.Y').' gacha amal qiladi.');
-        $this->get('/admin/settings')->assertSee('Baholash Servis MChJ')->assertDontSee('license-note', false);
-        $this->assertTrue(License::current()->allowsChanges());
-        $this->assertSame('Baholash Servis MChJ', Activity::where('event', 'license')->sole()->changes['company']);
-    }
-
-    public function test_without_a_key_or_with_a_changed_one_nothing_can_be_changed(): void
-    {
-        $this->license(null);
-        $this->actingAs($this->admin)->withSession(['locale' => 'uz'])->get('/admin/assets')->assertOk()
-            ->assertSee('Litsenziya yo‘q')->assertSee('Amaldagi litsenziya kaliti yo‘q');
-        $this->post('/admin/assets', ['name' => 'Yangi'])->assertSessionHas('error');
-
-        // A key with a later date written into it is refused: its signature no longer matches.
-        $key = $this->license(now()->addMonth()->toDateString());
-        [$prefix, $payload, $signature] = explode('.', $key);
-        $data = json_decode(base64_decode(strtr($payload, '-_', '+/')), true);
-        $data['u'] = '2099-12-31';
-        $forged = $prefix.'.'.rtrim(strtr(base64_encode(json_encode($data)), '+/', '-_'), '=').'.'.$signature;
-        $this->assertNull(License::verify($forged));
-        $this->assertNotNull(License::verify($key));
-
-        $this->license(null);
-        $this->put('/admin/settings/license', ['license_key' => $forged])->assertSessionHasErrors('license_key');
-        $this->assertFalse(License::current()->allowsChanges());
-    }
-
-    public function test_the_seller_issues_keys_and_companies_cannot(): void
-    {
-        $this->actingAs($this->admin)->withSession(['locale' => 'uz']);
-        $this->post('/admin/settings/license/issue', ['company' => 'X', 'until' => now()->addYear()->toDateString()])->assertForbidden();
-
-        $this->sellerCopy();
-        $this->get('/admin/assets')->assertOk()->assertDontSee('license-chip', false);
-        $this->get('/admin/settings')->assertOk()->assertSee('Sotuvchining nusxasi')->assertSee('Kompaniya uchun kalit');
-        $until = now()->addMonths(6)->toDateString();
-        $this->post('/admin/settings/license/issue', ['company' => 'Ishonch Baho MChJ', 'until' => $until])
-            ->assertRedirect()->assertSessionHas('issued_license');
-
-        $payload = License::verify(session('issued_license'));
-        $this->assertSame(['Ishonch Baho MChJ', $until], [$payload['c'], $payload['u']]);
-        // Copies not yet updated, which still look at a plan, read the new keys as opening everything.
-        $this->assertSame('premium', $payload['p']);
-        $this->get('/admin/settings')->assertSee(session('issued_license'));
-    }
-
-    public function test_everyone_who_works_on_a_licence_reads_documents_with_ai(): void
+    public function test_everyone_reads_documents_with_ai(): void
     {
         // A person of an organisation, with no tick of any kind, as the administrator.
         config(['services.anthropic.key' => 'test-key']);
@@ -181,10 +100,7 @@ class LicenseTest extends TestCase
         $this->actingAs($bank->refresh())->withSession(['locale' => 'uz'])->get('/admin/assets')->assertOk()->assertSee('Sizning foydalanish muddatingiz');
         $this->from('/admin/assets')->post('/admin/assets', ['name' => 'Stanok'])->assertRedirect('/admin/assets')->assertSessionHas('error');
         $this->assertTrue(Access::for($valuer)->allowsChanges());
-
-        // The end of the licence of the copy still limits everybody.
-        $this->license(now()->subDay()->toDateString());
-        $this->assertFalse(Access::for($valuer)->allowsChanges());
+        $this->assertTrue(Access::for($this->admin)->allowsChanges());
     }
 
     public function test_a_vehicle_is_filled_in_from_its_registration_certificate(): void

@@ -9,9 +9,7 @@ use App\Reports\RealEstateReport;
 use App\Reports\ReportScript;
 use App\Services\CurrencyService;
 use App\Support\DocumentNumber;
-use App\Support\License;
 use App\Support\NumberInput;
-use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -133,38 +131,6 @@ class SettingController extends Controller
         Activity::record('file_deleted', null, ['file' => $document['name']], 'Company documents');
 
         return back()->with('status', __('File deleted.'));
-    }
-
-    /** A new licence key from the seller: checked before it is kept. */
-    public function license(Request $request): RedirectResponse
-    {
-        $data = $request->validate(['license_key' => ['required', 'string', 'max:2000']], [], ['license_key' => __('Licence key')]);
-        $payload = License::verify($data['license_key']);
-        if ($payload === null) {
-            return back()->withInput()->withErrors(['license_key' => __('The key is not valid: copy it exactly as the seller sent it.')]);
-        }
-
-        Setting::put(['license_key' => trim($data['license_key'])]);
-        License::refresh();
-        $license = License::current();
-        Activity::record('license', null, ['company' => $payload['c'], 'until' => $payload['u']], 'Licence');
-
-        return back()->with('status', __('Licence saved: valid until :date.', ['date' => $license->until->format('d.m.Y')]));
-    }
-
-    /** In the seller's copy only: a key for a company, to copy and send. */
-    public function issueLicense(Request $request): RedirectResponse
-    {
-        abort_unless(License::isSeller(), 403);
-        $data = $request->validate([
-            'company' => ['required', 'string', 'max:150'],
-            'until' => ['required', 'date', 'after:today'],
-        ], [], ['company' => __('Company'), 'until' => __('Valid until')]);
-
-        $key = License::issue($data['company'], CarbonImmutable::parse($data['until']));
-        Activity::record('license_issued', null, ['company' => $data['company'], 'until' => $data['until']], 'Licence');
-
-        return back()->withInput()->with('issued_license', $key);
     }
 
     public function refreshRates(CurrencyService $currency): RedirectResponse

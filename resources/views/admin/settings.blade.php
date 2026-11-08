@@ -1,50 +1,5 @@
-@php use App\Support\Format; use App\Support\License; $license = License::current(); @endphp
+@php use App\Support\Format; @endphp
 <x-layouts.admin :title="__('Settings')" nav="settings" icon="settings">
-    {{-- The end of the licence; a new key from the seller is entered here. --}}
-    <x-card :title="__('Licence')" icon="badge-check" id="license">
-        <div class="license-state">
-            @if ($license->state === 'seller')
-                <p>{{ __('The seller\'s copy: always fully licensed, issues the keys of the companies.') }}</p>
-            @elseif (in_array($license->state, ['active', 'expired'], true))
-                <dl class="license-facts">
-                    <div><dt>{{ __('Company') }}</dt><dd>{{ $license->company }}</dd></div>
-                    <div><dt>{{ __('Valid until') }}</dt><dd>{{ $license->until->format('d.m.Y') }}</dd></div>
-                    <div><dt>{{ __('State') }}</dt><dd>
-                        @if ($license->state === 'expired')
-                            <span class="badge badge-danger">{{ __('Ended: viewing only') }}</span>
-                        @else
-                            <span @class(['badge', 'badge-warning' => $license->endsSoon(), 'badge-success' => ! $license->endsSoon()])>{{ trans_choice(':count day left|:count days left', $license->daysLeft(), ['count' => $license->daysLeft()]) }}</span>
-                        @endif
-                    </dd></div>
-                </dl>
-            @else
-                <p><span class="badge badge-danger">{{ $license->state === 'invalid' ? __('The key is not valid') : __('No licence key') }}</span> {{ __('The system is open for viewing only until a key from the seller is entered.') }}</p>
-            @endif
-        </div>
-
-        @if ($license->state !== 'seller')
-            <form method="post" action="{{ route('admin.settings.license') }}" class="form-grid license-form">
-                @csrf @method('put')
-                <x-textarea name="license_key" :label="__('New licence key')" rows="3" span="12" required />
-                <div class="span-12 license-actions"><button class="btn btn-primary" type="submit"><x-icon name="key-round" :size="16" /> {{ __('Save the key') }}</button></div>
-            </form>
-        @else
-            <form method="post" action="{{ route('admin.settings.license.issue') }}" class="form-grid license-form">
-                @csrf
-                <p class="form-section-title">{{ __('A key for a company') }}</p>
-                <x-field name="company" :label="__('Company')" span="8" required />
-                <x-field name="until" type="date" :label="__('Valid until')" :value="now()->addYear()->toDateString()" span="4" required />
-                <div class="span-12 license-actions"><button class="btn btn-primary" type="submit"><x-icon name="key-round" :size="16" /> {{ __('Make the key') }}</button></div>
-                @if (session('issued_license'))
-                    <div class="field span-12">
-                        <label for="issued-license">{{ __('The key: copy it and send it to the company') }}</label>
-                        <textarea id="issued-license" class="input mono" rows="3" readonly data-select-all>{{ session('issued_license') }}</textarea>
-                    </div>
-                @endif
-            </form>
-        @endif
-    </x-card>
-
     <form method="post" class="form-layout" action="{{ route('admin.settings.update') }}">
         @csrf @method('put')
         <x-card :title="__('Company')" icon="building-2">

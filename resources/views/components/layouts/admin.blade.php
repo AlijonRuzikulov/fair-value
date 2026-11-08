@@ -83,17 +83,11 @@
             </div>
 
             <div class="topbar-tools">
-                {{-- The end of the access, always in sight. --}}
-                @php $access = \App\Support\Access::current(); $license = $access->license; @endphp
-                @if ($access->shown())
-                    <a @class(['tool-btn', 'license-chip', 'is-soon' => $access->endsSoon(), 'is-off' => ! $access->allowsChanges()])
-                       href="{{ $user->can('admin') ? route('admin.settings.edit').'#license' : route('admin.profile.edit') }}"
-                       title="{{ $user->organization?->name ?: $license->company }}">
-                        @if (in_array($license->state, ['missing', 'invalid'], true))
-                            <strong>{{ __('No licence') }}</strong>
-                        @else
-                            <span class="hide-sm">{{ __('Licence') }} ·</span> <strong>{{ __('until :date', ['date' => $access->until()->format('d.m.Y')]) }}</strong>
-                        @endif
+                {{-- The day the person's access ends, always in sight when one is written. --}}
+                @php $access = \App\Support\Access::current(); @endphp
+                @if ($access->until())
+                    <a @class(['tool-btn', 'license-chip', 'is-soon' => $access->endsSoon(), 'is-off' => $access->ended()]) href="{{ route('admin.profile.edit') }}">
+                        <span class="hide-sm">{{ __('Access') }} ·</span> <strong>{{ __('until :date', ['date' => $access->until()->format('d.m.Y')]) }}</strong>
                     </a>
                 @endif
                 @if ($usd)
@@ -150,16 +144,11 @@
         <main class="content">
             @if ($access->endsSoon())
                 <div class="license-note is-soon" role="status"><x-icon name="clock" :size="18" />
-                    <span>@if ($access->userUntil() && $access->until()->equalTo($access->userUntil()))
-                        {{ trans_choice('Your access ends in :count day (:date). Ask the administrator to extend it.|Your access ends in :count days (:date). Ask the administrator to extend it.', $access->daysLeft(), ['count' => $access->daysLeft(), 'date' => $access->until()->format('d.m.Y')]) }}
-                    @else
-                        {{ trans_choice('The licence ends in :count day (:date). Ask the seller for a new key in time.|The licence ends in :count days (:date). Ask the seller for a new key in time.', $access->daysLeft(), ['count' => $access->daysLeft(), 'date' => $access->until()->format('d.m.Y')]) }}
-                    @endif</span>
+                    <span>{{ trans_choice('Your access ends in :count day (:date). Ask the administrator to extend it.|Your access ends in :count days (:date). Ask the administrator to extend it.', $access->daysLeft(), ['count' => $access->daysLeft(), 'date' => $access->until()->format('d.m.Y')]) }}</span>
                 </div>
-            @elseif (! $access->allowsChanges())
+            @elseif ($access->ended())
                 <div class="license-note is-off" role="alert"><x-icon name="lock" :size="18" />
-                    <span>{{ $access->lockedMessage() }}
-                        {{ $access->userEnded() ? __('Ask the administrator to extend it.') : __('Enter the new key from the seller under Settings → Plan and licence.') }}</span>
+                    <span>{{ $access->lockedMessage() }} {{ __('Ask the administrator to extend it.') }}</span>
                 </div>
             @endif
             @if (session('status'))

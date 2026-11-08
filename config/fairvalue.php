@@ -120,26 +120,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Licence
-    |--------------------------------------------------------------------------
-    |
-    | Each company gets its own copy with a licence key from the seller: whose
-    | it is and the day it ends; after that day the system
-    | is open for viewing only. The key is entered under Settings (or put in
-    | LICENSE_KEY). The public key below checks the signature of the keys; only
-    | the seller's own copy has LICENSE_SECRET_KEY, the other half, to issue
-    | them — never give it to a company.
-    |
-    */
-
-    'license' => [
-        'public_key' => 'o3+FoRGe7omqWP6InvTQyA3AGpSNwwdQD6f527RAtGs=',
-        'secret_key' => env('LICENSE_SECRET_KEY'),
-        'key' => env('LICENSE_KEY'),
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
     | Analogues for the comparative approach
     |--------------------------------------------------------------------------
     |
