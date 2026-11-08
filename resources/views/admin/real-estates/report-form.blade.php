@@ -113,7 +113,7 @@
                             @if ($aiAvailable)
                                 {{ __('AI reads the owner (name, PINFL, passport) and the object (cadastral number, areas, address, rights) from the chosen files. You check every value before it is saved. The files are sent to Claude (Anthropic) for reading.') }}
                             @else
-                                {{ \App\Support\License::premium() ? __('Reading documents needs an AI key (ANTHROPIC_API_KEY in .env).') : \App\Support\License::premiumOnly() }}
+                                {{ __('Reading documents needs an AI key (ANTHROPIC_API_KEY in .env).') }}
                             @endif
                         </p>
                         <button class="btn btn-primary" type="submit" @disabled(! $aiAvailable || $scans->isEmpty()) data-busy="{{ __('Reading the documents…') }}"><x-icon name="scan-search" :size="16" /> {{ __('Read the documents') }}</button>

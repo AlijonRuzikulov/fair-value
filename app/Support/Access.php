@@ -6,11 +6,10 @@ use App\Models\User;
 use Carbon\CarbonImmutable;
 
 /**
- * What the signed-in person may use: the licence of this copy, narrowed by
+ * What the signed-in person may do: the licence of this copy, narrowed by
  * their own account — the people the system is given to (employees of a
- * bank or a valuation company) get Premium by a tick and work until the day
- * written on their account. Administrators of the company that runs the
- * system have all that the licence gives.
+ * bank or a valuation company) work until the day written on their account.
+ * Administrators of the company that runs the system have no such day.
  */
 final class Access
 {
@@ -52,11 +51,6 @@ final class Access
         return $this->license->allowsChanges() && ! $this->userEnded();
     }
 
-    public function isPremium(): bool
-    {
-        return $this->allowsChanges() && $this->license->isPremium() && ($this->isAdmin() || $this->user->premium);
-    }
-
     /** The nearer of the end of the licence and of the person's own access. */
     public function until(): ?CarbonImmutable
     {
@@ -75,17 +69,10 @@ final class Access
         return $this->allowsChanges() && $this->daysLeft() !== null && $this->daysLeft() <= License::WARN_DAYS;
     }
 
-    public function planLabel(): string
-    {
-        return $this->isPremium() || (! $this->allowsChanges() && $this->license->plan === License::PREMIUM && ($this->isAdmin() || $this->user->premium))
-            ? __('Premium')
-            : __('Standard');
-    }
-
-    /** The plan is shown in the top bar, except to the administrator of the seller's own copy. */
+    /** The end is shown in the top bar when there is one, or that there is no licence. */
     public function shown(): bool
     {
-        return ! ($this->license->state === 'seller' && $this->isAdmin());
+        return $this->until() !== null || in_array($this->license->state, ['missing', 'invalid'], true);
     }
 
     /** Why nothing can be changed now, for the notice and the refusal. */

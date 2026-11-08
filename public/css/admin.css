@@ -1560,7 +1560,6 @@ summary.btn::-webkit-details-marker { display: none; }
 /* --- Licence: the plan in the top bar, the notice near its end, the card in Settings --- */
 .license-chip { gap: 4px; border: 1px solid var(--line); border-radius: 999px; padding: 0 12px; color: var(--ink-2); text-decoration: none; white-space: nowrap; }
 .license-chip strong { font-weight: 700; }
-.license-chip.is-premium { border-color: var(--success); color: var(--success); }
 .license-chip.is-soon { border-color: var(--warning); background: var(--warning-soft); color: var(--warning); }
 .license-chip.is-off { border-color: var(--danger); background: var(--danger-soft); color: var(--danger); }
 .license-note { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding: 12px 16px; border-radius: var(--radius); font-weight: 500; }

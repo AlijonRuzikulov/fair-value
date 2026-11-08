@@ -15,22 +15,22 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
-        // Every test runs with a valid Premium licence unless it sets another one.
-        $this->license(License::PREMIUM, now()->addYear()->toDateString());
+        // Every test runs with a valid licence unless it sets another one.
+        $this->license(now()->addYear()->toDateString());
     }
 
     /**
-     * Gives this copy a licence signed with the tests' key; null as the plan
-     * leaves it without any key.
+     * Gives this copy a licence until the day, signed with the tests' key;
+     * null leaves it without any key.
      */
-    protected function license(?string $plan, ?string $until = null, string $company = 'Sinov MChJ'): ?string
+    protected function license(?string $until, string $company = 'Sinov MChJ'): ?string
     {
         self::$testKeys ??= sodium_crypto_sign_keypair();
         config([
             'fairvalue.license.public_key' => base64_encode(sodium_crypto_sign_publickey(self::$testKeys)),
             'fairvalue.license.secret_key' => base64_encode(sodium_crypto_sign_secretkey(self::$testKeys)),
         ]);
-        $key = $plan ? License::issue($company, $plan, CarbonImmutable::parse($until ?? now()->addYear()->toDateString())) : null;
+        $key = $until ? License::issue($company, CarbonImmutable::parse($until)) : null;
         config(['fairvalue.license.secret_key' => null, 'fairvalue.license.key' => $key]);
         License::refresh();
 

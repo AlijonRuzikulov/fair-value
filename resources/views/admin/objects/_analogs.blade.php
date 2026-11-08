@@ -34,7 +34,7 @@
                     @if ($aiAvailable)
                         {{ __('AI looks for offers similar to this object (type, area, rooms, district) on :sites and reads them. It takes up to a minute.', ['sites' => $sites]) }}
                     @else
-                        {{ \App\Support\License::premium() ? __('Needs an AI key: ANTHROPIC_API_KEY in the .env file. Until then, paste links to listings.') : \App\Support\License::premiumOnly().' '.__('Until then, paste links to listings.') }}
+                        {{ __('Needs an AI key: ANTHROPIC_API_KEY in the .env file. Until then, paste links to listings.') }}
                     @endif
                 </p>
                 <button class="btn btn-primary" type="submit" @disabled(! $aiAvailable) data-busy="{{ __('Searching…') }}"><x-icon name="search" :size="16" /> {{ __('Find analogues') }}</button>

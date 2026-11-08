@@ -22,9 +22,9 @@ use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
- * Every company's copy works on a licence key from the seller: its plan and
- * end are always in sight, after the end the panel is for viewing only, and
- * reading documents with AI is in the Premium plan.
+ * Every company's copy works on a licence key from the seller: its end is
+ * always in sight and after the end the panel is for viewing only. Reading
+ * documents with AI is open to everyone who works on a licence.
  */
 class LicenseTest extends TestCase
 {
@@ -39,26 +39,26 @@ class LicenseTest extends TestCase
         $this->admin = User::factory()->admin()->create();
     }
 
-    public function test_the_plan_and_its_end_are_in_sight(): void
+    public function test_the_end_of_the_licence_is_in_sight(): void
     {
-        $this->license(License::PREMIUM, now()->addDays(200)->toDateString());
+        $this->license(now()->addDays(200)->toDateString());
         $this->actingAs($this->admin)->withSession(['locale' => 'uz'])->get('/admin/assets')->assertOk()
-            ->assertSee('license-chip is-premium', false)->assertSee('Premium')->assertSee(now()->addDays(200)->format('d.m.Y').' gacha')
-            ->assertDontSee('license-note', false);
+            ->assertSee('license-chip', false)->assertSee(now()->addDays(200)->format('d.m.Y').' gacha')
+            ->assertDontSee('Premium')->assertDontSee('license-note', false);
 
         // A month before the end a warning appears.
-        $this->license(License::STANDARD, now()->addDays(12)->toDateString());
+        $this->license(now()->addDays(12)->toDateString());
         $this->get('/admin/assets')->assertOk()
-            ->assertSee('license-chip is-soon', false)->assertSee('Oddiy')
+            ->assertSee('license-chip is-soon', false)
             ->assertSee('Litsenziya muddati tugashiga 12 kun qoldi');
-        $this->get('/admin/settings')->assertOk()
-            ->assertSeeInOrder(['Tarif va litsenziya', 'Kompaniya', 'Sinov MChJ', 'Tarif', 'Oddiy', 'Amal qilish muddati', 'Holati', '12 kun qoldi', 'Yangi litsenziya kaliti']);
+        $this->get('/admin/settings')->assertOk()->assertDontSee('Premium')
+            ->assertSeeInOrder(['Litsenziya', 'Kompaniya', 'Sinov MChJ', 'Amal qilish muddati', 'Holati', '12 kun qoldi', 'Yangi litsenziya kaliti']);
     }
 
     public function test_after_the_end_the_panel_is_for_viewing_only(): void
     {
         $asset = Asset::factory()->create(['name' => 'Stanok', 'status' => ValuationStatus::New]);
-        $this->license(License::PREMIUM, now()->subDay()->toDateString());
+        $this->license(now()->subDay()->toDateString());
         $this->actingAs($this->admin)->withSession(['locale' => 'uz']);
 
         // Everything can be seen and printed.
@@ -78,9 +78,10 @@ class LicenseTest extends TestCase
         $this->postJson('/admin/assets', [])->assertForbidden();
 
         // A new key from the seller opens it again.
-        $key = $this->license(License::PREMIUM, now()->addYear()->toDateString(), 'Baholash Servis MChJ');
-        $this->license(License::PREMIUM, now()->subDay()->toDateString());
-        $this->put('/admin/settings/license', ['license_key' => $key])->assertRedirect()->assertSessionHas('status');
+        $key = $this->license(now()->addYear()->toDateString(), 'Baholash Servis MChJ');
+        $this->license(now()->subDay()->toDateString());
+        $this->put('/admin/settings/license', ['license_key' => $key])->assertRedirect()
+            ->assertSessionHas('status', 'Litsenziya saqlandi: '.now()->addYear()->format('d.m.Y').' gacha amal qiladi.');
         $this->get('/admin/settings')->assertSee('Baholash Servis MChJ')->assertDontSee('license-note', false);
         $this->assertTrue(License::current()->allowsChanges());
         $this->assertSame('Baholash Servis MChJ', Activity::where('event', 'license')->sole()->changes['company']);
@@ -94,11 +95,10 @@ class LicenseTest extends TestCase
         $this->post('/admin/assets', ['name' => 'Yangi'])->assertSessionHas('error');
 
         // A key with a later date written into it is refused: its signature no longer matches.
-        $key = $this->license(License::STANDARD, now()->addMonth()->toDateString());
+        $key = $this->license(now()->addMonth()->toDateString());
         [$prefix, $payload, $signature] = explode('.', $key);
         $data = json_decode(base64_decode(strtr($payload, '-_', '+/')), true);
         $data['u'] = '2099-12-31';
-        $data['p'] = License::PREMIUM;
         $forged = $prefix.'.'.rtrim(strtr(base64_encode(json_encode($data)), '+/', '-_'), '=').'.'.$signature;
         $this->assertNull(License::verify($forged));
         $this->assertNotNull(License::verify($key));
@@ -111,70 +111,69 @@ class LicenseTest extends TestCase
     public function test_the_seller_issues_keys_and_companies_cannot(): void
     {
         $this->actingAs($this->admin)->withSession(['locale' => 'uz']);
-        $this->post('/admin/settings/license/issue', ['company' => 'X', 'plan' => 'premium', 'until' => now()->addYear()->toDateString()])->assertForbidden();
+        $this->post('/admin/settings/license/issue', ['company' => 'X', 'until' => now()->addYear()->toDateString()])->assertForbidden();
 
         $this->sellerCopy();
         $this->get('/admin/assets')->assertOk()->assertDontSee('license-chip', false);
         $this->get('/admin/settings')->assertOk()->assertSee('Sotuvchining nusxasi')->assertSee('Kompaniya uchun kalit');
         $until = now()->addMonths(6)->toDateString();
-        $this->post('/admin/settings/license/issue', ['company' => 'Ishonch Baho MChJ', 'plan' => 'standard', 'until' => $until])
+        $this->post('/admin/settings/license/issue', ['company' => 'Ishonch Baho MChJ', 'until' => $until])
             ->assertRedirect()->assertSessionHas('issued_license');
 
         $payload = License::verify(session('issued_license'));
-        $this->assertSame(['Ishonch Baho MChJ', 'standard', $until], [$payload['c'], $payload['p'], $payload['u']]);
+        $this->assertSame(['Ishonch Baho MChJ', $until], [$payload['c'], $payload['u']]);
+        // Copies not yet updated, which still look at a plan, read the new keys as opening everything.
+        $this->assertSame('premium', $payload['p']);
         $this->get('/admin/settings')->assertSee(session('issued_license'));
     }
 
-    public function test_reading_documents_with_ai_is_in_the_premium_plan(): void
+    public function test_everyone_who_works_on_a_licence_reads_documents_with_ai(): void
     {
+        // A person of an organisation, with no tick of any kind, as the administrator.
         config(['services.anthropic.key' => 'test-key']);
-        $this->actingAs($this->admin)->withSession(['locale' => 'uz']);
+        $this->actingAs(User::factory()->create(['organization_id' => Organization::create(['name' => 'Xalq banki'])->id]));
         $this->assertTrue(app(ClaudeDocumentAi::class)->available());
+        $this->assertTrue(app(ClaudeListingAi::class)->available());
 
-        $this->license(License::STANDARD, now()->addYear()->toDateString());
-        $this->assertFalse(app(ClaudeDocumentAi::class)->available());
-        $this->assertFalse(app(ClaudeListingAi::class)->available());
-        $this->post('/admin/clients/passport', ['files' => [UploadedFile::fake()->image('pasport.jpg')]])
-            ->assertSessionHas('error', 'Bu imkoniyat Premium tarifda.');
-        $this->get('/admin/clients?type=individual')->assertOk()->assertSee('Bu imkoniyat Premium tarifda.');
-
+        // Without the AI key the buttons say only what is missing.
+        config(['services.anthropic.key' => null]);
+        $missing = __('Reading documents needs an AI key (ANTHROPIC_API_KEY in .env).', [], 'uz');
+        $this->flushSession();
+        $this->actingAs($this->admin)->withSession(['locale' => 'uz']);
+        $this->post('/admin/clients/passport', ['files' => [UploadedFile::fake()->image('pasport.jpg')]])->assertSessionHas('error', $missing);
         $car = Vehicle::factory()->create();
-        $this->get('/admin/vehicles/'.$car->id)->assertOk()->assertSee('Texpasportdan to‘ldirish')->assertSee('Bu imkoniyat Premium tarifda.');
+        $this->get('/admin/vehicles/'.$car->id)->assertOk()->assertSee('Texpasportdan to‘ldirish')->assertSee($missing)->assertDontSee('Premium');
         $this->post('/admin/vehicles/'.$car->id.'/tech-passport', ['files' => [UploadedFile::fake()->image('texpasport.jpg')]])
-            ->assertSessionHas('error', 'Bu imkoniyat Premium tarifda.');
+            ->assertSessionHas('error', $missing);
     }
 
-    public function test_each_person_gets_premium_by_a_tick_and_works_until_their_own_day(): void
+    public function test_each_person_works_until_their_own_day(): void
     {
-        config(['services.anthropic.key' => 'test-key']);
         $this->actingAs($this->admin)->withSession(['locale' => 'uz']);
         $xalq = Organization::create(['name' => 'Xalq banki']);
         $ishonch = Organization::create(['name' => 'Ishonch Baho MChJ']);
 
-        // The administrator gives a bank employee Standard until a day, a valuer Premium.
+        // The administrator gives a bank employee access until a day, a valuer without an end.
         $this->get('/admin/users/create')->assertOk()
             ->assertSee('<title>Yangi foydalanuvchi', false)
-            ->assertSeeInOrder(['Tashkilot', 'Kirish huquqi', 'Premium', 'Amal qilish muddati']);
+            ->assertSeeInOrder(['Tashkilot', 'Kirish huquqi', 'Amal qilish muddati'])->assertDontSee('Premium');
         $form = ['email' => 'bank@xalqbank.uz', 'name' => 'Karimov Anvar', 'organization_id' => $xalq->id, 'role' => 'operator',
-            'is_active' => '1', 'premium' => '0', 'access_until' => now()->addDays(10)->toDateString(),
+            'is_active' => '1', 'access_until' => now()->addDays(10)->toDateString(),
             'password' => 'Parol12345abc', 'password_confirmation' => 'Parol12345abc'];
         $this->post('/admin/users', $form)->assertRedirect('/admin/users');
-        $this->post('/admin/users', ['email' => 'baho@ishonch.uz', 'name' => 'Toshmatov Ali', 'organization_id' => $ishonch->id, 'premium' => '1'] + $form)->assertRedirect('/admin/users');
+        $this->post('/admin/users', ['email' => 'baho@ishonch.uz', 'name' => 'Toshmatov Ali', 'organization_id' => $ishonch->id, 'access_until' => ''] + $form)->assertRedirect('/admin/users');
         $bank = User::where('email', 'bank@xalqbank.uz')->sole();
         $valuer = User::where('email', 'baho@ishonch.uz')->sole();
-        $this->assertSame([false, true], [$bank->premium, $valuer->premium]);
-        $this->get('/admin/users')->assertOk()->assertSee('Foydalanuvchilar')
-            ->assertSeeInOrder(['Karimov Anvar', 'Xalq banki', 'Oddiy', now()->addDays(10)->format('d.m.Y')]);
+        $this->assertNull($valuer->access_until);
+        $this->get('/admin/users')->assertOk()->assertSee('Foydalanuvchilar')->assertDontSee('Premium')
+            ->assertSeeInOrder(['Karimov Anvar', 'Xalq banki', now()->addDays(10)->format('d.m.Y')]);
 
-        // Each sees their own plan and day; only the ticked one reads documents with AI.
+        // Each sees their own day.
         // (A new session for each person: the panel signs out a session that belonged to someone else.)
         $this->flushSession();
         $this->actingAs($bank)->withSession(['locale' => 'uz'])->get('/admin/assets')->assertOk()
-            ->assertSee('Oddiy')->assertSee(now()->addDays(10)->format('d.m.Y').' gacha')
+            ->assertSee(now()->addDays(10)->format('d.m.Y').' gacha')
             ->assertSee('Foydalanish muddatingiz tugashiga 10 kun qoldi');
-        $this->assertFalse(app(ClaudeDocumentAi::class)->available());
-        $this->actingAs($valuer);
-        $this->assertTrue(app(ClaudeDocumentAi::class)->available());
 
         // After their day the person can only look; the others go on working.
         $bank->update(['access_until' => now()->subDay()->toDateString()]);
@@ -183,9 +182,9 @@ class LicenseTest extends TestCase
         $this->from('/admin/assets')->post('/admin/assets', ['name' => 'Stanok'])->assertRedirect('/admin/assets')->assertSessionHas('error');
         $this->assertTrue(Access::for($valuer)->allowsChanges());
 
-        // The plan of the copy still limits everybody.
-        $this->license(License::STANDARD, now()->addYear()->toDateString());
-        $this->assertFalse(Access::for($valuer)->isPremium());
+        // The end of the licence of the copy still limits everybody.
+        $this->license(now()->subDay()->toDateString());
+        $this->assertFalse(Access::for($valuer)->allowsChanges());
     }
 
     public function test_a_vehicle_is_filled_in_from_its_registration_certificate(): void

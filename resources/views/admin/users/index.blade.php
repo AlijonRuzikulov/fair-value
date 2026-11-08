@@ -11,7 +11,6 @@
                         <th>{{ __('Employee') }}</th>
                         <th>{{ __('Organisation') }}</th>
                         <th>{{ __('Role') }}</th>
-                        <th>{{ __('Plan') }}</th>
                         <th>{{ __('Access until') }}</th>
                         <th>{{ __('Phone') }}</th>
                         <th>{{ __('Qualification certificate') }}</th>
@@ -31,10 +30,6 @@
                             </td>
                             <td>{{ $user->organization?->name ?? '—' }}</td>
                             <td><span class="badge badge-brand">{{ $user->role->label() }}</span></td>
-                            <td>
-                                @if ($user->isMainAdmin() || $user->premium)<span class="badge badge-success">{{ __('Premium') }}</span>
-                                @else<span class="badge badge-info">{{ __('Standard') }}</span>@endif
-                            </td>
                             <td class="nowrap">
                                 @if ($user->access_until && ! $user->isMainAdmin())
                                     <span @class(['badge-text', 'is-off' => $user->access_until->endOfDay()->isPast()])>{{ $user->access_until->format('d.m.Y') }}</span>

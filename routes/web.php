@@ -71,7 +71,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
         Route::resource($uri, $controller)->parameters([$uri => 'id']);
     }
 
-    // Premium: a vehicle's fields from the photo of its registration certificate.
+    // A vehicle's fields from the photo of its registration certificate.
     Route::post('vehicles/{id}/tech-passport', [Admin\VehicleController::class, 'techPassport'])->whereNumber('id')->middleware('throttle:10,1')->name('vehicles.tech-passport');
 
     // Damage catalogues

@@ -13,7 +13,6 @@ use App\Services\Analogs\AnalogPhoto;
 use App\Services\Analogs\PageFetcher;
 use App\Services\CurrencyService;
 use App\Support\ComparativeCalculator;
-use App\Support\License;
 use App\Support\NumberInput;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
@@ -40,7 +39,7 @@ class AnalogController extends Controller
 
         if ($mode === 'search') {
             if (! $this->finder->aiAvailable()) {
-                return $this->back($type, $object)->with('error', License::premium() ? __('Automatic search needs an AI key (ANTHROPIC_API_KEY in .env).') : License::premiumOnly());
+                return $this->back($type, $object)->with('error', __('Automatic search needs an AI key (ANTHROPIC_API_KEY in .env).'));
             }
             set_time_limit(150);
             try {

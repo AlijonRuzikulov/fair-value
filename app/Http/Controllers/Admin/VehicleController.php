@@ -13,7 +13,6 @@ use App\Services\Documents\DocumentAi;
 use App\Services\Documents\DocumentData;
 use App\Support\AdminTheme;
 use App\Support\Format;
-use App\Support\License;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -80,7 +79,7 @@ class VehicleController extends ValuationController
     ];
 
     /**
-     * Premium: the registration certificate (texpasport) is read from its
+     * The registration certificate (texpasport) is read from its
      * photos and the vehicle's page opens with its fields filled in; nothing
      * changes until the appraiser checks them and saves. The photos are kept
      * with the vehicle's documents.
@@ -96,7 +95,7 @@ class VehicleController extends ValuationController
         $back = route($this->routeName('show'), $item->id).'#object-data';
 
         if (! $ai->available()) {
-            return redirect()->to($back)->with('error', License::premium() ? __('Reading documents needs an AI key (ANTHROPIC_API_KEY in .env).') : License::premiumOnly());
+            return redirect()->to($back)->with('error', __('Reading documents needs an AI key (ANTHROPIC_API_KEY in .env).'));
         }
 
         set_time_limit(120);

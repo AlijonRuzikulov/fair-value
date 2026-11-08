@@ -1,14 +1,13 @@
 @php use App\Support\Format; use App\Support\License; $license = License::current(); @endphp
 <x-layouts.admin :title="__('Settings')" nav="settings" icon="settings">
-    {{-- The plan and the end of the licence; a new key from the seller is entered here. --}}
-    <x-card :title="__('Plan and licence')" icon="badge-check" id="license">
+    {{-- The end of the licence; a new key from the seller is entered here. --}}
+    <x-card :title="__('Licence')" icon="badge-check" id="license">
         <div class="license-state">
             @if ($license->state === 'seller')
-                <p><span class="badge badge-success">{{ __('Premium') }}</span> {{ __('The seller\'s copy: always fully licensed, issues the keys of the companies.') }}</p>
+                <p>{{ __('The seller\'s copy: always fully licensed, issues the keys of the companies.') }}</p>
             @elseif (in_array($license->state, ['active', 'expired'], true))
                 <dl class="license-facts">
                     <div><dt>{{ __('Company') }}</dt><dd>{{ $license->company }}</dd></div>
-                    <div><dt>{{ __('Plan') }}</dt><dd><span @class(['badge', 'badge-success' => $license->plan === License::PREMIUM, 'badge-info' => $license->plan !== License::PREMIUM])>{{ $license->planLabel() }}</span></dd></div>
                     <div><dt>{{ __('Valid until') }}</dt><dd>{{ $license->until->format('d.m.Y') }}</dd></div>
                     <div><dt>{{ __('State') }}</dt><dd>
                         @if ($license->state === 'expired')
@@ -33,8 +32,7 @@
             <form method="post" action="{{ route('admin.settings.license.issue') }}" class="form-grid license-form">
                 @csrf
                 <p class="form-section-title">{{ __('A key for a company') }}</p>
-                <x-field name="company" :label="__('Company')" span="5" required />
-                <x-select name="plan" :label="__('Plan')" :options="[License::STANDARD => __('Standard'), License::PREMIUM => __('Premium')]" :value="License::PREMIUM" span="3" required />
+                <x-field name="company" :label="__('Company')" span="8" required />
                 <x-field name="until" type="date" :label="__('Valid until')" :value="now()->addYear()->toDateString()" span="4" required />
                 <div class="span-12 license-actions"><button class="btn btn-primary" type="submit"><x-icon name="key-round" :size="16" /> {{ __('Make the key') }}</button></div>
                 @if (session('issued_license'))

@@ -147,9 +147,9 @@ class SettingController extends Controller
         Setting::put(['license_key' => trim($data['license_key'])]);
         License::refresh();
         $license = License::current();
-        Activity::record('license', null, ['company' => $payload['c'], 'plan' => $license->planLabel(), 'until' => $payload['u']], 'Licence');
+        Activity::record('license', null, ['company' => $payload['c'], 'until' => $payload['u']], 'Licence');
 
-        return back()->with('status', __('Licence saved: :plan until :date.', ['plan' => $license->planLabel(), 'date' => $license->until->format('d.m.Y')]));
+        return back()->with('status', __('Licence saved: valid until :date.', ['date' => $license->until->format('d.m.Y')]));
     }
 
     /** In the seller's copy only: a key for a company, to copy and send. */
@@ -158,12 +158,11 @@ class SettingController extends Controller
         abort_unless(License::isSeller(), 403);
         $data = $request->validate([
             'company' => ['required', 'string', 'max:150'],
-            'plan' => ['required', 'in:'.License::STANDARD.','.License::PREMIUM],
             'until' => ['required', 'date', 'after:today'],
-        ], [], ['company' => __('Company'), 'plan' => __('Plan'), 'until' => __('Valid until')]);
+        ], [], ['company' => __('Company'), 'until' => __('Valid until')]);
 
-        $key = License::issue($data['company'], $data['plan'], CarbonImmutable::parse($data['until']));
-        Activity::record('license_issued', null, ['company' => $data['company'], 'plan' => $data['plan'], 'until' => $data['until']], 'Licence');
+        $key = License::issue($data['company'], CarbonImmutable::parse($data['until']));
+        Activity::record('license_issued', null, ['company' => $data['company'], 'until' => $data['until']], 'Licence');
 
         return back()->withInput()->with('issued_license', $key);
     }

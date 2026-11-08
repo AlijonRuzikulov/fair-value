@@ -4,7 +4,7 @@
         <summary>{{ __('Data of the vehicle') }}</summary>
         <fieldset class="portal-fields" @disabled(! $canEdit)>
             <div class="form-grid">
-                {{-- Premium: the fields are read from the photo of the registration certificate (the form is outside this one). --}}
+                {{-- The fields are read from the photo of the registration certificate (the form is outside this one). --}}
                 @php $readsCertificates = app(\App\Services\Documents\DocumentAi::class)->available(); @endphp
                 <div class="span-12 ai-fill">
                     <label @class(['btn', 'btn-info', 'is-disabled' => ! $readsCertificates])>
@@ -14,9 +14,8 @@
                                    data-submit-on-change data-busy-text="{{ __('Reading…') }}" aria-label="{{ __('Photo of the registration certificate') }}">
                         @endif
                     </label>
-                    <span class="badge badge-success">{{ __('Premium') }}</span>
                     @unless ($readsCertificates)
-                        <span class="ai-fill-note">{{ \App\Support\License::premium() ? __('Reading documents needs an AI key (ANTHROPIC_API_KEY in .env).') : \App\Support\License::premiumOnly() }}</span>
+                        <span class="ai-fill-note">{{ __('Reading documents needs an AI key (ANTHROPIC_API_KEY in .env).') }}</span>
                     @endunless
                 </div>
                 @include('admin.vehicles._fields')

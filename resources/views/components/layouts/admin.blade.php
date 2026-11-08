@@ -83,17 +83,16 @@
             </div>
 
             <div class="topbar-tools">
-                {{-- The plan and the end of the access, always in sight (not to the administrator of the seller's own copy). --}}
+                {{-- The end of the access, always in sight. --}}
                 @php $access = \App\Support\Access::current(); $license = $access->license; @endphp
                 @if ($access->shown())
-                    <a @class(['tool-btn', 'license-chip', 'is-premium' => $access->isPremium(), 'is-soon' => $access->endsSoon(), 'is-off' => ! $access->allowsChanges()])
+                    <a @class(['tool-btn', 'license-chip', 'is-soon' => $access->endsSoon(), 'is-off' => ! $access->allowsChanges()])
                        href="{{ $user->can('admin') ? route('admin.settings.edit').'#license' : route('admin.profile.edit') }}"
-                       title="{{ $user->organization ?: $license->company }}">
+                       title="{{ $user->organization?->name ?: $license->company }}">
                         @if (in_array($license->state, ['missing', 'invalid'], true))
                             <strong>{{ __('No licence') }}</strong>
                         @else
-                            <strong>{{ $access->planLabel() }}</strong>
-                            @if ($access->until())<span class="hide-sm">· {{ __('until :date', ['date' => $access->until()->format('d.m.Y')]) }}</span>@endif
+                            <span class="hide-sm">{{ __('Licence') }} ·</span> <strong>{{ __('until :date', ['date' => $access->until()->format('d.m.Y')]) }}</strong>
                         @endif
                     </a>
                 @endif

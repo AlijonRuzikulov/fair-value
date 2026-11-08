@@ -8,30 +8,30 @@ use Illuminate\Support\Str;
 use Throwable;
 
 /**
- * The licence of this copy of the system: whose it is, its plan (standard or
- * premium) and the day it ends. The key is signed by the seller (Ed25519) and
- * checked against the public key in config/fairvalue.php, so a company cannot
- * write a longer date or a better plan into it. The seller's own copy (with
- * LICENSE_SECRET_KEY, the other half of that key) is always fully licensed and
- * issues the keys.
+ * The licence of this copy of the system: whose it is and the day it ends.
+ * The key is signed by the seller (Ed25519) and checked against the public
+ * key in config/fairvalue.php, so a company cannot write a longer date into
+ * it. The seller's own copy (with LICENSE_SECRET_KEY, the other half of that
+ * key) is always licensed and issues the keys.
  *
  * After the end the system opens for viewing only (see EnsureLicenseAllowsChanges).
  */
 final class License
 {
-    public const STANDARD = 'standard';
-
-    public const PREMIUM = 'premium';
-
     /** Days before the end when the warning appears. */
     public const WARN_DAYS = 30;
 
     private const PREFIX = 'FV1';
 
+    /**
+     * Keys once had a plan; every key now opens everything. New keys still
+     * carry the full one, so that copies not yet updated read them as such.
+     */
+    private const FULL_PLAN = 'premium';
+
     private function __construct(
         public readonly string $state,
         public readonly ?string $company = null,
-        public readonly ?string $plan = null,
         public readonly ?CarbonImmutable $until = null,
     ) {}
 
@@ -50,7 +50,7 @@ final class License
     private static function resolve(): self
     {
         if (self::isSeller()) {
-            return new self('seller', (string) config('app.name'), self::PREMIUM);
+            return new self('seller', (string) config('app.name'));
         }
 
         try {
@@ -70,7 +70,7 @@ final class License
 
         $until = CarbonImmutable::parse($payload['u'], config('app.timezone'))->endOfDay();
 
-        return new self($until->isPast() ? 'expired' : 'active', $payload['c'], $payload['p'], $until);
+        return new self($until->isPast() ? 'expired' : 'active', $payload['c'], $until);
     }
 
     /** Whether this is the seller's copy: its secret key is the other half of the public key. */
@@ -87,7 +87,7 @@ final class License
     /**
      * A key for a company, signed with the seller's secret key.
      */
-    public static function issue(string $company, string $plan, CarbonImmutable $until): string
+    public static function issue(string $company, CarbonImmutable $until): string
     {
         $secret = base64_decode((string) config('fairvalue.license.secret_key'), true);
         if (! self::isSeller() || $secret === false) {
@@ -95,7 +95,7 @@ final class License
         }
         $payload = self::encode(json_encode([
             'c' => Str::limit(trim($company), 150, ''),
-            'p' => $plan === self::PREMIUM ? self::PREMIUM : self::STANDARD,
+            'p' => self::FULL_PLAN,
             'u' => $until->toDateString(),
             'i' => now()->toDateString(),
         ], JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR));
@@ -106,7 +106,7 @@ final class License
     /**
      * The contents of a key when its signature is right.
      *
-     * @return array{c: string, p: string, u: string, i?: string}|null
+     * @return array{c: string, u: string, p?: string, i?: string}|null
      */
     public static function verify(string $key): ?array
     {
@@ -127,7 +127,6 @@ final class License
 
         $valid = is_array($payload)
             && is_string($payload['c'] ?? null)
-            && in_array($payload['p'] ?? null, [self::STANDARD, self::PREMIUM], true)
             && is_string($payload['u'] ?? null) && preg_match('/^\d{4}-\d{2}-\d{2}$/', $payload['u']);
 
         return $valid ? $payload : null;
@@ -161,17 +160,6 @@ final class License
         return in_array($this->state, ['seller', 'active'], true);
     }
 
-    public function isPremium(): bool
-    {
-        return $this->allowsChanges() && $this->plan === self::PREMIUM;
-    }
-
-    /** Premium features (reading documents with AI) are available to the signed-in person (see Access). */
-    public static function premium(): bool
-    {
-        return Access::current()->isPremium();
-    }
-
     public function daysLeft(): ?int
     {
         return $this->until ? (int) max(0, now()->startOfDay()->diffInDays($this->until->startOfDay(), false)) : null;
@@ -181,16 +169,5 @@ final class License
     public function endsSoon(): bool
     {
         return $this->state === 'active' && $this->daysLeft() !== null && $this->daysLeft() <= self::WARN_DAYS;
-    }
-
-    public function planLabel(): string
-    {
-        return $this->plan === self::PREMIUM ? __('Premium') : __('Standard');
-    }
-
-    /** Why a Premium feature cannot be used here, for the message next to it. */
-    public static function premiumOnly(): string
-    {
-        return __('This feature is in the Premium plan.');
     }
 }

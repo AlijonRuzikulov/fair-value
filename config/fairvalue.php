@@ -123,8 +123,8 @@ return [
     | Licence
     |--------------------------------------------------------------------------
     |
-    | Each company gets its own copy with a licence key from the seller: its
-    | plan (standard or premium) and the day it ends; after that day the system
+    | Each company gets its own copy with a licence key from the seller: whose
+    | it is and the day it ends; after that day the system
     | is open for viewing only. The key is entered under Settings (or put in
     | LICENSE_KEY). The public key below checks the signature of the keys; only
     | the seller's own copy has LICENSE_SECRET_KEY, the other half, to issue

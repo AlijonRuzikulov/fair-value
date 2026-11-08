@@ -25,7 +25,7 @@
                                 <p class="field-hint">{{ __('The data is read from the photo and the form opens filled in; check it before saving. The photo is not kept.') }}</p>
                                 <button class="btn btn-info" type="submit" data-busy="{{ __('Reading…') }}">{{ __('Read the passport') }}</button>
                             @else
-                                <p class="field-hint">{{ \App\Support\License::premium() ? __('Reading documents needs an AI key (ANTHROPIC_API_KEY in .env).') : \App\Support\License::premiumOnly() }}</p>
+                                <p class="field-hint">{{ __('Reading documents needs an AI key (ANTHROPIC_API_KEY in .env).') }}</p>
                             @endif
                         </form>
                     </details>

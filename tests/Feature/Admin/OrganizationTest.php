@@ -125,11 +125,9 @@ class OrganizationTest extends TestCase
         $director = User::where('email', 'vali@ishonch.uz')->sole();
         $this->assertSame($valuer->id, $director->organization_id);
 
-        // The director of an organisation works in its workspace, without the rights of the main administrator,
-        // and gets Premium only by the tick.
+        // The director of an organisation works in its workspace, without the rights of the main administrator.
         $this->assertFalse($director->can('admin'));
-        $this->assertFalse(Access::for($director)->isPremium());
-        $this->assertTrue(Access::for($this->admin)->isPremium());
+        $this->assertTrue(Access::for($director)->allowsChanges());
 
         // An organisation with people is not deleted; an empty one is.
         $this->as($this->admin)->delete('/admin/organizations/'.$valuer->id)->assertSessionHas('error');
