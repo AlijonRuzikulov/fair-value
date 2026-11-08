@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\AdminTheme;
 use Carbon\Carbon;
 use Closure;
 use Illuminate\Http\Request;
@@ -26,6 +27,12 @@ class SetLocale
         $locale = $request->session()->get('locale');
         if (! isset($locales[$locale])) {
             $locale = isset($locales[config('app.locale')]) ? config('app.locale') : array_key_first($locales);
+        }
+
+        // The sign-in page of the classic look is in Uzbek (Latin) only, and so are its
+        // messages (a wrong password, too many attempts), whatever language was chosen.
+        if ($request->is('login') && isset($locales['uz']) && AdminTheme::classic()) {
+            $locale = 'uz';
         }
 
         app()->setLocale($locale);

@@ -20,9 +20,7 @@ class LoginController extends Controller
             return view('auth.login', ['hint' => $this->firstSignInHint()]);
         }
 
-        // The sign-in page of the classic look is in Uzbek (Latin) only.
-        app()->setLocale('uz');
-
+        // In Uzbek (Latin) only (see SetLocale).
         return view('auth.login-classic', ['hint' => $this->firstSignInHint()]);
     }
 

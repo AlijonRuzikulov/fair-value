@@ -53,6 +53,23 @@ class AuthTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_the_sign_in_page_and_its_messages_are_in_latin_letters(): void
+    {
+        User::factory()->create(['email' => 'a@fairvalue.uz', 'password' => 'secret123']);
+
+        // Whatever language was chosen (Cyrillic here), as on the sign-in page itself.
+        $this->withSession(['locale' => 'oz'])->get('/login')->assertOk()->assertSee('Parol');
+        $this->from('/login')->post('/login', ['email' => 'a@fairvalue.uz', 'password' => 'wrong'])
+            ->assertSessionHasErrors(['email' => 'E-mail yoki parol noto‘g‘ri.']);
+        $this->post('/login', ['email' => '', 'password' => ''])->assertSessionHasErrors('email');
+        $this->assertStringNotContainsString('ё', implode(' ', session('errors')->all()));
+        $this->followingRedirects()->from('/login')->post('/login', ['email' => 'a@fairvalue.uz', 'password' => 'wrong'])
+            ->assertSee('E-mail yoki parol noto‘g‘ri.')->assertDontSee('нотўғри');
+
+        // Inside the panel the chosen language stays.
+        $this->assertSame('oz', session('locale'));
+    }
+
     public function test_deactivated_employee_cannot_sign_in_or_stay_signed_in(): void
     {
         $user = User::factory()->create(['email' => 'b@fairvalue.uz', 'password' => 'secret123', 'is_active' => false]);
