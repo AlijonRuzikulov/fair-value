@@ -42,7 +42,7 @@ class ShareLinkTest extends TestCase
     {
         User::factory()->admin()->create(['password' => 'Yangi-parol-2026']);
         $this->systemRuns();
-        $tunnel = $this->fakeTunnel("2026-11-08T10:00:00Z INF |  https://quiet-river-42.trycloudflare.com  |\nINF Registered tunnel connection");
+        $tunnel = $this->fakeTunnel("2026-11-08T10:00:00Z INF |  https://quiet-river-42.trycloudflare.com  |\nINF Registered tunnel connection connIndex=0 protocol=http2");
 
         $this->artisan('share')->expectsOutputToContain('https://quiet-river-42.trycloudflare.com')->assertSuccessful();
         unlink($tunnel);
@@ -53,7 +53,7 @@ class ShareLinkTest extends TestCase
         User::factory()->admin()->create(['password' => 'Yangi-parol-2026']);
         $this->systemRuns();
         $byHand = base_path('cloudflared-linux-amd64');
-        rename($this->fakeTunnel('INF |  https://by-hand-7.trycloudflare.com  |'), $byHand);
+        rename($this->fakeTunnel("INF |  https://by-hand-7.trycloudflare.com  |\nINF Registered tunnel connection connIndex=0"), $byHand);
         config(['fairvalue.share.cloudflared' => null]);
 
         try {
@@ -70,6 +70,20 @@ class ShareLinkTest extends TestCase
         $tunnel = $this->fakeTunnel('INF |  https://never-shown.trycloudflare.com  |');
 
         $this->artisan('share')->doesntExpectOutputToContain('trycloudflare.com')->assertFailed();
+        unlink($tunnel);
+    }
+
+    public function test_a_link_that_does_not_connect_is_not_given(): void
+    {
+        // Named but never registered: the page would show "Error 1033".
+        User::factory()->admin()->create(['password' => 'Yangi-parol-2026']);
+        $this->systemRuns();
+        $tunnel = $this->fakeTunnel("INF |  https://not-connected-3.trycloudflare.com  |\nERR Failed to dial a quic connection error=\"timeout\"");
+
+        $this->artisan('share')
+            ->doesntExpectOutputToContain('https://not-connected-3.trycloudflare.com')
+            ->expectsOutputToContain('Failed to dial')
+            ->assertFailed();
         unlink($tunnel);
     }
 

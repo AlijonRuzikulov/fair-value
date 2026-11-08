@@ -21,7 +21,12 @@ use Throwable;
  */
 class ShareLink extends Command
 {
-    protected $signature = 'share {--port=8000 : Port the system runs on (php artisan serve)}';
+    protected $signature = 'share
+        {--port=8000 : Port the system runs on (php artisan serve)}
+        {--protocol=http2 : How cloudflared reaches Cloudflare: http2 (TCP, passes most networks) or quic}';
+
+    /** Seconds to wait for the connection to Cloudflare before saying what may block it. */
+    private const CONNECT_SECONDS = 45;
 
     protected $description = 'Open the system on this computer to the internet with a temporary link';
 
@@ -53,29 +58,46 @@ class ShareLink extends Command
         }
 
         $this->line(__('Opening the link…'));
-        $process = proc_open([$binary, 'tunnel', '--no-autoupdate', '--url', "http://127.0.0.1:{$port}"], [1 => ['pipe', 'w'], 2 => ['redirect', 1]], $pipes);
+        $protocol = in_array($this->option('protocol'), ['http2', 'quic', 'auto'], true) ? $this->option('protocol') : 'http2';
+        $process = proc_open([$binary, 'tunnel', '--no-autoupdate', '--protocol', $protocol, '--url', "http://127.0.0.1:{$port}"], [1 => ['pipe', 'w'], 2 => ['redirect', 1]], $pipes);
         if (! is_resource($process)) {
             $this->error(__('The link could not be opened.'));
 
             return self::FAILURE;
         }
 
+        // cloudflared names the link first and connects it to Cloudflare after; the link is
+        // given once the connection is registered, before that it shows "Error 1033".
         $link = null;
+        $ready = false;
+        $since = null;
+        $warned = false;
         $last = [];
         while (($line = fgets($pipes[1])) !== false) {
             $last = array_slice([...$last, rtrim($line)], -5);
             if ($link === null && preg_match('~https://[a-z0-9-]+\.trycloudflare\.com~', $line, $m)) {
                 $link = $m[0];
+                $since = time();
+                $this->line(__('Connecting the link to Cloudflare…'));
+            }
+            if ($link !== null && ! $ready && str_contains($line, 'Registered tunnel connection')) {
+                $ready = true;
                 $this->announce($link);
+            }
+            if ($link !== null && ! $ready && ! $warned && time() - $since > self::CONNECT_SECONDS) {
+                $warned = true;
+                $this->blocked($last);
             }
         }
         fclose($pipes[1]);
         proc_close($process);
 
-        if ($link === null) {
+        if (! $ready) {
             $this->error(__('The link could not be opened.'));
-            foreach ($last as $text) {
-                $this->line($text);
+            if ($link !== null && ! $warned) {
+                $this->blocked($last);
+            } else {
+                $this->lastLines($last);
             }
 
             return self::FAILURE;
@@ -83,6 +105,23 @@ class ShareLink extends Command
         $this->line(__('The link is closed.'));
 
         return self::SUCCESS;
+    }
+
+    /** The link was named but does not connect: most often the network or an antivirus stops cloudflared. */
+    private function blocked(array $last): void
+    {
+        $this->error(__('The link does not connect to Cloudflare: this network or an antivirus may block it. Allow cloudflared in the antivirus or try another network, for example the internet of your phone.'));
+        $this->lastLines($last);
+    }
+
+    /** What cloudflared said last, for a picture of the window; without a link that does not work. */
+    private function lastLines(array $last): void
+    {
+        foreach ($last as $text) {
+            if (! str_contains($text, 'trycloudflare.com')) {
+                $this->line($text);
+            }
+        }
     }
 
     private function initialPasswordInUse(): bool
