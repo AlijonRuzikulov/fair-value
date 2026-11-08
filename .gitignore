@@ -24,6 +24,7 @@
 _ide_helper.php
 /cloudflared
 /cloudflared.exe
+/cloudflared-*-amd64*
 Homestead.json
 Homestead.yaml
 Thumbs.db

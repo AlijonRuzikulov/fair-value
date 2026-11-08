@@ -55,6 +55,7 @@ class Transliterator
         'Matiz', 'Tracker', 'Onix', 'Captiva', 'Equinox', 'Tahoe', 'Isuzu', 'MAN', 'BYD', 'Kia', 'Hyundai',
         'Toyota', 'Lada', 'GM', 'Cyrl', 'Latn', 'TEO', 'IT', 'HTML', 'CBU', 'Google', 'Yandex', 'MChJ', 'LLC',
         'HTTPS', 'https', 'IP', 'README', 'cron', 'SQLite', 'MySQL', 'JPG', 'JPEG', 'PNG', 'WEBP', 'USD', 'UZS', 'Claude', 'Anthropic', 'AI',
+        'cloudflared', 'Cloudflare', 'GitHub', 'Herd',
     ];
 
     /** Two-letter combinations first, then single letters. */

@@ -48,6 +48,21 @@ class ShareLinkTest extends TestCase
         unlink($tunnel);
     }
 
+    public function test_a_cloudflared_downloaded_in_the_browser_is_found_in_the_folder(): void
+    {
+        User::factory()->admin()->create(['password' => 'Yangi-parol-2026']);
+        $this->systemRuns();
+        $byHand = base_path('cloudflared-linux-amd64');
+        rename($this->fakeTunnel('INF |  https://by-hand-7.trycloudflare.com  |'), $byHand);
+        config(['fairvalue.share.cloudflared' => null]);
+
+        try {
+            $this->artisan('share')->expectsOutputToContain('https://by-hand-7.trycloudflare.com')->assertSuccessful();
+        } finally {
+            unlink($byHand);
+        }
+    }
+
     public function test_nothing_is_opened_while_the_first_password_is_in_use(): void
     {
         User::factory()->admin()->create(['password' => 'admin12345']);

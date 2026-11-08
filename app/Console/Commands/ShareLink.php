@@ -107,7 +107,9 @@ class ShareLink extends Command
     {
         $windows = PHP_OS_FAMILY === 'Windows';
         $local = base_path($windows ? 'cloudflared.exe' : 'cloudflared');
-        foreach ([config('fairvalue.share.cloudflared'), $local, (new ExecutableFinder)->find('cloudflared')] as $path) {
+        // Also as the browser saves it, when it was downloaded by hand.
+        $byHand = base_path($windows ? 'cloudflared-windows-amd64.exe' : 'cloudflared-linux-amd64');
+        foreach ([config('fairvalue.share.cloudflared'), $local, $byHand, (new ExecutableFinder)->find('cloudflared')] as $path) {
             if (is_string($path) && $path !== '' && is_file($path)) {
                 return $path;
             }
@@ -123,9 +125,11 @@ class ShareLink extends Command
         $this->line(__('Downloading cloudflared, the program that opens the link (once, about 55 MB)…'));
         try {
             Http::timeout(600)->withOptions(['sink' => $local])->get($url)->throw();
-        } catch (Throwable) {
+        } catch (Throwable $e) {
             @unlink($local);
             $this->error(__('cloudflared could not be downloaded. Check the internet connection and try again.'));
+            $this->line(mb_substr($e->getMessage(), 0, 300));
+            $this->line(__('Or download it in the browser: :url — and put the file into this folder: :folder', ['url' => $url, 'folder' => base_path()]));
 
             return null;
         }
