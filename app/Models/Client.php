@@ -173,6 +173,16 @@ class Client extends Model
                 ->orWhere('phone', 'like', "%{$term}%")
                 ->orWhere('passport_number', 'like', "%{$term}%");
 
+            // A phone typed in any way: "901234567" finds "+998 (90) 123 4567".
+            $digits = preg_replace('/\D/', '', $term);
+            if (strlen($digits) >= 5 && ! preg_match('/[A-Za-z]/', $term)) {
+                $phone = 'phone';
+                foreach ([' ', '(', ')', '-', '+'] as $character) {
+                    $phone = "replace({$phone}, '{$character}', '')";
+                }
+                $q->orWhereRaw("{$phone} like ?", ['%'.$digits.'%']);
+            }
+
             // "AA 1234567" or "AA1234567"
             if (preg_match('/^([A-Za-z]{2})\s*(\d{3,})$/', $term, $m)) {
                 $q->orWhere(fn (Builder $p) => $p

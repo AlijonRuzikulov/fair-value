@@ -42,6 +42,23 @@ class ClientsAndFilesTest extends TestCase
         $this->assertCount(1, $this->getJson('/admin/clients/search?q=Karim')->json());
     }
 
+    public function test_a_phone_is_found_however_it_is_typed(): void
+    {
+        $user = User::factory()->create();
+        Client::factory()->create(['last_name' => 'Telefonov', 'phone' => '+998 (90) 123 4567']);
+        Client::factory()->create(['last_name' => 'Boshqa', 'phone' => '+998 (93) 555 7788']);
+
+        foreach (['901234567', '90 123 45 67', '+998901234567', '123 4567'] as $typed) {
+            $found = $this->actingAs($user)->getJson('/admin/clients/search?q='.urlencode($typed))->json();
+            $this->assertCount(1, $found, $typed);
+            $this->assertStringStartsWith('Telefonov', $found[0]['title']);
+        }
+
+        // The boxes are typed with +998 at the start and the passport as "AA 1234567".
+        $this->get('/admin/clients/create?type=individual')->assertOk()
+            ->assertSee('name="phone" type="tel"', false)->assertSee('data-passport', false);
+    }
+
     public function test_files_are_attached_downloaded_and_deleted(): void
     {
         Storage::fake('local');

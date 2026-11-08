@@ -973,13 +973,92 @@
     });
   });
 
+  // The passport series takes only letters; when both are typed the number box comes next.
+  $$('[data-letters]').forEach(function (input) {
+    input.addEventListener('input', function (e) {
+      input.value = input.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 2);
+      var next = input.dataset.next && input.form ? input.form.elements[input.dataset.next] : null;
+      if (next && input.value.length === 2 && (e.inputType || '').indexOf('delete') !== 0) next.focus();
+    });
+  });
+
+  // Boxes of digits only (the passport number).
+  $$('[data-digits]').forEach(function (input) {
+    input.addEventListener('input', function () {
+      var digits = input.value.replace(/\D/g, '');
+      if (digits !== input.value) input.value = digits;
+    });
+  });
+
+  // The passport in one box, "AA 1234567": two letters (made capitals), a space, then only the seven digits.
+  $$('[data-passport]').forEach(function (input) {
+    input.addEventListener('input', function (e) {
+      var deleting = (e.inputType || '').indexOf('delete') === 0;
+      var text = input.value.toUpperCase();
+      var letters = '';
+      var digits = '';
+      for (var i = 0; i < text.length; i++) {
+        var c = text.charAt(i);
+        if (letters.length < 2) {
+          if (c >= 'A' && c <= 'Z') letters += c;
+        } else if (c >= '0' && c <= '9' && digits.length < 7) {
+          digits += c;
+        }
+      }
+      // The space comes by itself after the letters (and goes with the last digit when deleting).
+      input.value = letters.length === 2 && (digits || !deleting) ? letters + ' ' + digits : letters;
+    });
+  });
+
+  // Phone numbers: +998 stands at the start, the rest is typed as (90) 123 4567.
+  $$('input[type="tel"]').forEach(function (input) {
+    var PREFIX = '+998 ';
+    var format = function (rest) {
+      if (!rest) return PREFIX;
+      var out = '+998 (' + rest.slice(0, 2);
+      if (rest.length >= 2) out += ')';
+      if (rest.length > 2) out += ' ' + rest.slice(2, 5);
+      if (rest.length > 5) out += ' ' + rest.slice(5, 9);
+      return out;
+    };
+    var restOf = function (value) {
+      var digits = value.replace(/\D/g, '');
+      return value.indexOf('+998') === 0 || (digits.length > 9 && digits.indexOf('998') === 0) ? digits.slice(3) : digits;
+    };
+    var prev = input.value;
+    input.addEventListener('focus', function () {
+      if (input.value.trim() === '') input.value = PREFIX;
+      prev = input.value;
+      window.setTimeout(function () { input.setSelectionRange(input.value.length, input.value.length); }, 0);
+    });
+    input.addEventListener('input', function (e) {
+      var deleting = (e.inputType || '').indexOf('delete') === 0;
+      var before = restOf(prev);
+      // The +998 itself is not deleted (all of it selected and deleted: the box starts again from +998).
+      var rest = deleting && input.value.indexOf('+998') !== 0
+        ? (/\d/.test(input.value) ? before : '')
+        : restOf(input.value);
+      // A bracket or a space was deleted: the digit before it goes.
+      if (deleting && rest === before) rest = rest.slice(0, -1);
+      // 998 typed again out of habit: it is already there.
+      if (rest.length > 9 && rest.indexOf('998') === 0) rest = rest.slice(3);
+      input.value = format(rest.slice(0, 9));
+      prev = input.value;
+    });
+    input.addEventListener('blur', function () {
+      if (input.value.replace(/\D/g, '') === '998') input.value = '';
+      prev = input.value;
+    });
+  });
+
   // A red reminder under a required field while it is empty, as on the valuation portal.
   $$('[data-empty-alert]').forEach(function (input) {
     var note = document.createElement('p');
     note.className = 'field-alert';
     note.textContent = input.dataset.emptyAlert;
     (input.closest('.input-wrap') || input).after(note);
-    function sync() { note.hidden = input.value.trim() !== ''; }
+    // A phone box holding only its +998 counts as empty.
+    function sync() { note.hidden = input.value.trim() !== '' && !(input.type === 'tel' && input.value.replace(/\D/g, '') === '998'); }
     input.addEventListener('input', sync);
     sync();
   });
