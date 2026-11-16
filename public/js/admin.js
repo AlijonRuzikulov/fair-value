@@ -1059,16 +1059,19 @@
     });
   });
 
-  // Cadastral numbers: only the digits are typed, the colons come by themselves.
-  //   a land plot           AA:VV:SS:DD:EE:FFFF   (or, by the newer rule, AA:VV:SS:DD:EE:FFFFF/ZZZZ)
-  //   a building, a house   AA:VV:SS:DD:EE:FFFF:GGGG
-  //   a flat, a premises    AA:VV:SS:DD:EE:FFFF:GGGG:HHH   (10:04:02:01:03:0045:0001:012)
-  // The slash of the newer land plots is typed after the fourth or fifth digit of the sixth part.
+  // Cadastral numbers: only the digits are typed, the colons and the slash come by themselves.
+  // The kind is told by the number of digits:
+  //   14  a land plot           AA:VV:SS:DD:EE:FFFF
+  //   18  a building, a house   AA:VV:SS:DD:EE:FFFF:GGGG
+  //   19  a newer land plot     AA:VV:SS:DD:EE:FFFFF/ZZZZ
+  //   21  a flat, a premises    AA:VV:SS:DD:EE:FFFF:GGGG:HHH   (10:04:02:01:03:0045:0001:012)
+  // A slash typed by hand after four or five digits of the sixth part is kept too.
   $$('[data-cadastral]').forEach(function (input) {
     var GROUPS = [2, 2, 2, 2, 2, 4, 4, 3];
     var MAX = GROUPS.reduce(function (a, b) { return a + b; }, 0);
     var HEAD = 10; // the digits of the first five parts
-    var format = function (digits, open) {
+    var PLOT = 19; // the digits of a newer land plot
+    var colons = function (digits, open) {
       var out = '';
       var at = 0;
       for (var g = 0; g < GROUPS.length && at < digits.length; g++) {
@@ -1083,25 +1086,31 @@
       }
       return out;
     };
-    // AA:VV:SS:DD:EE:FFFFF/ZZZZ: the sixth part of four or five digits, the slash, four digits.
-    var formatPlot = function (before, after) {
-      return format(before.slice(0, HEAD), false) + ':' + before.slice(HEAD) + '/' + after.slice(0, 4);
+    // AA:VV:SS:DD:EE:FFFFF/ZZZZ: the sixth part, the slash, four digits.
+    var plot = function (before, after) {
+      return colons(before.slice(0, HEAD), false) + ':' + before.slice(HEAD) + '/' + after.slice(0, 4);
     };
+    var byHand = false; // the slash was typed by hand
     var prev = input.value;
     input.addEventListener('input', function (e) {
       var deleting = (e.inputType || '').indexOf('delete') === 0;
       var raw = input.value;
       var slash = raw.indexOf('/');
+      if (e.data === '/') byHand = true;
+      if (slash < 0) byHand = false;
       var before = (slash < 0 ? raw : raw.slice(0, slash)).replace(/\D/g, '');
       var after = slash < 0 ? '' : raw.slice(slash + 1).replace(/\D/g, '');
-      if (slash >= 0 && before.length >= HEAD + 4 && before.length <= HEAD + 5) {
-        input.value = formatPlot(before, after);
+      if (byHand && before.length >= HEAD + 4 && before.length <= HEAD + 5) {
+        input.value = plot(before, after);
       } else {
+        byHand = false;
         var digits = (before + after).slice(0, MAX);
-        var removedSlash = prev.indexOf('/') >= 0 && slash < 0;
-        // A colon was deleted: the digit before it goes (a deleted slash goes by itself).
-        if (deleting && !removedSlash && digits === prev.replace(/\D/g, '')) digits = digits.slice(0, -1);
-        input.value = format(digits, !deleting);
+        var slashGone = prev.indexOf('/') >= 0 && slash < 0;
+        // A colon was deleted: the digit before it goes (a slash deleted goes by itself).
+        if (deleting && !slashGone && digits === prev.replace(/\D/g, '')) digits = digits.slice(0, -1);
+        input.value = digits.length === PLOT && !(deleting && slashGone)
+          ? plot(digits.slice(0, HEAD + 5), digits.slice(HEAD + 5))
+          : colons(digits, !deleting);
       }
       prev = input.value;
     });

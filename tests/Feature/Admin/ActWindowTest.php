@@ -112,11 +112,15 @@ class ActWindowTest extends TestCase
         // A colon left at the end (the box writes it after each group) is not kept.
         $this->house->update(['cadastral_number' => ' 10:10:03:01:01:5037: ']);
         $this->assertSame('10:10:03:01:01:5037', $this->house->fresh()->cadastral_number);
-        // A land plot by the newer rule keeps its slash, but not one left at the end.
-        $this->house->update(['cadastral_number' => '10:04:02:01:03:00451/0012']);
-        $this->assertSame('10:04:02:01:03:00451/0012', $this->house->fresh()->cadastral_number);
+        // Nineteen digits are a land plot numbered by the newer rule: it gets its slash however it was written.
+        foreach (['10:04:02:01:03:00451/0012', '1004020103004510012', '10:04:02:01:03:0045:1001:2'] as $written) {
+            $this->house->update(['cadastral_number' => $written]);
+            $this->assertSame('10:04:02:01:03:00451/0012', $this->house->fresh()->cadastral_number, $written);
+        }
         $this->house->update(['cadastral_number' => '10:04:02:01:03:00451/']);
         $this->assertSame('10:04:02:01:03:00451', $this->house->fresh()->cadastral_number);
+        $this->house->update(['cadastral_number' => '10:04:02:01:03:0045:0001:012']);
+        $this->assertSame('10:04:02:01:03:0045:0001:012', $this->house->fresh()->cadastral_number);
     }
 
     public function test_someone_who_may_not_change_the_valuation_only_looks(): void

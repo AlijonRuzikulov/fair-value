@@ -42,10 +42,21 @@ class RealEstate extends Model
         ];
     }
 
-    /** "10:01:05:01:02:0123" (or "…:01234/0001" of a newer land plot), kept without spaces and without a colon or a slash left at the end. */
+    /**
+     * "10:01:05:01:02:0123", kept without spaces and without a colon or a slash left at the end.
+     * Nineteen digits are a land plot numbered by the newer rule: "10:04:02:01:03:00451/0012".
+     */
     protected function cadastralNumber(): Attribute
     {
-        return Attribute::make(set: fn (?string $value) => $value === null ? null : (rtrim(preg_replace('/\s+/u', '', $value), ':/') ?: null));
+        return Attribute::make(set: function (?string $value) {
+            $value = $value === null ? '' : rtrim(preg_replace('/\s+/u', '', $value), ':/');
+            $digits = preg_replace('/\D/', '', $value);
+            if (strlen($digits) === 19 && preg_match('/^[\d:\/.\-]+$/', $value)) {
+                $value = implode(':', str_split(substr($digits, 0, 10), 2)).':'.substr($digits, 10, 5).'/'.substr($digits, 15);
+            }
+
+            return $value !== '' ? $value : null;
+        });
     }
 
     public static function searchable(): array
