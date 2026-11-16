@@ -42,10 +42,10 @@ class RealEstate extends Model
         ];
     }
 
-    /** "10:01:05:01:02:0123", kept without spaces and without a colon left at the end. */
+    /** "10:01:05:01:02:0123" (or "…:01234/0001" of a newer land plot), kept without spaces and without a colon or a slash left at the end. */
     protected function cadastralNumber(): Attribute
     {
-        return Attribute::make(set: fn (?string $value) => $value === null ? null : (rtrim(preg_replace('/\s+/u', '', $value), ':') ?: null));
+        return Attribute::make(set: fn (?string $value) => $value === null ? null : (rtrim(preg_replace('/\s+/u', '', $value), ':/') ?: null));
     }
 
     public static function searchable(): array

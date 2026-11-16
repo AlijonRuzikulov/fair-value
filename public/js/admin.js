@@ -1059,11 +1059,15 @@
     });
   });
 
-  // Cadastral numbers: only the digits are typed, the colons come by themselves:
-  // 10:01:05:01:02:0123 (a building), and :0001:001 more for a flat or a room.
+  // Cadastral numbers: only the digits are typed, the colons come by themselves.
+  //   a land plot           AA:VV:SS:DD:EE:FFFF   (or, by the newer rule, AA:VV:SS:DD:EE:FFFFF/ZZZZ)
+  //   a building, a house   AA:VV:SS:DD:EE:FFFF:GGGG
+  //   a flat, a premises    AA:VV:SS:DD:EE:FFFF:GGGG:HHH   (10:04:02:01:03:0045:0001:012)
+  // The slash of the newer land plots is typed after the fourth or fifth digit of the sixth part.
   $$('[data-cadastral]').forEach(function (input) {
     var GROUPS = [2, 2, 2, 2, 2, 4, 4, 3];
     var MAX = GROUPS.reduce(function (a, b) { return a + b; }, 0);
+    var HEAD = 10; // the digits of the first five parts
     var format = function (digits, open) {
       var out = '';
       var at = 0;
@@ -1071,7 +1075,7 @@
         out += (g ? ':' : '') + digits.substr(at, GROUPS[g]);
         at += GROUPS[g];
       }
-      // A finished group is followed by its colon at once, while typing.
+      // A finished part is followed by its colon at once, while typing.
       var ends = 0;
       for (var k = 0; k < GROUPS.length - 1; k++) {
         ends += GROUPS[k];
@@ -1079,17 +1083,30 @@
       }
       return out;
     };
+    // AA:VV:SS:DD:EE:FFFFF/ZZZZ: the sixth part of four or five digits, the slash, four digits.
+    var formatPlot = function (before, after) {
+      return format(before.slice(0, HEAD), false) + ':' + before.slice(HEAD) + '/' + after.slice(0, 4);
+    };
     var prev = input.value;
     input.addEventListener('input', function (e) {
       var deleting = (e.inputType || '').indexOf('delete') === 0;
-      var digits = input.value.replace(/\D/g, '').slice(0, MAX);
-      // A colon was deleted: the digit before it goes.
-      if (deleting && digits === prev.replace(/\D/g, '')) digits = digits.slice(0, -1);
-      input.value = format(digits, !deleting);
+      var raw = input.value;
+      var slash = raw.indexOf('/');
+      var before = (slash < 0 ? raw : raw.slice(0, slash)).replace(/\D/g, '');
+      var after = slash < 0 ? '' : raw.slice(slash + 1).replace(/\D/g, '');
+      if (slash >= 0 && before.length >= HEAD + 4 && before.length <= HEAD + 5) {
+        input.value = formatPlot(before, after);
+      } else {
+        var digits = (before + after).slice(0, MAX);
+        var removedSlash = prev.indexOf('/') >= 0 && slash < 0;
+        // A colon was deleted: the digit before it goes (a deleted slash goes by itself).
+        if (deleting && !removedSlash && digits === prev.replace(/\D/g, '')) digits = digits.slice(0, -1);
+        input.value = format(digits, !deleting);
+      }
       prev = input.value;
     });
     input.addEventListener('blur', function () {
-      input.value = input.value.replace(/:+$/, '');
+      input.value = input.value.replace(/[:/]+$/, '');
       prev = input.value;
     });
   });
