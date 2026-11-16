@@ -102,11 +102,12 @@ class LocationAndNumbersTest extends TestCase
 
         $this->get('/admin/real-estates/'.$flat->id)->assertOk()
             ->assertSee('data-map-picker', false)->assertSee('name="latitude" value="41.3111', false)
-            ->assertSee('Feruza massivi')->assertSee('name="cadastral_value" type="text" value="'.Format::number(830176946.46, 2).'"', false)
+            // The landmark is shown in the alphabet of the language (Cyrillic by default).
+            ->assertSee('Феруза массиви')->assertSee('name="cadastral_value" type="text" value="'.Format::number(830176946.46, 2).'"', false)
             ->assertSee('value="'.Format::number(500000).'"', false);  // paid
 
         $this->get('/admin/real-estates/'.$flat->id.'/edit')->assertOk()
-            ->assertSee('data-map-picker', false)->assertSee('leaflet/leaflet.js', false)->assertSee('<option value="Feruza massivi">', false);
+            ->assertSee('data-map-picker', false)->assertSee('leaflet/leaflet.js', false)->assertSee('<option value="Феруза массиви">', false);
 
         $this->get('/admin/real-estates/'.$flat->id.'/report?script=latn')->assertOk()
             ->assertSee('Geografik koordinatalari')->assertSee('41.311100, 69.279700')

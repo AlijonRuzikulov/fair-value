@@ -340,7 +340,7 @@
 <table class="facts">
     <tr><td>{{ $t('Obyekt nomi') }}</td><td>{{ $t($item->name) }}</td></tr>
     <tr><td>{{ $t('Funksional maqsadi va foydalanilishi') }}</td><td>{{ $t($f['function']) }}</td></tr>
-    <tr><td>{{ $t('Joylashgan joyi') }}</td><td>{{ $t($location) }}@if ($item->landmark) ({{ $t("mo'ljal") }}: {{ $t($item->landmark) }})@endif</td></tr>
+    <tr><td>{{ $t('Joylashgan joyi') }}</td><td>{{ $t($location) }}@if ($item->landmark) ({{ $t("mo'ljal") }}: {{ $s->name($item->landmark) }})@endif</td></tr>
     @if ($item->hasLocation())<tr><td>{{ $t('Geografik koordinatalari') }}</td><td>{{ number_format($item->latitude, 6, '.', '') }}, {{ number_format($item->longitude, 6, '.', '') }}</td></tr>@endif
     <tr><td>{{ $t('Umumiy maydoni') }}</td><td>{{ $num($item->total_area) }} {{ $t('kv. m') }}</td></tr>
     @if ($item->built_up_area)<tr><td>{{ $t('Qurilish osti maydoni') }}</td><td>{{ $num($item->built_up_area) }} {{ $t('kv. m') }}</td></tr>@endif

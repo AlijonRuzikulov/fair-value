@@ -13,7 +13,7 @@
         <div class="object-map">
             <x-static-map :lat="$item->latitude" :lng="$item->longitude" :width="760" :height="280" />
             <div class="map-links">
-                <span class="muted">{{ number_format($item->latitude, 6, '.', '') }}, {{ number_format($item->longitude, 6, '.', '') }}@if ($item->landmark) · {{ $item->landmark }}@endif</span>
+                <span class="muted">{{ number_format($item->latitude, 6, '.', '') }}, {{ number_format($item->longitude, 6, '.', '') }}@if ($item->landmark) · {{ \App\Support\Transliterator::forLocale($item->landmark) }}@endif</span>
                 @foreach (\App\Support\StaticMap::links($item->latitude, $item->longitude) as $service => $url)
                     <a class="btn btn-sm" href="{{ $url }}" target="_blank" rel="noopener noreferrer"><x-icon name="external-link" :size="14" /> {{ $service }}</a>
                 @endforeach

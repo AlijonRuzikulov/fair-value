@@ -14,6 +14,7 @@ use App\Reports\RealEstateReport;
 use App\Support\AdminTheme;
 use App\Support\Format;
 use App\Support\Tenant;
+use App\Support\Transliterator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
@@ -404,9 +405,10 @@ class RealEstateController extends ValuationController
     {
         return [
             'features' => RealEstateFeature::options(),
-            // Landmarks typed before, the most used first.
+            // Landmarks typed before, the most used first, in the alphabet of the language.
             'landmarks' => RealEstate::query()->whereNotNull('landmark')->toBase()
-                ->select('landmark', DB::raw('count(*) as uses'))->groupBy('landmark')->orderByDesc('uses')->limit(300)->pluck('landmark'),
+                ->select('landmark', DB::raw('count(*) as uses'))->groupBy('landmark')->orderByDesc('uses')->limit(300)->pluck('landmark')
+                ->map(fn ($name) => Transliterator::forLocale($name))->unique(fn ($name) => mb_strtolower($name))->values(),
         ];
     }
 

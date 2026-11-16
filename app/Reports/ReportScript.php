@@ -38,6 +38,17 @@ final class ReportScript
         return $this->isCyrillic() ? Transliterator::toCyrillic($text) : self::latin($text);
     }
 
+    /** A name chosen from a list or typed (a landmark): in the report's alphabet, whichever it was written in. */
+    public function name(?string $text): string
+    {
+        $text = (string) $text;
+        if ($this->isCyrillic()) {
+            return preg_match('/[A-Za-z]/', $text) ? Transliterator::toCyrillic($text) : $text;
+        }
+
+        return self::latin(Transliterator::toLatin($text));
+    }
+
     /** A value typed by a person: unchanged, or "—" when empty. */
     public function v(mixed $value): string
     {

@@ -3,10 +3,11 @@
 namespace App\Support;
 
 /**
- * Uzbek Latin → Uzbek Cyrillic transliteration.
+ * Uzbek Latin → Uzbek Cyrillic transliteration, and back (toLatin).
  *
  * Used to generate lang/oz.json from lang/uz.json and Cyrillic names of
- * directory entries. Words that do not follow the rules (mostly Russian
+ * directory entries, and to show a name in the alphabet of the language
+ * (forLocale), such as the portal's landmarks written in Cyrillic. Words that do not follow the rules (mostly Russian
  * loanwords) are listed in self::WORDS; translation placeholders such as
  * ":count" and words in self::KEEP are left untouched.
  */
@@ -206,5 +207,71 @@ class Transliterator
         }
 
         return $converted;
+    }
+
+    /** Cyrillic letters in Latin, lower case ("е", "ц" and the case are decided in toLatin). */
+    private const LATIN = [
+        'а' => 'a', 'б' => 'b', 'в' => 'v', 'г' => 'g', 'ғ' => 'g‘', 'д' => 'd', 'е' => 'e', 'ё' => 'yo', 'ж' => 'j',
+        'з' => 'z', 'и' => 'i', 'й' => 'y', 'к' => 'k', 'қ' => 'q', 'л' => 'l', 'м' => 'm', 'н' => 'n', 'о' => 'o',
+        'п' => 'p', 'р' => 'r', 'с' => 's', 'т' => 't', 'у' => 'u', 'ў' => 'o‘', 'ф' => 'f', 'х' => 'x', 'ҳ' => 'h',
+        'ц' => 's', 'ч' => 'ch', 'ш' => 'sh', 'щ' => 'sh', 'ъ' => '’', 'ы' => 'i', 'ь' => '', 'э' => 'e', 'ю' => 'yu',
+        'я' => 'ya',
+    ];
+
+    private const CYRILLIC_VOWELS = 'аеёиоуўэюя';
+
+    /**
+     * Uzbek Cyrillic → Uzbek Latin with o‘ and g‘: "е" is "ye" at the start of
+     * a word and after a vowel, "ц" is "ts" after a vowel; a letter of two is
+     * written in capitals inside a word in capitals (МФЙ → MFY, ЧОРСУ →
+     * CHORSU). Latin letters, digits and signs stay as they are.
+     */
+    public static function toLatin(string $text): string
+    {
+        $chars = mb_str_split($text);
+        $out = '';
+        foreach ($chars as $i => $char) {
+            $lower = mb_strtolower($char);
+            if (! isset(self::LATIN[$lower])) {
+                $out .= $char;
+
+                continue;
+            }
+            $prev = mb_strtolower($chars[$i - 1] ?? '');
+            $afterVowel = $prev !== '' && (str_contains(self::CYRILLIC_VOWELS, $prev) || $prev === 'ъ' || $prev === 'ь');
+            $latin = match ($lower) {
+                'е' => ($prev === '' || ! preg_match('/\pL/u', $prev) || $afterVowel) ? 'ye' : 'e',
+                'ц' => str_contains(self::CYRILLIC_VOWELS, $prev) && $prev !== '' ? 'ts' : 's',
+                default => self::LATIN[$lower],
+            };
+            if ($char !== $lower && $latin !== '') {
+                $next = $chars[$i + 1] ?? '';
+                $before = $chars[$i - 1] ?? '';
+                $upperNext = $next !== '' && preg_match('/\p{Lu}/u', $next);
+                $upperWord = $upperNext || (preg_match('/\p{Lu}/u', $before) && ! preg_match('/\p{Ll}/u', $next));
+                $latin = $upperWord ? mb_strtoupper($latin) : mb_strtoupper(mb_substr($latin, 0, 1)).mb_substr($latin, 1);
+            }
+            $out .= $latin;
+        }
+
+        return $out;
+    }
+
+    /**
+     * A name in the alphabet of the language: Latin for "uz", Cyrillic for
+     * "oz"; in Russian, and when it is already so, it stays as it is.
+     */
+    public static function forLocale(?string $text, ?string $locale = null): string
+    {
+        $text = (string) $text;
+        $locale ??= app()->getLocale();
+        if ($locale === 'uz' && preg_match('/\p{Cyrillic}/u', $text)) {
+            return self::toLatin($text);
+        }
+        if ($locale === 'oz' && preg_match('/[A-Za-z]/', $text)) {
+            return self::toCyrillic($text);
+        }
+
+        return $text;
     }
 }

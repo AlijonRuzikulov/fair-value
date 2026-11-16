@@ -89,7 +89,7 @@ class LandmarkTest extends TestCase
     {
         $this->fakeMap(overpassStatus: 504);
 
-        $this->actingAs($this->user)->getJson('/admin/landmarks?district_id='.$this->district->id)
+        $this->actingAs($this->user)->withSession(['locale' => 'uz'])->getJson('/admin/landmarks?district_id='.$this->district->id)
             ->assertOk()->assertJsonPath('failed', false)->assertJsonPath('items.0.name', 'Bunyodkor mahallasi');
         Http::assertSent(fn (Request $r) => str_contains($r->url(), 'overpass.kumi.systems'));
     }
@@ -120,15 +120,21 @@ class LandmarkTest extends TestCase
         Http::fake();
         $this->seed(LandmarkSeeder::class);
         $district = District::where('name_uz', 'Yunusobod tumani')->firstOrFail();
-        RealEstate::factory()->create(['district_id' => $district->id, 'region_id' => $district->region_id, 'landmark' => 'Feruza massivi']);
-
-        $items = collect($this->actingAs($this->user)->withSession(['locale' => 'uz'])
+        $place = ['district_id' => $district->id, 'region_id' => $district->region_id];
+        RealEstate::factory()->count(2)->create($place + ['landmark' => 'Feruza massivi']);
+        RealEstate::factory()->create($place + ['landmark' => 'Yunusobod 1-Mavze']);
+        $list = fn (string $locale) => collect($this->actingAs($this->user)->withSession(['locale' => $locale])
             ->getJson('/admin/landmarks?district_id='.$district->id)->assertOk()->assertJsonPath('failed', false)->json('items'));
 
-        // Typed before first, then the portal's list in its own order, without a kind of its own.
-        $this->assertSame(['Feruza massivi', 'Алайский', 'Юнусобод 1-Мавзе'], $items->pluck('name')->take(3)->all());
-        $this->assertSame('', $items[1]['kind']);
-        $this->assertGreaterThan(200, $items->count());
+        // Typed before first, then the portal's list in its own order, without a kind of its own,
+        // in the alphabet of the language; a name typed before in the other alphabet comes once.
+        $uz = $list('uz');
+        $this->assertSame(['Feruza massivi', 'Yunusobod 1-Mavze', 'Alayskiy', 'Yunusobod 2-Mavze'], $uz->pluck('name')->take(4)->all());
+        $this->assertSame('', $uz[2]['kind']);
+        $this->assertSame(1, $uz->where('name', 'Yunusobod 1-Mavze')->count());
+        $this->assertGreaterThan(200, $uz->count());
+        $this->assertSame(['Феруза массиви', 'Юнусобод 1-Мавзе', 'Алайский', 'Юнусобод 2-Мавзе'], $list('oz')->pluck('name')->take(4)->all());
+        $this->assertSame(['Feruza massivi', 'Yunusobod 1-Mavze', 'Алайский', 'Юнусобод 2-Мавзе'], $list('ru')->pluck('name')->take(4)->all());
         Http::assertNothingSent();
     }
 
@@ -148,5 +154,15 @@ class LandmarkTest extends TestCase
         $this->assertSame(['portal', 41.36, 69.28], [$kept->kind, $kept->latitude, $kept->longitude]);
         // Every district but Davlatobod has the portal's list.
         $this->assertSame(District::count() - 1, District::whereHas('landmarks', fn ($q) => $q->where('kind', 'portal'))->count());
+    }
+
+    public function test_the_landmark_of_an_object_is_shown_in_the_alphabet_of_the_language(): void
+    {
+        $item = RealEstate::factory()->create(['district_id' => $this->district->id, 'region_id' => $this->district->region_id, 'landmark' => 'Юнусобод 1-Мавзе']);
+
+        $this->actingAs($this->user)->withSession(['locale' => 'uz'])->get('/admin/real-estates/'.$item->id.'/edit')->assertOk()
+            ->assertSee('value="Yunusobod 1-Mavze"', false);
+        $this->actingAs($this->user)->withSession(['locale' => 'oz'])->get('/admin/real-estates/'.$item->id.'/edit')->assertOk()
+            ->assertSee('value="Юнусобод 1-Мавзе"', false);
     }
 }
