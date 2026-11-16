@@ -1,0 +1,37 @@
+# Every push: the full test suite and a check of the PHP libraries against
+# the database of known vulnerabilities (composer audit).
+name: Tests
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '17 4 * * 1' # every Monday: new vulnerabilities are found in old versions too
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: sqlite3, pdo_sqlite, mbstring, intl, gd, zip, bcmath, sockets
+          coverage: none
+
+      - name: Libraries
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Known vulnerabilities
+        run: composer audit --locked --abandoned=report
+
+      - name: Tests
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          php artisan test --compact

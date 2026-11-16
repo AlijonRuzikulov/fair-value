@@ -7,6 +7,8 @@ use App\Services\Audit\SecurityAlert;
 use App\Services\CurrencyService;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schedule;
 use Illuminate\Support\Facades\Validator;
@@ -80,6 +82,33 @@ Artisan::command('user:password {email? : E-mail of the user (default: ADMIN_EMA
     return 0;
 })->purpose('Set a new password for a user who cannot sign in');
 
+Artisan::command('db:backup {--keep=14 : How many copies to keep}', function () {
+    if (DB::getDriverName() !== 'sqlite') {
+        $this->warn('Only an SQLite database is copied here; back up other databases with their own tools.');
+
+        return 0;
+    }
+
+    // A consistent copy of the working database, made while the site keeps running.
+    $dir = storage_path('app/backups');
+    File::ensureDirectoryExists($dir, 0700);
+    // Named by the second it was made, so the names sort by age.
+    while (File::exists($file = $dir.'/fairvalue-'.now()->format('Y-m-d-His').'.sqlite')) {
+        sleep(1);
+    }
+    DB::statement('VACUUM INTO ?', [$file]);
+    @chmod($file, 0600);
+
+    $copies = collect(File::glob($dir.'/fairvalue-*.sqlite'))->sort()->values();
+    $copies->slice(0, max(0, $copies->count() - max(1, (int) $this->option('keep'))))->each(fn ($old) => File::delete($old));
+    Cache::forever('monitor:backup', now()->toDateTimeString());
+
+    $this->info('Saved: '.$file);
+
+    return 0;
+})->purpose('Copy the database to storage/app/backups (the newest 14 copies are kept)');
+
+Schedule::command('db:backup')->dailyAt('02:40')->withoutOverlapping();
 Schedule::command('currency:fetch')->everyThreeHours()->withoutOverlapping();
 Schedule::command('audit:verify')->dailyAt('03:10');
 Schedule::command('audit:prune')->dailyAt('03:20');

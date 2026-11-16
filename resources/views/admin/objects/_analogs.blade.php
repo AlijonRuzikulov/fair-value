@@ -45,7 +45,7 @@
                 <input type="hidden" name="mode" value="links">
                 <label class="analog-tool-title" for="analog-links"><x-icon name="external-link" :size="18" /> {{ __('Add by links') }}</label>
                 <textarea id="analog-links" class="input" name="links" rows="3" placeholder="https://www.olx.uz/d/obyavlenie/…" required></textarea>
-                <p class="field-hint">{{ __('Links to listings or to a page of search results with your filters (:sites), one per line.', ['sites' => $sites]) }}</p>
+                <p class="field-hint">{{ __('Links to listings or to a page of search results with your filters (:sites), one per line.', ['sites' => $sites]) }} {{ __('Links to other sites are added too: paste the text of the listing under them.') }}</p>
                 <button class="btn" type="submit"><x-icon name="plus" :size="16" /> {{ __('Add links') }}</button>
             </form>
         </div>

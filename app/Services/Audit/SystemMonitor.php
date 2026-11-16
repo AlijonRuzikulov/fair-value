@@ -95,6 +95,13 @@ class SystemMonitor
         $add(__('Scheduled tasks (cron)'), $late ? 'warn' : 'ok', $heartbeat ? Carbon::parse($heartbeat)->diffForHumans() : __('never ran'),
             $late ? __('Add the cron line from the README: rates, audit checks and cleanup run from it.') : null);
 
+        if (DB::getDriverName() === 'sqlite') {
+            $backup = Cache::get('monitor:backup');
+            $old = ! $backup || Carbon::parse($backup)->lt(now()->subDays(2));
+            $add(__('Database backup'), $old ? 'warn' : 'ok', $backup ? Carbon::parse($backup)->diffForHumans() : __('never made'),
+                $old ? __('A copy is made every night by cron (php artisan db:backup) into storage/app/backups. Also keep copies on another computer.') : null);
+        }
+
         $rateDate = CurrencyRate::max('rate_date');
         $stale = ! $rateDate || Carbon::parse($rateDate)->lt(now()->subDays(4));
         $add(__('Exchange rates'), $stale ? 'warn' : 'ok', $rateDate ? Carbon::parse($rateDate)->format('d.m.Y') : __('not loaded'));

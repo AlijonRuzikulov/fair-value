@@ -3,8 +3,10 @@
 namespace App\Services\Analogs;
 
 use App\Enums\RealEstateFeature;
+use App\Enums\ValuationApproach;
 use App\Models\Analog;
 use App\Models\RealEstate;
+use App\Reports\RealEstateReport;
 use App\Services\CurrencyService;
 use App\Support\ComparativeCalculator;
 use Illuminate\Database\Eloquent\Model;
@@ -63,6 +65,69 @@ class AnalogFinder
         }
 
         return $added;
+    }
+
+    /**
+     * Saves links to listings on other sites, which the server does not open:
+     * the appraiser pastes the text of each listing or types in its price and
+     * area. Returns how many were added.
+     *
+     * @param  list<string>  $urls
+     */
+    public function addOtherLinks(Model $object, array $urls, int $limit): int
+    {
+        $known = $object->analogs()->pluck('url')->filter()->all();
+        $room = min($limit, max(0, self::MAX_PER_OBJECT - $object->analogs()->count()));
+        $added = 0;
+
+        foreach (array_unique(array_map('trim', $urls)) as $url) {
+            if ($added >= $room || in_array($url, $known, true) || ! self::isWebsite($url)) {
+                continue;
+            }
+            $object->analogs()->create([
+                'status' => Analog::FAILED,
+                'url' => mb_substr($url, 0, 2000),
+                'source' => parse_url($url, PHP_URL_HOST),
+                'note' => __('This site is not read automatically: paste the text of the listing or fill in the price and the area.'),
+                'created_by' => auth()->id(),
+            ]);
+            $added++;
+        }
+
+        return $added;
+    }
+
+    /** An address of a website on the internet (not of a computer or a local network). */
+    public static function isWebsite(string $url): bool
+    {
+        $parts = parse_url($url);
+        if (! is_array($parts) || ! in_array(strtolower($parts['scheme'] ?? ''), ['http', 'https'], true) || isset($parts['user']) || isset($parts['pass'])) {
+            return false;
+        }
+
+        // A name with a dot and letters at the end (example.uz), not an IP address or "localhost".
+        return (bool) preg_match('/^(?:[a-z0-9-]+\.)+[a-z]{2,}$/i', $parts['host'] ?? '');
+    }
+
+    /**
+     * Keeps the value by the comparative approach in step with its analogues
+     * once the approach is applied, so the appraiser does not have to save it.
+     */
+    public function syncValue(Model $object): void
+    {
+        if (! $object instanceof RealEstate || ! in_array(ValuationApproach::Comparative->value, (array) $object->approaches, true)) {
+            return;
+        }
+
+        $analogs = $object->analogs()->get();
+        $result = ComparativeCalculator::calculate((float) $object->total_area, $analogs, RealEstateReport::comparativeOptions($object));
+        // No analogues left: no value. One that is still being read leaves the saved value as it is.
+        $value = $result['value'] ?? ($analogs->isEmpty() ? null : $object->value_comparative);
+        $saved = $object->value_comparative;
+        $changed = $value === null || $saved === null ? $value !== $saved : (float) $value !== (float) $saved;
+        if ($changed) {
+            $object->update(['value_comparative' => $value]);
+        }
     }
 
     /** Asks the AI for listings similar to the object and saves them to be read. */

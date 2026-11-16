@@ -104,8 +104,8 @@ class AnalogsFlowTest extends TestCase
 
         $this->actingAs($this->user)->post($this->url(), [
             'mode' => 'links',
-            'links' => "https://www.olx.uz/d/obyavlenie/kv-ID1.html\nhttp://169.254.169.254/latest\nhttps://www.olx.uz/d/obyavlenie/kv-ID1.html",
-        ])->assertRedirect()->assertSessionHas('error');
+            'links' => "https://www.olx.uz/d/obyavlenie/kv-ID1.html\nhttp://169.254.169.254/latest\nhttp://localhost/x\nhttps://www.olx.uz/d/obyavlenie/kv-ID1.html",
+        ])->assertRedirect()->assertSessionHas('status');
 
         $analog = $this->flat->analogs()->sole();
         $this->assertTrue($analog->isPending());
@@ -123,6 +123,88 @@ class AnalogsFlowTest extends TestCase
         $this->assertSame(-5.0, (float) $analog->adjustments['bargain']);
         $this->assertSame(5.0, (float) $analog->adjustments['floor'], 'First floor against the 4th.');
         Http::assertSentCount(1);
+    }
+
+    public function test_links_without_https_and_with_punctuation_around_them_are_understood(): void
+    {
+        $this->withoutAi();
+        Http::fake();
+
+        $this->actingAs($this->user)->post($this->url(), [
+            'mode' => 'links',
+            'links' => "Qarang: www.olx.uz/d/obyavlenie/kv-ID7.html, (olx.uz/d/obyavlenie/kv-ID8.html)\n«https://uybor.uz/listings/123».",
+        ])->assertSessionHas('status');
+
+        $this->assertSame([
+            'https://www.olx.uz/d/obyavlenie/kv-ID7.html',
+            'https://olx.uz/d/obyavlenie/kv-ID8.html',
+            'https://uybor.uz/listings/123',
+        ], $this->flat->analogs()->orderBy('id')->pluck('url')->all());
+        $this->assertTrue($this->flat->analogs()->get()->every->isPending());
+        Http::assertNothingSent();
+
+        $this->post($this->url(), ['mode' => 'links', 'links' => 'narxi 50.000 dollar'])->assertSessionHas('error');
+        $this->post($this->url(), ['mode' => 'links', 'links' => 'https://uybor.uz/listings/123'])->assertSessionHas('error');
+    }
+
+    public function test_a_link_to_another_site_is_kept_for_the_text_of_its_listing_and_never_opened(): void
+    {
+        $this->withoutAi();
+        Http::fake();
+        $this->flat->update(['approaches' => ['cost', 'comparative']]);
+
+        $this->actingAs($this->user)->withSession(['locale' => 'uz'])->post($this->url(), [
+            'mode' => 'links',
+            'links' => "https://t.me/uyjoy_toshkent/1234\nhttps://makler.uz/kvartira/55",
+        ])->assertSessionHas('status');
+
+        $analogs = $this->flat->analogs()->orderBy('id')->get();
+        $this->assertCount(2, $analogs);
+        $this->assertSame([Analog::FAILED, Analog::FAILED], $analogs->pluck('status')->all());
+        $this->assertSame(['t.me', 'makler.uz'], $analogs->pluck('source')->all());
+        // The page asks for the text of each listing.
+        $this->withSession(['locale' => 'uz'])->get('/admin/real-estates/'.$this->flat->id)
+            ->assertSee('Bu sayt avtomatik o‘qilmaydi', false)->assertSee('E’lon matnini qo‘yish', false)
+            ->assertDontSee('data-analog-fill', false);
+        $this->postJson('/admin/analogs/'.$analogs[0]->id.'/fill')->assertJson(['status' => 'failed']);
+        Http::assertNothingSent();
+
+        $this->post('/admin/analogs/'.$analogs[0]->id.'/text', ['text' => "2 xonali kvartira sotiladi\nNarxi: 60 000 \$\nUmumiy maydon: 60 m²\nQavat: 4\nUy qavatliligi: 9"])
+            ->assertSessionHas('status');
+        $this->assertTrue($analogs[0]->fresh()->isUsable());
+        // The comparative value is saved by itself once the approach is applied: 60 000 × 12 500 × 0.95.
+        $this->assertEqualsWithDelta(712_500_000, (float) $this->flat->fresh()->value_comparative, 1000);
+    }
+
+    public function test_a_page_that_was_not_read_counts_once_its_price_and_area_are_typed_in(): void
+    {
+        $this->withoutAi();
+        $this->flat->update(['approaches' => ['cost', 'comparative']]);
+        $analog = $this->flat->analogs()->create(['status' => Analog::FAILED, 'url' => 'https://www.olx.uz/d/obyavlenie/x.html', 'note' => 'Code 403']);
+
+        $this->actingAs($this->user)->put($this->url(), ['analogs' => [$analog->id => [
+            'price' => '600 000 000', 'currency' => 'UZS', 'area' => '60', 'floor' => '4', 'floors_total' => '9', 'included' => '1',
+        ]]])->assertSessionHas('status');
+
+        $analog->refresh();
+        $this->assertSame(Analog::READY, $analog->status);
+        $this->assertNull($analog->note);
+        $this->assertTrue($analog->isUsable());
+        $this->assertSame(-5.0, (float) $analog->adjustments['bargain'], 'The usual adjustments are suggested.');
+        $this->assertEqualsWithDelta(570_000_000, (float) $this->flat->fresh()->value_comparative, 1000);
+
+        // Without analogues there is no comparative value.
+        $this->delete('/admin/analogs/'.$analog->id)->assertRedirect();
+        $this->assertNull($this->flat->fresh()->value_comparative);
+    }
+
+    public function test_the_comparative_value_is_not_saved_while_the_approach_is_refused(): void
+    {
+        $this->withoutAi();
+        $this->actingAs($this->user)->post($this->url(), ['mode' => 'manual', 'title' => 'Kvartira A', 'price' => '600 000 000', 'currency' => 'UZS', 'area' => '60'])
+            ->assertSessionHasNoErrors();
+
+        $this->assertNull($this->flat->fresh()->value_comparative);
     }
 
     public function test_a_page_that_cannot_be_opened_is_marked(): void

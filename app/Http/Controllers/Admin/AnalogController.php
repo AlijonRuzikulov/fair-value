@@ -59,23 +59,51 @@ class AnalogController extends Controller
         if ($mode === 'manual') {
             $data = $this->manualData($request);
             $this->finder->addManual($object, $data);
+            $this->finder->syncValue($object);
             Activity::record('analogs', $object, ['mode' => 'manual', 'title' => $data['title']]);
 
             return $this->back($type, $object)->with('status', __('The analogue has been added.'));
         }
 
         $request->validate(['links' => ['required', 'string', 'max:20000']], [], ['links' => __('Links')]);
-        preg_match_all('#https?://[^\s<>"\']+#u', $request->input('links'), $m);
-        $rejected = array_filter($m[0], fn ($url) => ! PageFetcher::allowed($url));
-        $added = $this->finder->addLinks($object, $m[0]);
-        Activity::record('analogs', $object, ['mode' => 'links', 'added' => $added]);
-
-        $response = $this->back($type, $object);
-        if ($rejected) {
-            $response->with('error', __('Only links to these sites are accepted: :sites.', ['sites' => implode(', ', config('fairvalue.analogs.domains'))]));
+        $links = self::links($request->input('links'));
+        if ($links === []) {
+            return $this->back($type, $object)->with('error', __('No links were found. Copy the address of the listing from the address bar of the browser.'));
         }
 
-        return $response->with('status', __(':count links added, they are being read.', ['count' => $added]));
+        // Listing sites are read by the server; a link to any other site is
+        // kept for the appraiser to paste the text of the listing (the server
+        // never opens other sites).
+        $added = $this->finder->addLinks($object, array_filter($links, PageFetcher::allowed(...)));
+        $other = $this->finder->addOtherLinks($object, array_filter($links, fn ($url) => ! PageFetcher::allowed($url)), (int) config('fairvalue.analogs.max_links') - $added);
+        Activity::record('analogs', $object, ['mode' => 'links', 'added' => $added + $other]);
+
+        $messages = array_filter([
+            $added ? __(':count links added, they are being read.', ['count' => $added]) : null,
+            $other ? __(':count links of other sites added: paste the text of each listing under it or fill in the price and the area.', ['count' => $other]) : null,
+        ]);
+
+        return $messages
+            ? $this->back($type, $object)->with('status', implode(' ', $messages))
+            : $this->back($type, $object)->with('error', __('These links have already been added or are not addresses of websites.'));
+    }
+
+    /**
+     * Web addresses in pasted text: with or without "https://", without the
+     * punctuation around them.
+     *
+     * @return list<string>
+     */
+    public static function links(string $text): array
+    {
+        preg_match_all('#(?:https?://|www\.)[^\s<>"\'«»]+|\b(?:[a-z0-9-]+\.)+[a-z]{2,}/[^\s<>"\'«»]*#iu', $text, $m);
+        $links = array_map(function (string $url) {
+            $url = rtrim($url, '.,;:!?)]}');
+
+            return preg_match('#^https?://#i', $url) ? $url : 'https://'.$url;
+        }, $m[0]);
+
+        return array_values(array_unique($links));
     }
 
     /** Reads the page of one saved link (called by the page, one at a time). */
@@ -86,6 +114,7 @@ class AnalogController extends Controller
 
         if ($analog->isPending()) {
             $this->finder->fill($analog);
+            $this->finder->syncValue($analog->object);
         }
 
         return response()->json(['status' => $analog->fresh()?->status]);
@@ -103,6 +132,7 @@ class AnalogController extends Controller
 
         $this->finder->fillFromText($analog, $data['text']);
         $analog->refresh();
+        $this->finder->syncValue($analog->object);
 
         return $this->back(self::typeOf($analog), $analog->object)
             ->with($analog->isUsable() ? 'status' : 'error', $analog->isUsable() ? __('The listing has been read from the text.') : __('The price or the area was not found in the text — fill them in.'));
@@ -161,7 +191,14 @@ class AnalogController extends Controller
             }
             $rate = (float) $analog->usd_rate;
             $analog->price_uzs = $analog->price === null ? null : ($code === 'USD' ? ($rate ? round((float) $analog->price * $rate, 2) : null) : (float) $analog->price);
-            if ($analog->status === Analog::READY && $analog->isUsable() && $analog->isDirty(['price', 'area', 'currency'])) {
+            // A page that was not read counts once its price and area are typed in.
+            if ($analog->status === Analog::FAILED && (float) $analog->price_uzs > 0 && (float) $analog->area > 0) {
+                $analog->status = Analog::READY;
+                if (! array_filter($adjustments)) {
+                    $analog->adjustments = ComparativeCalculator::suggest(AnalogFinder::subject($object), $analog);
+                }
+            }
+            if ($analog->status === Analog::READY && $analog->isUsable() && $analog->isDirty(['price', 'area', 'currency', 'status'])) {
                 $analog->note = null;
             }
             $analog->save();
@@ -182,6 +219,7 @@ class AnalogController extends Controller
         if ($object->isDirty('report')) {
             Activity::muted(fn () => $object->save());
         }
+        $this->finder->syncValue($object->fresh());
 
         return $badIndex
             ? $this->back($type, $object)->with('error', __('The price index must be a number of percent per month between −20 and 20.'))
@@ -235,6 +273,7 @@ class AnalogController extends Controller
         $object = $analog->object;
         Gate::authorize('edit-valuation', $object);
         $analog->delete();
+        $this->finder->syncValue($object);
 
         return $this->back(self::typeOf($analog), $object)->with('status', __('Deleted.'));
     }
