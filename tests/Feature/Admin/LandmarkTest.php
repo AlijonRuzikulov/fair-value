@@ -6,6 +6,7 @@ use App\Models\District;
 use App\Models\Landmark;
 use App\Models\RealEstate;
 use App\Models\User;
+use Database\Seeders\LandmarkSeeder;
 use Database\Seeders\RegionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
@@ -14,7 +15,8 @@ use Tests\TestCase;
 
 /**
  * The landmarks (mo'ljal) of a district come in the list of the landmark box
- * as soon as the district is chosen: those typed before, then OpenStreetMap's.
+ * as soon as the district is chosen: those typed before, then the portal's
+ * list of the district, or OpenStreetMap's where the portal has none.
  */
 class LandmarkTest extends TestCase
 {
@@ -111,5 +113,40 @@ class LandmarkTest extends TestCase
             ->assertSee('data-landmarks-url="'.route('admin.landmarks').'"', false)
             ->assertSee('Tumanda :count ta mo‘ljal: ro‘yxatdan tanlang yoki yozing.');
         $this->getJson('/admin/landmarks?district_id=999999')->assertOk()->assertExactJson(['items' => [], 'failed' => false]);
+    }
+
+    public function test_the_portal_landmarks_of_the_district_are_listed_without_the_map(): void
+    {
+        Http::fake();
+        $this->seed(LandmarkSeeder::class);
+        $district = District::where('name_uz', 'Yunusobod tumani')->firstOrFail();
+        RealEstate::factory()->create(['district_id' => $district->id, 'region_id' => $district->region_id, 'landmark' => 'Feruza massivi']);
+
+        $items = collect($this->actingAs($this->user)->withSession(['locale' => 'uz'])
+            ->getJson('/admin/landmarks?district_id='.$district->id)->assertOk()->assertJsonPath('failed', false)->json('items'));
+
+        // Typed before first, then the portal's list in its own order, without a kind of its own.
+        $this->assertSame(['Feruza massivi', 'Алайский', 'Юнусобод 1-Мавзе'], $items->pluck('name')->take(3)->all());
+        $this->assertSame('', $items[1]['kind']);
+        $this->assertGreaterThan(200, $items->count());
+        Http::assertNothingSent();
+    }
+
+    public function test_the_portal_list_is_added_once_and_keeps_a_place_found_on_the_map(): void
+    {
+        $district = District::where('name_uz', 'Yunusobod tumani')->firstOrFail();
+        Landmark::create(['district_id' => $district->id, 'name' => 'Юнусобод 1-Мавзе', 'kind' => 'area', 'latitude' => 41.36, 'longitude' => 69.28]);
+
+        $this->seed(LandmarkSeeder::class);
+        $count = Landmark::where('kind', 'portal')->count();
+        $this->seed(LandmarkSeeder::class);
+        LandmarkSeeder::import();
+
+        $this->assertSame($count, Landmark::where('kind', 'portal')->count());
+        $this->assertGreaterThan(18000, $count);
+        $kept = Landmark::where('district_id', $district->id)->where('name', 'Юнусобод 1-Мавзе')->sole();
+        $this->assertSame(['portal', 41.36, 69.28], [$kept->kind, $kept->latitude, $kept->longitude]);
+        // Every district but Davlatobod has the portal's list.
+        $this->assertSame(District::count() - 1, District::whereHas('landmarks', fn ($q) => $q->where('kind', 'portal'))->count());
     }
 }

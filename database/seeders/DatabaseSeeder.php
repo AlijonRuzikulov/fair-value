@@ -12,13 +12,14 @@ class DatabaseSeeder extends Seeder
     /**
      * Seed the application's database.
      *
-     * Creates the directory of regions and the first administrator. Set
+     * Creates the directory of regions with the landmarks of each district
+     * and the first administrator. Set
      * ADMIN_EMAIL and ADMIN_PASSWORD in .env before running the seeder; a
      * random password is generated and printed when none is set.
      */
     public function run(): void
     {
-        $this->call(RegionSeeder::class);
+        $this->call([RegionSeeder::class, LandmarkSeeder::class]);
 
         $email = config('fairvalue.admin.email');
         if (! User::where('email', $email)->exists()) {

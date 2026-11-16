@@ -838,6 +838,10 @@ select.input {
 .combo-option strong { display: block; font-size: 13px; }
 .combo-option small { color: var(--muted); }
 .combo-empty { padding: 10px; color: var(--muted); font-size: 13px; }
+/* The landmark list scrolls by itself and lies over the map below. */
+.landmark-list { z-index: 1100; max-height: 300px; overscroll-behavior: contain; }
+.landmark-list .combo-option { font-size: 14px; line-height: 1.35; }
+.landmark-list .combo-option.is-current { font-weight: 600; }
 .combo-selected {
   display: flex;
   align-items: center;

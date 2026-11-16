@@ -172,17 +172,117 @@
     });
   });
 
-  // The landmarks of the chosen district (from OpenStreetMap, kept on the server) fill the list
-  // of the landmark box; those with a place on the map are remembered for the map below.
+  // The landmarks of the chosen district fill a list under the landmark box: those typed before,
+  // then the portal's list of the district (OpenStreetMap's where the portal has none). The list
+  // scrolls, is narrowed by typing (in Latin or Cyrillic letters) and is used with the arrow keys;
+  // another landmark may still be typed. Those with a place on the map are kept for the map below.
+  var LATIN = { 'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'ғ': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'j', 'з': 'z',
+    'и': 'i', 'й': 'y', 'к': 'k', 'қ': 'q', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's',
+    'т': 't', 'у': 'u', 'ў': 'o', 'ф': 'f', 'х': 'x', 'ҳ': 'h', 'ц': 's', 'ч': 'ch', 'ш': 'sh', 'щ': 'sh', 'ъ': '',
+    'ы': 'i', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya' };
+  function searchable(text) {
+    return String(text).toLowerCase().replace(/[‘’ʻʼ'`]/g, '').replace(/[а-яёғқўҳ]/g, function (c) { return LATIN[c]; });
+  }
   $$('[data-landmarks-url]').forEach(function (input) {
     var form = input.form || document;
     var district = $('[data-district-select]', form);
-    var list = input.getAttribute('list') ? document.getElementById(input.getAttribute('list')) : null;
-    if (!district || !list) return;
+    if (!district) return;
+    var datalist = input.getAttribute('list') ? document.getElementById(input.getAttribute('list')) : null;
+    var wrap = input.closest('.input-wrap') || input.parentNode;
     var status = document.createElement('p');
     status.className = 'field-hint landmark-status';
-    (input.closest('.input-wrap') || input).after(status);
+    wrap.after(status);
+
+    // The browser's own list of a datalist cannot be scrolled everywhere: the page shows its own.
+    input.removeAttribute('list');
+    wrap.classList.add('combo');
+    var box = document.createElement('div');
+    box.className = 'combo-list landmark-list';
+    box.id = input.id + '-list';
+    box.setAttribute('role', 'listbox');
+    box.tabIndex = -1;
+    box.hidden = true;
+    wrap.appendChild(box);
+    input.setAttribute('role', 'combobox');
+    input.setAttribute('aria-autocomplete', 'list');
+    input.setAttribute('aria-controls', box.id);
+    input.setAttribute('aria-expanded', 'false');
+
+    var all = datalist ? $$('option', datalist).map(function (o) { return { name: o.value, kind: '', lat: null, lng: null }; }) : [];
+    var shown = [], focused = -1, quiet = false;
     input.landmarks = {};
+
+    var close = function () {
+      box.hidden = true;
+      box.innerHTML = '';
+      focused = -1;
+      input.setAttribute('aria-expanded', 'false');
+    };
+    var reveal = function () {
+      var options = $$('.combo-option', box);
+      options.forEach(function (o, i) { o.classList.toggle('is-focused', i === focused); });
+      var o = options[focused];
+      if (!o) return;
+      if (o.offsetTop < box.scrollTop) box.scrollTop = o.offsetTop - 6;
+      else if (o.offsetTop + o.offsetHeight > box.scrollTop + box.clientHeight) box.scrollTop = o.offsetTop + o.offsetHeight - box.clientHeight + 6;
+    };
+    var open = function (everything) {
+      if (input.disabled || input.readOnly || !all.length) { close(); return; }
+      var query = everything ? '' : searchable(input.value.trim());
+      var current = input.value.trim().toLowerCase();
+      shown = query ? all.filter(function (item) { return searchable(item.name).indexOf(query) !== -1; }) : all;
+      focused = -1;
+      box.innerHTML = shown.length ? shown.map(function (item, i) {
+        var on = item.name.toLowerCase() === current;
+        if (on) focused = i;
+        return '<button type="button" tabindex="-1" class="combo-option' + (on ? ' is-current' : '') + '" role="option" aria-selected="' + on + '" data-i="' + i + '">'
+          + escapeHtml(item.name) + (item.kind ? ' <small>' + escapeHtml(item.kind) + '</small>' : '') + '</button>';
+      }).join('') : '<div class="combo-empty">' + escapeHtml(input.dataset.nothing || '') + '</div>';
+      box.hidden = false;
+      input.setAttribute('aria-expanded', 'true');
+      if (focused >= 0) reveal(); else box.scrollTop = 0;
+    };
+    var pick = function (i) {
+      var item = shown[i];
+      if (!item) return;
+      input.value = item.name;
+      close();
+      quiet = true;
+      if (document.activeElement !== input) input.focus();
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      quiet = false;
+    };
+    var move = function (step) {
+      if (box.hidden) { open(true); return; }
+      if (!shown.length) return;
+      focused = focused < 0 ? (step > 0 ? 0 : shown.length - 1) : Math.max(0, Math.min(shown.length - 1, focused + step));
+      reveal();
+    };
+
+    input.addEventListener('focus', function () { if (!quiet) open(true); });
+    input.addEventListener('mousedown', function () { if (box.hidden && document.activeElement === input) open(true); });
+    input.addEventListener('input', function () { if (!quiet) open(false); });
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); move(e.key === 'ArrowDown' ? 1 : -1); }
+      else if ((e.key === 'PageDown' || e.key === 'PageUp') && !box.hidden) { e.preventDefault(); move(e.key === 'PageDown' ? 8 : -8); }
+      else if (e.key === 'Enter' && !box.hidden && focused >= 0) { e.preventDefault(); pick(focused); }
+      else if (e.key === 'Escape' && !box.hidden) { e.preventDefault(); e.stopPropagation(); close(); }
+    });
+    box.addEventListener('mousedown', function (e) {
+      var option = e.target.closest('.combo-option');
+      if (option) { e.preventDefault(); pick(+option.dataset.i); }
+    });
+    // Scrolling the list with its scroll bar moves the focus into it: the list stays open until
+    // the focus leaves both the box and the list.
+    var leave = function () {
+      setTimeout(function () {
+        if (document.activeElement !== input && !box.contains(document.activeElement)) close();
+      }, 0);
+    };
+    input.addEventListener('blur', leave);
+    box.addEventListener('focusout', leave);
+
     var asked = 0;
     var load = function () {
       if (!district.value) return;
@@ -193,22 +293,19 @@
         .then(function (data) {
           if (mine !== asked) return;
           var items = Array.isArray(data.items) ? data.items : [];
-          list.innerHTML = '';
+          all = items;
           input.landmarks = {};
           items.forEach(function (item) {
-            var option = document.createElement('option');
-            option.value = item.name;
-            option.label = item.kind;
-            list.appendChild(option);
             if (item.lat !== null && item.lng !== null) input.landmarks[item.name.toLowerCase()] = item;
           });
           status.textContent = items.length
             ? (input.dataset.count || '').replace(':count', items.length)
             : (data.failed ? input.dataset.failed : input.dataset.none) || '';
+          if (document.activeElement === input) open(true); else close();
         })
         .catch(function () { if (mine === asked) status.textContent = input.dataset.failed || ''; });
     };
-    district.addEventListener('change', load);
+    district.addEventListener('change', function () { all = []; close(); load(); });
     if (district.value) load();
   });
 
@@ -832,7 +929,7 @@
         var known = landmark.landmarks && landmark.landmarks[text.toLowerCase()];
         if (known) {
           if (!marker) placeAndWrite(L.latLng(known.lat, known.lng));
-          note.textContent = (landmark.dataset.found || '').replace(':place', known.name + ' (' + known.kind + ')');
+          note.textContent = (landmark.dataset.found || '').replace(':place', known.kind ? known.name + ' (' + known.kind + ')' : known.name);
           return;
         }
         searchAll(queries, function (places) {

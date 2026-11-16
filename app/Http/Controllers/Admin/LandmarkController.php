@@ -13,8 +13,9 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * The landmarks (mo'ljal) of a district for the list of the landmark box:
- * those typed before in this workspace first, then those of OpenStreetMap
- * (taken once and kept), each with its place on the map when known.
+ * those typed before in this workspace first, then the portal's list of the
+ * district; OpenStreetMap is asked (once, then kept) only for a district the
+ * portal has no list for. Each comes with its place on the map when known.
  */
 class LandmarkController extends Controller
 {
@@ -24,8 +25,11 @@ class LandmarkController extends Controller
         if (! $district) {
             return response()->json(['items' => [], 'failed' => false]);
         }
-        set_time_limit(180);
-        $known = $finder->ensure($district);
+        $known = $district->landmarks()->where('kind', 'portal')->exists();
+        if (! $known) {
+            set_time_limit(180);
+            $known = $finder->ensure($district);
+        }
 
         $items = [];
         $used = RealEstate::query()->where('district_id', $district->id)->whereNotNull('landmark')->where('landmark', '!=', '')->toBase()
@@ -33,7 +37,7 @@ class LandmarkController extends Controller
         foreach ($used as $name) {
             $items[mb_strtolower($name)] = ['name' => $name, 'kind' => Landmark::kindLabel('used'), 'lat' => null, 'lng' => null];
         }
-        foreach ($district->landmarks()->orderBy('id')->get() as $landmark) {
+        foreach ($district->landmarks()->orderByRaw("case when kind = 'portal' then 0 else 1 end")->orderBy('id')->get() as $landmark) {
             $key = mb_strtolower($landmark->name);
             $items[$key] ??= ['name' => $landmark->name, 'kind' => Landmark::kindLabel($landmark->kind), 'lat' => null, 'lng' => null];
             if ($items[$key]['lat'] === null && $landmark->latitude !== null) {
