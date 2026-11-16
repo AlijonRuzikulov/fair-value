@@ -180,7 +180,7 @@ class PortalPageTest extends TestCase
             'kind' => 'nonresidential', 'property_type' => 'Bino', 'owner_id' => (string) $owner->id,
             'persons' => [['client_id' => (string) $bank->id, 'role' => 'pledgee']],
             'approaches' => ['', 'cost', 'comparative'], 'purpose' => 'collateral', 'name' => 'Savdo binosi',
-            'cadastral_number' => '10:09:01:02:03:0101', 'features' => ['', 'electricity', 'gas'],
+            'cadastral_number' => '10:09:01:02:03:0101', 'amenities' => ['', "Asosiy yo'l yoqasida joylashgan", 'Markaziy bozor hududida'],
             'architecture' => 'Xaytek', 'function' => 'Noturar joy (savdo)', 'repair' => 'Yaxshi', 'completion' => '85.5',
             'light' => '1', 'service_fee' => '2 000 000', 'paid_amount' => '500 000', 'identification' => 'Obyekt hujjatlarga mos keladi.',
             'total_area' => '120,5', 'value_kind' => 'market', ...$this->mainData(),
@@ -191,7 +191,7 @@ class PortalPageTest extends TestCase
 
         $this->assertSame(ValuationStatus::New, $object->status);
         $this->assertSame(['cost', 'comparative'], $object->approaches);
-        $this->assertSame(['electricity', 'gas'], $object->features);
+        $this->assertSame(["Asosiy yo'l yoqasida joylashgan", 'Markaziy bozor hududida'], $object->report['amenities']);
         $this->assertSame(['owner' => $owner->id, 'pledgee' => $bank->id], $object->clients->mapWithKeys(fn ($c) => [$c->pivot->role => $c->id])->all());
         $this->assertSame('Bino', $object->report['property_type']);
         $this->assertSame('Xaytek', $object->report['architecture']);
@@ -201,15 +201,15 @@ class PortalPageTest extends TestCase
         $this->assertSame('2000000.00', $object->service_fee);
 
         // What the portal asks for is required on this page.
-        $this->post('/admin/real-estates', [...$form, 'owner_id' => '', 'approaches' => [''], 'features' => [''], 'cadastral_number' => '', 'land_area' => '', 'wall_material' => '', 'region_id' => ''])
-            ->assertSessionHasErrors(['owner_id', 'approaches', 'features', 'cadastral_number', 'land_area', 'wall_material', 'region_id']);
+        $this->post('/admin/real-estates', [...$form, 'owner_id' => '', 'approaches' => [''], 'amenities' => [''], 'cadastral_number' => '', 'land_area' => '', 'wall_material' => '', 'region_id' => ''])
+            ->assertSessionHasErrors(['owner_id', 'approaches', 'amenities', 'cadastral_number', 'land_area', 'wall_material', 'region_id']);
     }
 
     public function test_the_owner_and_the_other_persons_are_changed_on_the_page(): void
     {
         $owner = Client::factory()->create();
         $this->actingAs($this->user)->put('/admin/real-estates/'.$this->flat->id.'/main', [
-            'owner_id' => (string) $owner->id, 'approaches' => ['', 'comparative'], 'features' => ['', 'water'],
+            'owner_id' => (string) $owner->id, 'approaches' => ['', 'comparative'], 'amenities' => ['', 'Alohida qulaylik mavjud emas'],
             'purpose' => 'sale', 'name' => 'Kvartira', 'cadastral_number' => '1', 'property_type' => 'Kvartira',
             'architecture' => 'Oddiy', 'function' => 'Turar joy', 'repair' => 'Yaxshi', 'completion' => '100', 'light' => '0',
             ...$this->mainData(), 'detached' => '1', 'floors_total' => '9', 'floor' => '4', 'use_index' => '1', 'market_index' => '0,6',

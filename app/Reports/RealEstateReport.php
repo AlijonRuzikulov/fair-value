@@ -104,9 +104,10 @@ final class RealEstateReport
         'function_residential' => ["Ko'p qavatli turar joy", 'Turar joy'],
         'function_nonresidential' => ['Noturar joy', 'Noturar joy (savdo)', 'Noturar joy (ofis)', 'Ombor', 'Ishlab chiqarish binosi'],
         'function' => ["Ko'p qavatli turar joy", 'Turar joy (hovli)', 'Noturar joy (savdo)', 'Noturar joy (ofis)', 'Ombor', 'Ishlab chiqarish binosi'],
-        'ownership_form' => ['Xususiy mulk', 'Davlat mulki', 'Jamoa mulki'],
+        'ownership_form' => ['Xususiy mulk', 'Davlat mulki', 'Jamiyat mulki', 'Jamoa mulki'],
         'rights' => ['Egalik huquqi', 'Mulk huquqi', 'Ijara huquqi', 'Doimiy foydalanish huquqi'],
-        'land_rights' => ['Doimiy foydalanish', 'Meros qilib qoldiriladigan umrbod egalik', 'Ijara', 'Xususiy mulk'],
+        // As on the valuation portal (a value saved before stays in the list of its select).
+        'land_rights' => ['Ijara huquqi', 'Mavjud emas', 'Egalik huquqi', 'Doimiy foydalanish'],
         'encumbrances' => ['Mavjud emas', 'Ipoteka', 'Garov', 'Taqiq (arest)'],
         'foundation' => ['Beton', 'Lentasimon temirbeton', 'Temirbeton bloklar', 'Monolit temirbeton plita', 'Temirbeton ustunli'],
         'walls' => ["Pishgan g'isht", 'Temirbeton panellar', 'Monolit temirbeton', 'Gazoblok', 'Paxsa', 'Sendvich-panellar'],
@@ -116,6 +117,11 @@ final class RealEstateReport
         'windows_doors' => ['Plastik', 'Alyumin-plastik', "Yog'och", 'Metall eshik'],
         'repair' => ['Yaxshi', 'Qoniqarli', 'Qoniqarsiz', 'Avariya holatda', 'Juda yaxshi'],
         'architecture' => ['Oddiy', 'Evro', 'Xaytek'],
+        // "Alohida qulayliklar" of the portal: where the object stands (several can be chosen).
+        'amenities' => [
+            "Asosiy yo'l yoqasida joylashgan", 'Alohida qulaylik mavjud emas', "Komfort (uy atrofi qo'riqlanadigan,...)",
+            'Markaziy bozor hududida', "Metro stansiyasidan 200 metr radius oralig'ida joylashgan",
+        ],
         'landscaping' => ['Obodonlashtirilgan', 'Qisman obodonlashtirilgan', 'Obodonlashtirilmagan'],
         'surroundings' => ['Turar joy binolari', "Ko'p qavatli turar joy binolari", 'Xususiy turar joy uylari', 'Turli maqsadli binolar', 'Sanoat binolari'],
     ];
@@ -136,6 +142,21 @@ final class RealEstateReport
         $cyrillic = app()->getLocale() === 'oz';
 
         return collect($options)->mapWithKeys(fn ($o) => [$o => $cyrillic ? Transliterator::toCyrillic($o) : ReportScript::latin($o)])->all();
+    }
+
+    /**
+     * Choices of a multiple select (the amenities): the suggestions and the saved values that are not among them.
+     *
+     * @return array<string, string>
+     */
+    public static function choicesOf(string $key, mixed $current): array
+    {
+        $options = self::choices($key);
+        foreach (array_filter((array) $current, 'filled') as $value) {
+            $options += self::choices($key, (string) $value, [(string) $value]);
+        }
+
+        return $options;
     }
 
     /** Reconciliation criteria (national standard No. 6), in the order of the scores. */

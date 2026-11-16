@@ -33,7 +33,7 @@
         <div class="field span-12">
             <label for="f-cadastral_number">{{ __('Cadastral number of the real estate') }}<span class="req">*</span><span class="label-alert">({{ __('Press the button to get the cadastral data!') }})</span></label>
             <div class="input-row joined">
-                <input id="f-cadastral_number" name="cadastral_number" data-history="cadastral" value="{{ old('cadastral_number', $item->cadastral_number) }}" @class(['input', 'is-invalid' => $errors->has('cadastral_number')])>
+                <input id="f-cadastral_number" name="cadastral_number" data-history="cadastral" data-cadastral inputmode="numeric" autocomplete="off" placeholder="10:01:05:01:02:0123" value="{{ old('cadastral_number', $item->cadastral_number) }}" @class(['input', 'is-invalid' => $errors->has('cadastral_number')])>
                 <button type="button" class="btn btn-info" data-reveal="cadastre-note">{{ __('Get the data') }}</button>
             </div>
             @error('cadastral_number')<p class="field-error">{{ $message }}</p>@enderror
@@ -41,7 +41,7 @@
             <p class="field-hint" id="cadastre-note" hidden>{{ __('There is no direct connection to the cadastre system. Upload the cadastral extract under "Documents": the data is read from it.') }}</p>
         </div>
 
-        <x-multi-select name="features" :label="__('Special amenities')" :options="$features" :value="$item->features ?? []" span="12" required placeholder="" />
+        <x-multi-select name="amenities" :label="__('Special amenities')" :options="RealEstateReport::choicesOf('amenities', $rv['amenities'] ?? [])" :value="$rv['amenities'] ?? []" span="12" required placeholder="" />
         <x-select name="architecture" :label="__('Architectural style (facade)')" :options="$choices('architecture')" :value="$rv['architecture']" span="12" required />
     </div>
 

@@ -11,7 +11,7 @@
     $land = (float) ($item->report['cost']['land'] ?? 0);
     $buildings = count((array) ($item->report['cost']['buildings'] ?? []));
     $purpose = $item->purpose ? ValuationPurpose::tryFrom($item->purpose) : null;
-    $features = $item->featureList();
+    $amenities = array_values(array_filter((array) ($rv['amenities'] ?? []), 'filled'));
     $byAppraiser = $item->currentStep('submitted');
     $byDirector = $item->currentStep('approved') ?? ($item->status === ValuationStatus::Completed && $item->completed_at ? true : null);
     $show = route($module->routeName('show'), $item->id);
@@ -40,13 +40,13 @@
     <td class="row-lines">
         <span>{{ __('Architectural style (facade)') }}: <i class="badge badge-info">{{ $rv['architecture'] }}</i></span>
         <span>{{ __('Special amenities') }}:
-            @forelse ($features as $feature)<i class="badge badge-info">{{ $feature->label() }}</i>@empty<i class="badge badge-info">{{ __('No special amenities') }}</i>@endforelse
+            @forelse ($amenities as $amenity)<i class="badge badge-info">{{ \App\Reports\RealEstateReport::choices('amenities', $amenity, [$amenity])[$amenity] }}</i>@empty<i class="badge badge-info">{{ __('No special amenities') }}</i>@endforelse
         </span>
         <span>{{ __('Repair condition') }}: {{ $rv['repair'] ?? '—' }}</span>
         <span>{{ __('Construction completed (%)') }}: <i class="badge badge-info">{{ Format::number((float) $rv['completion']) }}</i></span>
     </td>
     <td class="t-center">
-        <a class="btn btn-sm btn-success" href="{{ route('admin.real-estates.report.edit', $item->id) }}#step-inspection"><x-icon name="table" :size="14" /> {{ __('Act') }}</a>
+        <a class="btn btn-sm btn-success" href="{{ route('admin.real-estates.act', $item->id) }}" data-act-open><x-icon name="table" :size="14" /> {{ __('Act') }}</a>
     </td>
     <td class="row-lines row-status">
         <x-status :status="$item->status" />

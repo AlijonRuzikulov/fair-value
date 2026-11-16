@@ -16,7 +16,7 @@
         <x-field name="cadastral_value" :label="__('Cadastral or book value')" :value="$item->cadastral_value" money span="12" required />
         <x-select name="region_id" :label="__('Select the region')" :options="$regions->pluck('name', 'id')" :value="$item->region_id" placeholder="" span="12" required data-region-select />
         <x-select name="district_id" :label="__('Select the district')" :options="$districts" :value="$item->district_id" placeholder="" span="12" required data-district-select />
-        <x-field name="landmark" :label="__('Select the landmark')" :value="$item->landmark" span="12" list="landmarks" required class="input-select" />
+        <x-field name="landmark" :label="__('Select the landmark')" :value="$item->landmark" span="12" list="landmarks" required class="input-select" data-landmark-find :data-found="__('Marked on the map: :place')" :data-not-found="__('The landmark was not found on the map: mark the point on the map yourself.')" autocomplete="off" />
         <x-field name="address" :label="__('Address of the real estate')" :value="$item->address" span="12" required />
         {{-- The numbers are given by the system: the letter takes the contract number, the report one on completion. --}}
         <div class="field span-12 number-box">
@@ -87,7 +87,7 @@
         @if ($item->exists)
             <div class="field span-12">
                 <div class="btn-group">
-                    <a class="btn btn-success" href="{{ route('admin.real-estates.report.edit', $item->id) }}#step-inspection"><x-icon name="list" :size="16" /> {{ __('Enter the data of the act') }}</a>
+                    <a class="btn btn-success" href="{{ route('admin.real-estates.act', $item->id) }}" data-act-open><x-icon name="list" :size="16" /> {{ __('Enter the data of the act') }}</a>
                     <a class="btn btn-info" href="{{ route('admin.real-estates.report.edit', $item->id) }}#survey"><x-icon name="list" :size="16" /> {{ __('Questionnaire data') }}</a>
                 </div>
             </div>

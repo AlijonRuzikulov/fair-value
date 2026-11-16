@@ -726,28 +726,77 @@
       });
     }
     function placeAndWrite(point) { place(point, true); write(point); }
-    function search() {
-      var q = query.value.trim();
-      if (q.length < 3) return;
-      find.disabled = true;
-      fetch(box.dataset.search + '?q=' + encodeURIComponent(q), { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+    function lookFor(q) {
+      return fetch(box.dataset.search + '?q=' + encodeURIComponent(q), { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
         .then(function (r) {
           return r.json().catch(function () { return {}; }).then(function (body) {
             if (!r.ok) throw new Error(body.message || '');
-            return body;
+            return Array.isArray(body) ? body : [];
           });
+        });
+    }
+    // The first of the queries that finds something (the narrowest first).
+    function searchAll(queries, found) {
+      queries = queries.filter(function (q) { return q.trim().length >= 3; });
+      if (!queries.length) return;
+      find.disabled = true;
+      var next = function (i) {
+        return lookFor(queries[i]).then(function (places) {
+          return places.length || i === queries.length - 1 ? places : next(i + 1);
+        });
+      };
+      next(0)
+        .then(function (places) {
+          showPlaces(places);
+          if (found) found(places);
         })
-        .then(function (places) { showPlaces(Array.isArray(places) ? places : []); })
         .catch(function (error) {
           results.hidden = false;
           results.textContent = (error && error.message) || box.dataset.nothing;
         })
         .then(function () { find.disabled = false; });
     }
+    function search() { searchAll([query.value.trim()]); }
     if (query && find && results) {
       find.addEventListener('click', search);
       query.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') { e.preventDefault(); search(); }
+      });
+
+      // The landmark is looked for on the map once it is written: with its district and
+      // region, then with the region only, then by itself. A click on a place puts the pin.
+      var landmark = $('[data-landmark-find]', form);
+      if (landmark) landmark.addEventListener('change', function () {
+        var text = landmark.value.trim();
+        if (text.length < 3) return;
+        var nameOf = function (selector) {
+          var select = $(selector, form);
+          return select && select.value && select.selectedIndex >= 0 ? select.options[select.selectedIndex].text.trim() : '';
+        };
+        var district = nameOf('[data-district-select]');
+        var region = nameOf('[data-region-select]');
+        var queries = [[text, district, region], [text, region], [text]].map(function (parts) {
+          return parts.filter(Boolean).join(', ');
+        }).filter(function (q, i, all) { return all.indexOf(q) === i; });
+        query.value = queries[0];
+        if (searchBox) searchBox.hidden = false;
+        // The first place found is marked at once (another one can be chosen in the list on the map),
+        // and the box of the landmark says so.
+        var note = landmark.parentNode.querySelector('.landmark-found');
+        if (!note) {
+          note = document.createElement('p');
+          note.className = 'field-hint landmark-found';
+          (landmark.closest('.input-wrap') || landmark).after(note);
+        }
+        note.textContent = '';
+        searchAll(queries, function (places) {
+          if (!places.length) {
+            note.textContent = landmark.dataset.notFound || '';
+            return;
+          }
+          if (!marker) placeAndWrite(L.latLng(places[0].lat, places[0].lng));
+          note.textContent = (landmark.dataset.found || '').replace(':place', places[0].label);
+        });
       });
     }
 
@@ -1010,6 +1059,41 @@
     });
   });
 
+  // Cadastral numbers: only the digits are typed, the colons come by themselves:
+  // 10:01:05:01:02:0123 (a building), and :0001:001 more for a flat or a room.
+  $$('[data-cadastral]').forEach(function (input) {
+    var GROUPS = [2, 2, 2, 2, 2, 4, 4, 3];
+    var MAX = GROUPS.reduce(function (a, b) { return a + b; }, 0);
+    var format = function (digits, open) {
+      var out = '';
+      var at = 0;
+      for (var g = 0; g < GROUPS.length && at < digits.length; g++) {
+        out += (g ? ':' : '') + digits.substr(at, GROUPS[g]);
+        at += GROUPS[g];
+      }
+      // A finished group is followed by its colon at once, while typing.
+      var ends = 0;
+      for (var k = 0; k < GROUPS.length - 1; k++) {
+        ends += GROUPS[k];
+        if (open && digits.length === ends) return out + ':';
+      }
+      return out;
+    };
+    var prev = input.value;
+    input.addEventListener('input', function (e) {
+      var deleting = (e.inputType || '').indexOf('delete') === 0;
+      var digits = input.value.replace(/\D/g, '').slice(0, MAX);
+      // A colon was deleted: the digit before it goes.
+      if (deleting && digits === prev.replace(/\D/g, '')) digits = digits.slice(0, -1);
+      input.value = format(digits, !deleting);
+      prev = input.value;
+    });
+    input.addEventListener('blur', function () {
+      input.value = input.value.replace(/:+$/, '');
+      prev = input.value;
+    });
+  });
+
   // Phone numbers: +998 stands at the start, the rest is typed as (90) 123 4567.
   $$('input[type="tel"]').forEach(function (input) {
     var PREFIX = '+998 ';
@@ -1159,4 +1243,79 @@
       if (input.value) look();
     });
   })();
+  // "Akt": the window of the valuation portal over the list or the object page. Without the
+  // window (an error, or a new tab) the same link opens the act as a page.
+  function initAct(root, dialog) {
+    $$('[data-act-close]', root).forEach(function (button) {
+      button.addEventListener('click', function () { dialog.close(); });
+    });
+    var slides = $$('[data-act-slide]', root);
+    var dots = $$('[data-act-dot]', root);
+    var current = 0;
+    var show = function (n) {
+      if (!slides.length) return;
+      current = (n + slides.length) % slides.length;
+      slides.forEach(function (slide, k) { slide.hidden = k !== current; });
+      dots.forEach(function (dot, k) { dot.classList.toggle('is-active', k === current); });
+      var rotate = $('.act-rotate', root);
+      if (rotate) rotate.hidden = !slides[current].dataset.rotateUrl;
+    };
+    var prev = $('[data-act-prev]', root);
+    var next = $('[data-act-next]', root);
+    if (prev) prev.addEventListener('click', function () { show(current - 1); });
+    if (next) next.addEventListener('click', function () { show(current + 1); });
+    dots.forEach(function (dot) {
+      dot.addEventListener('click', function () { show(parseInt(dot.dataset.actDot, 10)); });
+    });
+    // A picture taken sideways is turned and kept so.
+    $$('[data-act-rotate]', root).forEach(function (button) {
+      button.addEventListener('click', function () {
+        var slide = slides[current];
+        if (!slide || !slide.dataset.rotateUrl) return;
+        var body = new FormData();
+        body.append('_token', (document.querySelector('meta[name="csrf-token"]') || {}).content || '');
+        body.append('direction', button.dataset.actRotate);
+        button.disabled = true;
+        fetch(slide.dataset.rotateUrl, { method: 'POST', body: body, credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+          .then(function (r) {
+            if (!r.ok) return;
+            var image = $('[data-act-image]', slide);
+            image.src = image.src.split('?')[0] + '?v=' + Date.now();
+          })
+          .catch(function () {})
+          .then(function () { button.disabled = false; });
+      });
+    });
+    show(0);
+  }
+
+  document.addEventListener('click', function (e) {
+    var link = e.target.closest('[data-act-open]');
+    if (!link || e.ctrlKey || e.metaKey || e.shiftKey || typeof HTMLDialogElement === 'undefined') return;
+    e.preventDefault();
+    var dialog = document.getElementById('act-dialog');
+    if (!dialog) {
+      dialog = document.createElement('dialog');
+      dialog.id = 'act-dialog';
+      dialog.className = 'act-dialog';
+      // A click on the dark background closes it, as does Esc.
+      dialog.addEventListener('click', function (event) { if (event.target === dialog) dialog.close(); });
+      document.body.appendChild(dialog);
+    }
+    dialog.innerHTML = '<p class="act-loading">' + (link.dataset.loading || '…') + '</p>';
+    if (!dialog.open) dialog.showModal();
+    fetch(link.href, { headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'text/html' }, credentials: 'same-origin' })
+      .then(function (r) {
+        if (!r.ok) throw new Error(String(r.status));
+        return r.text();
+      })
+      .then(function (html) {
+        dialog.innerHTML = html;
+        initAct(dialog, dialog);
+      })
+      .catch(function () { window.location.href = link.href; });
+  });
+
+  // The act opened as a page: its pictures and buttons work as in the window.
+  $$('.act-page [data-act-window]').forEach(function (form) { initAct(form, { close: function () {} }); });
 })();

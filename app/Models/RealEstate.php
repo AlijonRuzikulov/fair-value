@@ -6,6 +6,7 @@ use App\Enums\RealEstateFeature;
 use App\Enums\RealEstateKind;
 use App\Models\Concerns\ValuationObject;
 use App\Support\Format;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -39,6 +40,12 @@ class RealEstate extends Model
             'latitude' => 'float',
             'longitude' => 'float',
         ];
+    }
+
+    /** "10:01:05:01:02:0123", kept without spaces and without a colon left at the end. */
+    protected function cadastralNumber(): Attribute
+    {
+        return Attribute::make(set: fn (?string $value) => $value === null ? null : (rtrim(preg_replace('/\s+/u', '', $value), ':') ?: null));
     }
 
     public static function searchable(): array

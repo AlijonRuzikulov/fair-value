@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\DocumentKind;
+use App\Enums\PersonRole;
 use App\Enums\RealEstateFeature;
 use App\Enums\RealEstateKind;
 use App\Enums\ValuationApproach;
@@ -19,8 +21,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\HtmlString;
 use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 /**
  * "Янги кўчмас мулк" — non-residential (нотурар жой) and residential
@@ -32,13 +36,16 @@ class RealEstateController extends ValuationController
     /** Report data typed together with the main data of the object; kept with the report. */
     public const REPORT_FIELDS = [
         'property_type', 'architecture', 'function', 'repair', 'completion', 'light', 'detached', 'identification',
-        'letter_number', 'value_type', 'ownership_form', 'land_rights',
+        'letter_number', 'value_type', 'ownership_form', 'land_rights', 'amenities',
     ];
+
+    /** The fields of the act window of the valuation portal. */
+    private const ACT_FIELDS = ['function', 'architecture', 'amenities', 'repair', 'completion', 'ownership_form', 'land_rights'];
 
     /** The data saved on the object page (the first step, as on the valuation portal). */
     private const MAIN_FIELDS = [
         'owner_id', 'persons', 'persons.*.client_id', 'persons.*.role', 'approaches', 'approaches.*', 'purpose',
-        'name', 'cadastral_number', 'features', 'features.*', 'appraiser_id', 'service_fee', 'paid_amount',
+        'name', 'cadastral_number', 'features', 'features.*', 'amenities', 'amenities.*', 'appraiser_id', 'service_fee', 'paid_amount',
         'latitude', 'longitude', 'cadastral_value', 'region_id', 'district_id', 'landmark', 'address',
         'contract_number', 'contract_date', 'report_number', 'land_area', 'built_up_area', 'useful_area', 'total_area',
         'living_area', 'rooms', 'wall_material', 'condition', 'floors_total', 'floor', 'year_built',
@@ -139,6 +146,8 @@ class RealEstateController extends ValuationController
             'condition' => ['nullable', 'string', 'max:255'],
             'features' => ['nullable', 'array'],
             'features.*' => [Rule::enum(RealEstateFeature::class)],
+            'amenities' => ['nullable', 'array'],
+            'amenities.*' => ['string', 'max:150'],
             // The owner chosen on the page of the classic look; the other persons come in "persons".
             'owner_id' => ['sometimes', 'required', 'integer', Tenant::exists('clients')],
             'property_type' => ['nullable', 'string', 'max:150'],
@@ -167,7 +176,7 @@ class RealEstateController extends ValuationController
             $rules['district_id'] = ['required', 'integer', Rule::exists('districts', 'id')->where('region_id', $request->integer('region_id'))];
             $rules['address'] = ['required', 'string', 'max:255'];
             foreach ([
-                'cadastral_number', 'features', 'property_type', 'architecture', 'function', 'repair', 'completion',
+                'cadastral_number', 'amenities', 'property_type', 'architecture', 'function', 'repair', 'completion',
                 'cadastral_value', 'landmark', 'land_area', 'built_up_area', 'useful_area', 'wall_material', 'ownership_form', 'land_rights',
             ] as $key) {
                 $rules[$key] = ['required', ...array_diff($rules[$key], ['nullable'])];
@@ -204,7 +213,7 @@ class RealEstateController extends ValuationController
     /** Lists sent with an empty first value (so that "none chosen" is told from "not on the form") lose it. */
     private function prepare(Request $request): void
     {
-        foreach (['approaches', 'features'] as $list) {
+        foreach (['approaches', 'features', 'amenities'] as $list) {
             if ($request->exists($list)) {
                 $request->merge([$list => array_values(array_filter((array) $request->input($list), 'filled'))]);
             }
@@ -299,10 +308,96 @@ class RealEstateController extends ValuationController
         return [
             ...parent::attributeNames(), 'name' => __('Object name'), 'total_area' => __('Total area'),
             'owner_id' => __('Owner of the property'), 'approaches' => __('Approach methods'), 'purpose' => __('Purpose of valuation'),
-            'cadastral_number' => __('Cadastral number'), 'features' => __('Special amenities'), 'property_type' => __('Type of the property'),
+            'cadastral_number' => __('Cadastral number'), 'features' => __('Utilities'), 'amenities' => __('Special amenities'), 'property_type' => __('Type of the property'),
             'architecture' => __('Architectural style (facade)'), 'function' => __('Purpose of use'), 'repair' => __('Repair condition'),
-            'completion' => __('Construction completed (%)'),
+            'completion' => __('Construction completed (%)'), 'ownership_form' => __('Form of ownership'),
+            'land_rights' => __('Ownership right to the land plot'),
         ];
+    }
+
+    /**
+     * "Akt" of the valuation portal, a window over the list and the object page:
+     * the valued amount, the approaches, the documents to look at and the data
+     * of the object taken at the inspection. Opened as a page when asked for
+     * without the window.
+     */
+    public function act(Request $request, string $id): View
+    {
+        $item = $this->find($id);
+        $item->load(['clients.attachments', 'attachments']);
+        // As on the portal: the owner's passport first, then the documents of the object, its photos last.
+        $owner = $item->clients->firstWhere('pivot.role', PersonRole::Owner->value);
+        $documents = $item->clients->sortByDesc(fn ($client) => $client->is($owner))
+            ->flatMap(fn ($client) => $client->attachments->filter->isImage())
+            ->concat($item->attachments->filter->isImage()->sortBy(fn ($a) => $a->documentKind() === DocumentKind::Photo ? 1 : 0))
+            ->values();
+        $data = [
+            'item' => $item,
+            'rv' => RealEstateReport::values($item),
+            'documents' => $documents,
+            'owner' => $owner,
+            'canEdit' => Gate::allows('edit-valuation', $item),
+            'residential' => $item->kind === RealEstateKind::Residential,
+        ];
+
+        return view($request->ajax() ? 'admin.real-estates._act' : 'admin.real-estates.act', $data);
+    }
+
+    /** Saves the act window: the approaches, the owner and the data of the object. */
+    public function saveAct(Request $request, string $id): RedirectResponse
+    {
+        $item = $this->find($id);
+        Gate::authorize('edit-valuation', $item);
+        $this->prepare($request);
+        $required = fn (array $rules) => ['required', ...$rules];
+        $validator = Validator::make($request->all(), [
+            'approaches' => ['required', 'array', 'min:1'],
+            'approaches.*' => [Rule::enum(ValuationApproach::class)],
+            'owner_id' => ['nullable', 'integer', Tenant::exists('clients')],
+            'function' => $required(['string', 'max:150']),
+            'architecture' => $required(['string', 'max:150']),
+            'amenities' => ['required', 'array', 'min:1'],
+            'amenities.*' => ['string', 'max:150'],
+            'repair' => $required(['string', 'max:150']),
+            'completion' => $required(['numeric', 'min:0', 'max:100']),
+            'ownership_form' => $required(['string', 'max:150']),
+            'land_rights' => $required(['string', 'max:150']),
+        ], [], $this->attributeNames());
+        // A mistake is shown on the act as a page (the window would be gone after the reload).
+        if ($validator->fails()) {
+            return redirect()->route('admin.real-estates.act', $item->id)->withErrors($validator)->withInput();
+        }
+        $data = $validator->validated();
+
+        DB::transaction(function () use ($item, $data) {
+            // A value is kept only for the approaches that are applied.
+            $item->approaches = array_values(array_unique($data['approaches']));
+            foreach (ValuationApproach::cases() as $approach) {
+                if (! in_array($approach->value, $item->approaches, true)) {
+                    $item->{$approach->column()} = null;
+                }
+            }
+            $report = (array) $item->report;
+            foreach (self::ACT_FIELDS as $key) {
+                $report[$key] = $data[$key];
+            }
+            $item->report = $report;
+            $item->save();
+
+            // Another owner chosen: the others linked to the object stay with their roles.
+            $owner = PersonRole::Owner->value;
+            if (filled($data['owner_id'] ?? null) && $item->clients->firstWhere('pivot.role', $owner)?->id !== (int) $data['owner_id']) {
+                $others = $item->clients->filter(fn ($c) => $c->pivot->role !== $owner && $c->id !== (int) $data['owner_id'])
+                    ->map(fn ($c) => ['client_id' => $c->id, 'role' => $c->pivot->role])->values()->all();
+                $item->syncPersons([['client_id' => (int) $data['owner_id'], 'role' => $owner], ...$others]);
+            }
+        });
+
+        // Back to where the act was opened from: the list or the object page.
+        $back = (string) $request->input('_back');
+        $back = str_starts_with($back, url('/').'/') && ! str_contains($back, '/act') ? $back : route('admin.real-estates.show', $item->id);
+
+        return redirect()->to($back)->with('status', __('The act has been saved.'));
     }
 
     protected function formData(Model $item): array
