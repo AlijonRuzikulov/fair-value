@@ -1,0 +1,12 @@
+// Cloudflare (Workers & Pages → fair-value, deploy command "npx wrangler deploy"):
+// serves the HTML dashboard demo in cloudflare/ as a static site. The Laravel
+// system itself needs PHP and runs elsewhere (codespace, server); Cloudflare
+// cannot run it.
+{
+    "name": "fair-value",
+    "compatibility_date": "2026-11-01",
+    "assets": {
+        "directory": "./cloudflare",
+        "not_found_handling": "single-page-application"
+    }
+}
