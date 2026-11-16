@@ -1096,6 +1096,14 @@ a.page-link:hover { background: var(--neutral-soft); }
 .analog-tool textarea.input { min-height: 74px; }
 .analog-tool-title { display: flex; align-items: center; gap: 8px; font-weight: 800; color: var(--ink); }
 .analog-tool-title .icon { color: var(--brand-2, #7c3aed); }
+.analog-tools { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.bookmarklet { cursor: grab; }
+.bookmarklet:active { cursor: grabbing; }
+.capture-steps { display: grid; gap: 12px; margin: 14px 0; padding-left: 22px; }
+.capture-steps .bookmarklet { margin-left: 8px; }
+.capture-listing { margin: 4px 0 0; }
+.alert-error { padding: 12px 16px; border-radius: 12px; background: var(--danger-soft); color: var(--danger); font-weight: 600; }
+[data-copy].is-done { border-color: var(--brand); color: var(--brand); }
 .analog-manual { margin-bottom: 16px; border: 1px dashed var(--line); border-radius: 14px; padding: 12px 16px; }
 .analog-manual summary { display: flex; align-items: center; gap: 8px; font-weight: 700; cursor: pointer; list-style: none; }
 .analog-manual summary::-webkit-details-marker { display: none; }

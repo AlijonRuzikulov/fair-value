@@ -206,16 +206,49 @@ class AnalogFinder
     }
 
     /**
+     * An analogue sent from the appraiser's own browser by the bookmark
+     * button: the listing as the browser showed it (sites that refuse the
+     * server do not refuse the person). The server does not open the site;
+     * a listing already added with the same address is filled in again.
+     *
+     * @param  list<string>  $structured  JSON-LD blocks of the page
+     * @param  array<string, string>  $meta  og:, product: and description tags
+     */
+    public function addCaptured(Model $object, string $url, ?string $title, string $text, array $structured, array $meta): Analog
+    {
+        $analog = $object->analogs()->where('url', $url)->first()
+            ?? $object->analogs()->make(['url' => $url, 'created_by' => auth()->id()]);
+        $analog->source = parse_url($url, PHP_URL_HOST);
+        $analog->setRelation('object', $object);
+
+        // A page of its own made of what the browser sent, read as a fetched page is.
+        $html = '<html><head><title>'.e((string) $title).'</title>';
+        foreach ($meta as $name => $content) {
+            $html .= '<meta property="'.e((string) $name).'" content="'.e((string) $content).'">';
+        }
+        foreach ($structured as $block) {
+            $html .= '<script type="application/ld+json">'.str_replace('</', '<\\/', (string) $block).'</script>';
+        }
+        $html .= '</head><body></body></html>';
+
+        $this->fillFromText($analog, $text, $html);
+        $this->photos->download($analog);
+
+        return $analog;
+    }
+
+    /**
      * Fills an analogue from the text of its listing, copied from the
      * browser by the appraiser (when the site does not open for the server).
+     * The page's structured data, when given, wins over the text.
      */
-    public function fillFromText(Analog $analog, string $text): Analog
+    public function fillFromText(Analog $analog, string $text, ?string $html = null): Analog
     {
         $object = $analog->object;
         $text = mb_substr(trim(str_replace(["\r\n", "\r"], "\n", $text)), 0, 40000);
         $lines = array_values(array_filter(array_map('trim', explode("\n", $text)), fn ($l) => mb_strlen($l) >= 8));
 
-        $listing = ListingParser::merge(ListingParser::empty($analog->url), ListingParser::fromText($text));
+        $listing = ListingParser::merge($html !== null ? $this->parser->parse($html, (string) $analog->url) : ListingParser::empty($analog->url), ListingParser::fromText($text));
         $listing['title'] ??= $analog->title ?: (isset($lines[0]) ? mb_substr($lines[0], 0, 250) : null);
 
         if ($this->ai->available()) {
