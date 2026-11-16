@@ -29,5 +29,8 @@ Copies the appraisers' valuation portal, light blue (`admin_color`: azure / oran
 - "Alohida qulayliklar" (report `amenities`) is one choice, as on the portal: a plain `<x-select name="amenities[]">` on the object page and in the Akt (kept as a list of one; `max:1`). `x-select` takes a `name[]` and keys its old input and errors by `name`.
 - Report data fields kept in `real_estates.report` JSON (`RealEstateReport::values/defaults/OPTIONS`); option lists of the portal are in `RealEstateReport::OPTIONS`, `ValuationPurpose::portalOptions`, `Client::ORGANIZATIONS/MANAGEMENT`.
 
+## Planned (the user asked for it after the current portal work)
+- A third look, chosen in Settings like the others (the portal look stays): a white sidebar with icons and a "+ New" button on top, tabs over the list, filters as pill buttons, and the objects as cards — a photo on the left; number and name, address, kind, people in the middle; status, document, due and inspection dates and the fee on the right; small icons on hover. From a screenshot of another appraisal product: take the layout only, never its name, logo or sample data.
+
 ## Still unknown from the portal (ask the user)
 "Ўзимизда" badge and the small yellow number in lists; "Манба" filter of mixed property; "Toifasi" values; "Tashkilot"/"Boshqaruv turi" option lists; non-residential "Foydalanish maqsadi" list; inside of the Documents, Comparative, Income and Reconciliation sections; the rest of the real estate Akt window below "Yer uchastkasiga bo'lgan mulk huquqi", the Akt of other objects and the So'rovnoma window (where the portal takes a vehicle's make/model and the value of mixed property or a vehicle — here folds on the saved page); the add page of a damaged car; "Boshqa mol-mulk".
