@@ -2,7 +2,7 @@
 @php
     use App\Enums\DocumentKind;
     $type = $owner->getMorphClass();
-    $slots = DocumentKind::slotsFor($type);
+    $slots = DocumentKind::slotsForObject($owner);
     $required = DocumentKind::requiredFor($type);
     $byKind = $owner->attachments->sortBy('id')->groupBy(fn ($file) => in_array($file->documentKind(), $slots, true) ? $file->documentKind()->value : DocumentKind::Other->value);
     $missing = collect($required)->reject(fn ($kind) => $byKind->has($kind->value));

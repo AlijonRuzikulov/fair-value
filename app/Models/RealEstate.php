@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\RealEstateFeature;
 use App\Enums\RealEstateKind;
 use App\Models\Concerns\ValuationObject;
+use App\Reports\RealEstateReport;
 use App\Support\Format;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -86,6 +87,15 @@ class RealEstate extends Model
             fn ($v) => RealEstateFeature::tryFrom((string) $v),
             (array) $this->features
         )));
+    }
+
+    /** A flat in a multi-storey building: its "Foydalanish maqsadi" is "Ko'p qavatli turar joy". */
+    public function isFlat(): bool
+    {
+        $function = (string) (RealEstateReport::values($this)['function'] ?? '');
+
+        return $this->kind === RealEstateKind::Residential
+            && mb_strtolower(str_replace(['‘', '’', 'ʻ', 'ʼ'], "'", $function)) === "ko'p qavatli turar joy";
     }
 
     public function hasLocation(): bool

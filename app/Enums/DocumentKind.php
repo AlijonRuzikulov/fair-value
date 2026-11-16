@@ -2,6 +2,9 @@
 
 namespace App\Enums;
 
+use App\Models\RealEstate;
+use Illuminate\Database\Eloquent\Model;
+
 /**
  * What an attached file is. Valuation objects show a place for each kind
  * of document they need, so a missing passport or extract is seen at once.
@@ -68,6 +71,24 @@ enum DocumentKind: string
             'damage_case' => [self::Passport, self::Application, self::TechnicalPassport, self::Photo, self::Other],
             default => [self::Passport, self::Application, self::Photo, self::Other],
         };
+    }
+
+    /**
+     * Places for documents on the page of this object: a flat in a
+     * multi-storey building has no technical passport of its own, so it gets
+     * no place for one (unless one was uploaded all the same).
+     *
+     * @return list<self>
+     */
+    public static function slotsForObject(Model $owner): array
+    {
+        $slots = self::slotsFor($owner->getMorphClass());
+        if ($owner instanceof RealEstate && $owner->isFlat()
+            && ! $owner->attachments->contains(fn ($file) => $file->documentKind() === self::TechnicalPassport)) {
+            $slots = array_values(array_filter($slots, fn (self $kind) => $kind !== self::TechnicalPassport));
+        }
+
+        return $slots;
     }
 
     /**

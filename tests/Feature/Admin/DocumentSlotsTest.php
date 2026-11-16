@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Enums\DocumentKind;
+use App\Enums\RealEstateKind;
 use App\Enums\ValuationStatus;
 use App\Models\Activity;
 use App\Models\Attachment;
@@ -99,5 +100,22 @@ class DocumentSlotsTest extends TestCase
         $this->post('/admin/attachments/'.$file->id.'/rotate', ['direction' => 'left'])->assertForbidden();
         $this->post('/admin/attachments', ['type' => 'real_estate', 'id' => $this->flat->id, 'files' => [UploadedFile::fake()->image('x.jpg')]])->assertForbidden();
         $this->get('/admin/real-estates/'.$this->flat->id)->assertOk()->assertDontSee('/rotate', false);
+    }
+
+    public function test_a_flat_in_a_multi_storey_building_has_no_place_for_a_technical_passport(): void
+    {
+        $page = fn (RealEstate $item) => $this->actingAs($this->user)->withSession(['locale' => 'uz'])->get('/admin/real-estates/'.$item->id)->assertOk();
+        $this->flat->update(['report' => ['function' => "Ko'p qavatli turar joy"]]);
+        $house = RealEstate::factory()->residential()->create(['status' => ValuationStatus::InProgress, 'report' => ['function' => 'Turar joy']]);
+        $shop = RealEstate::factory()->create(['status' => ValuationStatus::InProgress, 'kind' => RealEstateKind::NonResidential]);
+
+        $this->assertTrue($this->flat->fresh()->isFlat());
+        $page($this->flat)->assertDontSee('Texnik pasport')->assertSee('Kadastr hujjati');
+        $page($house)->assertSee('Texnik pasport');
+        $page($shop)->assertSee('Texnik pasport');
+
+        // A technical passport uploaded for a flat all the same keeps its place.
+        $this->upload([UploadedFile::fake()->image('scan-2.jpg')], DocumentKind::TechnicalPassport->value);
+        $page($this->flat->fresh())->assertSee('Texnik pasport');
     }
 }
