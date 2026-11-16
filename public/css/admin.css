@@ -689,7 +689,7 @@ a.cell-title:hover { color: var(--brand-strong); }
 .span-8 { grid-column: span 8; }
 .span-9 { grid-column: span 9; }
 .span-12 { grid-column: span 12; }
-.field label:not(.check, .check-inline), .field legend {
+.field label:not(.check, .check-inline, .multi-option), .field legend {
   padding: 0;
   font-size: 12px;
   font-weight: 700;
