@@ -18,6 +18,14 @@ if [ ! -f .devcontainer/.ready ]; then
     exit 1
 fi
 
+# The latest version is taken now and then every 5 minutes, so that nothing has to be
+# typed here after an update is pushed. One watcher, whichever editor window starts it.
+bash .devcontainer/update.sh
+if ! { [ -f .devcontainer/.updater.pid ] && kill -0 "$(cat .devcontainer/.updater.pid)" 2> /dev/null; }; then
+    bash .devcontainer/update.sh --watch &
+    echo $! > .devcontainer/.updater.pid
+fi
+
 # A second editor window must not start a second server.
 if php -r 'exit(@fsockopen("127.0.0.1", 8000) ? 0 : 1);'; then
     echo "The site is already running on port 8000."

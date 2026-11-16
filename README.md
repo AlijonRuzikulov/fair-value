@@ -89,7 +89,12 @@ kiritmang, faqat sinov uchun ishlating.
 Shaxsiy GitHub hisobida Codespaces oyiga ~60 soat bepul. Ishlatmaganda
 *Codespaces → Stop codespace* qiling. Kiritilgan ma’lumotlar codespace o‘chirilmaguncha saqlanadi.
 
-**“HTTP ERROR 502” chiqsa yoki yangi versiyani olish kerak bo‘lsa** — Codespace oynasida
+**Yangi versiya o‘zi keladi:** codespace ochiq turganda u har 5 daqiqada GitHub’ni tekshiradi va yangi
+versiyani o‘zi oladi (kutubxonalar va baza ham yangilanadi, kiritilgan ma’lumotlar saqlanadi). Terminalda
+`Yangi versiya olindi` yozuvi chiqqach, sahifani yangilang. Qo‘lda o‘zgartirilgan fayl bo‘lsa, u ustidan
+yozilmaydi — terminal shuni aytadi.
+
+**“HTTP ERROR 502” chiqsa yoki yangilanish o‘zi kelmasa** — Codespace oynasida
 terminalni oching (`Ctrl + \``) va bajaring:
 
 ```bash
