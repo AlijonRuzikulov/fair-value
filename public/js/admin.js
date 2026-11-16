@@ -1530,16 +1530,18 @@
   });
 
   // Puts one answer into the listed boxes that are still empty ("None" in the questionnaire).
-  $$('[data-fill-empty]').forEach(function (button) {
-    button.addEventListener('click', function () {
-      var value = button.getAttribute('data-fill-value');
-      JSON.parse(button.getAttribute('data-fill-empty')).forEach(function (name) {
-        var input = document.querySelector('[name="' + name + '"]');
-        if (input && !input.value.trim()) {
-          input.value = value;
-          input.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-      });
+  // (Delegated: the button may come in a window loaded later.)
+  document.addEventListener('click', function (e) {
+    var button = e.target.closest('[data-fill-empty]');
+    if (!button) return;
+    var form = button.closest('form') || document;
+    var value = button.getAttribute('data-fill-value');
+    JSON.parse(button.getAttribute('data-fill-empty')).forEach(function (name) {
+      var input = form.querySelector('[name="' + name + '"]');
+      if (input && !input.value.trim()) {
+        input.value = value;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      }
     });
   });
 

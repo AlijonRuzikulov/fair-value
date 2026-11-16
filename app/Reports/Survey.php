@@ -69,6 +69,33 @@ final class Survey
     }
 
     /**
+     * The answers to keep from a form: an empty answer, or a known one left
+     * as it was (the documents, the contact), is not stored.
+     *
+     * @param  array<string, mixed>  $input
+     * @return array<string, string>
+     */
+    public static function answers(Model $item, array $input): array
+    {
+        $known = self::defaults($item);
+        $survey = [];
+        foreach (self::keys($item) as $key) {
+            $answer = trim((string) ($input[$key] ?? ''));
+            if ($answer !== '' && $answer !== ($known[$key] ?? null)) {
+                $survey[$key] = $answer;
+            }
+        }
+
+        return $survey;
+    }
+
+    /** Questions usually answered "none" (pledge, disputes, alterations, debts), filled in at once where still empty. */
+    public static function usuallyNone(Model $item): array
+    {
+        return array_values(array_intersect(self::keys($item), array_keys(array_filter(self::OPTIONS, fn ($options) => in_array('Mavjud emas', $options, true)))));
+    }
+
+    /**
      * The questions with the answers entered (or known); an empty answer is left to be written by hand.
      *
      * @return list<array{key: string, question: string, answer: ?string}>

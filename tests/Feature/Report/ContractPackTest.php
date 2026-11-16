@@ -105,6 +105,34 @@ class ContractPackTest extends TestCase
         $this->get('/admin/vehicles/'.$car->id)->assertOk()->assertSee('/admin/vehicles/'.$car->id.'/contract', false);
     }
 
+    public function test_the_questionnaire_opens_in_a_window_from_the_object_page_and_is_saved_there(): void
+    {
+        $this->actingAs($this->appraiser);
+        $page = '/admin/real-estates/'.$this->flat->id;
+
+        // The button opens the window, as the act does; the window holds only the questions.
+        $this->withSession(['locale' => 'uz'])->get($page)->assertOk()
+            ->assertSee('href="'.route('admin.real-estates.survey', $this->flat->id).'" data-act-open', false);
+        $window = $this->get($page.'/survey', ['X-Requested-With' => 'XMLHttpRequest'])->assertOk();
+        $window->assertSee('So‘rovnoma ma’lumotlari', false)->assertSee('class="qa-row"', false)->assertSee('name="survey[debts]"', false)
+            ->assertSee('Jurayev Shokirjon Ganijonovich, +998941221274')->assertDontSee('<html', false)->assertDontSee('analog');
+        $this->get($page.'/survey')->assertOk()->assertSee('<html', false)->assertSee('class="qa-row"', false);
+
+        $this->from($page)->put($page.'/survey', ['_back' => url($page), 'survey' => ['use' => 'Ijaraga berilgan', 'debts' => 'Mavjud emas', 'contact' => 'Jurayev Shokirjon Ganijonovich, +998941221274']])
+            ->assertRedirect(url($page))->assertSessionHas('status');
+        $this->assertSame(['use' => 'Ijaraga berilgan', 'debts' => 'Mavjud emas'], $this->flat->fresh()->report['survey']);
+        $this->get($page.'/survey', ['X-Requested-With' => 'XMLHttpRequest'])->assertSee('value="Ijaraga berilgan"', false);
+
+        // Emptied answers are removed; a mistake shows the window as a page.
+        $this->put($page.'/survey', ['survey' => ['use' => '', 'debts' => '']])->assertRedirect(url($page));
+        $this->assertArrayNotHasKey('survey', (array) $this->flat->fresh()->report);
+        $this->put($page.'/survey', ['survey' => ['use' => str_repeat('x', 1001)]])->assertRedirect(url($page.'/survey'))->assertSessionHasErrors('survey.use');
+
+        // A completed valuation is not changed by an operator.
+        $this->flat->update(['status' => ValuationStatus::Completed]);
+        $this->actingAs(User::factory()->operator()->create())->put($page.'/survey', ['survey' => ['use' => 'X']])->assertForbidden();
+    }
+
     public function test_the_customer_questionnaire_is_entered_signed_and_listed_in_the_report(): void
     {
         $this->flat->attachments()->create(['name' => 'kadastr.jpg', 'path' => 'kadastr.jpg', 'mime' => 'image/jpeg', 'size' => 1, 'kind' => 'cadastral']);

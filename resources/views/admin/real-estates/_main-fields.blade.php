@@ -88,7 +88,7 @@
             <div class="field span-12">
                 <div class="btn-group">
                     <a class="btn btn-success" href="{{ route('admin.real-estates.act', $item->id) }}" data-act-open><x-icon name="list" :size="16" /> {{ __('Enter the data of the act') }}</a>
-                    <a class="btn btn-info" href="{{ route('admin.real-estates.report.edit', $item->id) }}#survey"><x-icon name="list" :size="16" /> {{ __('Questionnaire data') }}</a>
+                    <a class="btn btn-info" href="{{ route('admin.real-estates.survey', $item->id) }}" data-act-open><x-icon name="list" :size="16" /> {{ __('Questionnaire data') }}</a>
                 </div>
             </div>
         @endif

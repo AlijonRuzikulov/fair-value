@@ -1636,6 +1636,10 @@ summary.btn::-webkit-details-marker { display: none; }
 .act-fields .check-grid { grid-template-columns: 1fr; }
 .act-more { font-size: 13px; }
 .act-foot { display: flex; justify-content: flex-end; gap: 10px; padding: 12px 18px; border-top: 1px solid var(--line); }
+.act-dialog:has(.survey-window) { width: min(820px, 96vw); }
+.survey-window .qa-list { margin: 0; }
+.survey-window .act-foot { flex-wrap: wrap; align-items: center; }
+.survey-window .survey-none { margin-right: auto; }
 @media (max-width: 820px) {
     .act-grid { grid-template-columns: 1fr; }
     .act-fields { max-height: none; }

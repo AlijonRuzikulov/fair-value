@@ -152,8 +152,7 @@
                     @php
                         $surveyKeys = \App\Reports\Survey::keys($item);
                         $surveyAnswers = [...\App\Reports\Survey::defaults($item), ...(array) ($values['survey'] ?? [])];
-                        // Questions usually answered "none": filled in at once where still empty.
-                        $surveyNone = array_values(array_intersect($surveyKeys, array_keys(array_filter(\App\Reports\Survey::OPTIONS, fn ($options) => in_array('Mavjud emas', $options, true)))));
+                        $surveyNone = \App\Reports\Survey::usuallyNone($item);
                     @endphp
                     <details class="prep-more" id="survey" @if (! empty($values['survey'])) open @endif>
                         <summary>{{ __('Customer questionnaire') }}</summary>

@@ -122,6 +122,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
     Route::put('real-estates/{id}/main', [Admin\RealEstateController::class, 'main'])->whereNumber('id')->name('real-estates.main');
     Route::get('real-estates/{id}/act', [Admin\RealEstateController::class, 'act'])->whereNumber('id')->name('real-estates.act');
     Route::put('real-estates/{id}/act', [Admin\RealEstateController::class, 'saveAct'])->whereNumber('id')->name('real-estates.act.update');
+    Route::get('real-estates/{id}/survey', [Admin\RealEstateController::class, 'survey'])->whereNumber('id')->name('real-estates.survey');
+    Route::put('real-estates/{id}/survey', [Admin\RealEstateController::class, 'saveSurvey'])->whereNumber('id')->name('real-estates.survey.update');
 
     // Cost and income approaches of real estate
     Route::controller(Admin\ApproachController::class)->group(function () {

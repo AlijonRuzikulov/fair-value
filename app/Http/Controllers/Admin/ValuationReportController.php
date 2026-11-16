@@ -144,14 +144,7 @@ class ValuationReportController extends Controller
         }
         // The customer's answers; the known ones (documents, contact) are kept only when they were changed.
         if ($request->has('survey')) {
-            $known = Survey::defaults($item);
-            $survey = [];
-            foreach (Survey::keys($item) as $key) {
-                $answer = trim((string) ($data['survey'][$key] ?? ''));
-                if ($answer !== '' && $answer !== ($known[$key] ?? null)) {
-                    $survey[$key] = $answer;
-                }
-            }
+            $survey = Survey::answers($item, (array) ($data['survey'] ?? []));
             if ($survey) {
                 $report['survey'] = $survey;
             }

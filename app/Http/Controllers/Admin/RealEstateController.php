@@ -11,6 +11,7 @@ use App\Enums\ValuationPurpose;
 use App\Enums\ValuationStatus;
 use App\Models\RealEstate;
 use App\Reports\RealEstateReport;
+use App\Reports\Survey;
 use App\Support\AdminTheme;
 use App\Support\Format;
 use App\Support\Tenant;
@@ -342,6 +343,52 @@ class RealEstateController extends ValuationController
         ];
 
         return view($request->ajax() ? 'admin.real-estates._act' : 'admin.real-estates.act', $data);
+    }
+
+    /**
+     * The questionnaire window ("So'rovnoma ma'lumotlari" of the portal): what
+     * the customer states about the object, question by question. A page when
+     * not opened as a window.
+     */
+    public function survey(Request $request, string $id): View
+    {
+        $item = $this->find($id);
+        $data = [
+            'item' => $item,
+            'answers' => [...Survey::defaults($item), ...(array) (((array) $item->report)['survey'] ?? [])],
+            'canEdit' => Gate::allows('edit-valuation', $item),
+        ];
+
+        return view($request->ajax() ? 'admin.real-estates._survey' : 'admin.real-estates.survey', $data);
+    }
+
+    /** Saves the questionnaire window and goes back to where it was opened from. */
+    public function saveSurvey(Request $request, string $id): RedirectResponse
+    {
+        $item = $this->find($id);
+        Gate::authorize('edit-valuation', $item);
+        $validator = Validator::make($request->all(), [
+            'survey' => ['nullable', 'array'],
+            'survey.*' => ['nullable', 'string', 'max:1000'],
+        ], [], ['survey.*' => __('Answer')]);
+        if ($validator->fails()) {
+            return redirect()->route('admin.real-estates.survey', $item->id)->withErrors($validator)->withInput();
+        }
+
+        $report = (array) $item->report;
+        $survey = Survey::answers($item, (array) $request->input('survey', []));
+        if ($survey) {
+            $report['survey'] = $survey;
+        } else {
+            unset($report['survey']);
+        }
+        $item->report = $report;
+        $item->save();
+
+        $back = (string) $request->input('_back');
+        $back = str_starts_with($back, url('/').'/') && ! str_contains($back, '/survey') ? $back : route('admin.real-estates.show', $item->id);
+
+        return redirect()->to($back)->with('status', __('Changes saved.'));
     }
 
     /** Saves the act window: the approaches, the owner and the data of the object. */
