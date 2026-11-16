@@ -27,11 +27,12 @@ jobs:
       - name: Libraries
         run: composer install --no-interaction --no-progress --prefer-dist
 
-      - name: Known vulnerabilities
-        run: composer audit --locked --abandoned=report
-
       - name: Tests
         run: |
           cp .env.example .env
           php artisan key:generate
           php artisan test --compact
+
+      - name: Known vulnerabilities
+        if: always()
+        run: composer audit --locked --abandoned=report

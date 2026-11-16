@@ -1,0 +1,52 @@
+# Started by hand (Actions → Update libraries → Run workflow): updates the
+# named PHP libraries within the versions composer.json allows, runs the
+# tests and commits composer.lock to the same branch when they pass.
+name: Update libraries
+
+on:
+  workflow_dispatch:
+    inputs:
+      packages:
+        description: 'Libraries to update (empty: all)'
+        default: 'laravel/framework'
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: sqlite3, pdo_sqlite, mbstring, intl, gd, zip, bcmath, sockets
+          coverage: none
+
+      - name: Update
+        env:
+          PACKAGES: ${{ inputs.packages }}
+        run: composer update $PACKAGES --with-all-dependencies --no-interaction --no-progress --prefer-dist
+
+      - name: Tests
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          php artisan test --compact
+
+      - name: Known vulnerabilities
+        run: composer audit --locked --abandoned=report
+
+      - name: Commit
+        run: |
+          git diff --quiet composer.lock && { echo "Nothing to update."; exit 0; }
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update PHP libraries: ${PACKAGES:-all}" composer.lock
+          git push
+        env:
+          PACKAGES: ${{ inputs.packages }}
