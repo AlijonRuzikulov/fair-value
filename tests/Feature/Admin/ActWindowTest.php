@@ -46,7 +46,7 @@ class ActWindowTest extends TestCase
     {
         return [
             'approaches' => ['', 'cost', 'comparative'], 'owner_id' => (string) $this->owner->id, 'function' => 'Turar joy',
-            'architecture' => 'Evro', 'amenities' => ['', "Asosiy yo'l yoqasida joylashgan", "Metro stansiyasidan 200 metr radius oralig'ida joylashgan"],
+            'architecture' => 'Evro', 'amenities' => ['', "Metro stansiyasidan 200 metr radius oralig'ida joylashgan"],
             'repair' => 'Qoniqarli', 'completion' => '100', 'ownership_form' => 'Jamiyat mulki', 'land_rights' => 'Ijara huquqi',
             ...$changes,
         ];
@@ -86,8 +86,8 @@ class ActWindowTest extends TestCase
         $house = $this->house->fresh();
         $this->assertSame(['cost', 'comparative'], $house->approaches);
         $this->assertSame(['Evro', 'Qoniqarli', 'Jamiyat mulki', 'Ijara huquqi'], [$house->report['architecture'], $house->report['repair'], $house->report['ownership_form'], $house->report['land_rights']]);
-        $this->assertSame(["Asosiy yo'l yoqasida joylashgan", "Metro stansiyasidan 200 metr radius oralig'ida joylashgan"], $house->report['amenities']);
-        $this->get($list)->assertSee('Asosiy yo‘l yoqasida joylashgan');
+        $this->assertSame(["Metro stansiyasidan 200 metr radius oralig'ida joylashgan"], $house->report['amenities']);
+        $this->get($list)->assertSee('Metro stansiyasidan 200 metr radius oralig‘ida joylashgan');
 
         // Another owner chosen: the pledgee stays.
         $this->put('/admin/real-estates/'.$this->house->id.'/act', $this->form(['owner_id' => (string) $other->id]))->assertRedirect();
@@ -99,6 +99,7 @@ class ActWindowTest extends TestCase
         // A mistake is shown on the act as a page, with what was typed.
         $this->put('/admin/real-estates/'.$this->house->id.'/act', $this->form(['amenities' => [''], 'approaches' => [''], 'architecture' => 'Barokko']))
             ->assertRedirect(route('admin.real-estates.act', $this->house->id))->assertSessionHasErrors(['amenities', 'approaches']);
+        $this->put('/admin/real-estates/'.$this->house->id.'/act', $this->form(['amenities' => ['', 'Markaziy bozor hududida', 'Komfort']]))->assertSessionHasErrors('amenities');
         $this->assertSame('Evro', $this->house->fresh()->report['architecture']);
     }
 

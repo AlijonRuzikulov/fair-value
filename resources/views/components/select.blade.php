@@ -1,8 +1,12 @@
 @props(['name', 'label' => null, 'options' => [], 'value' => null, 'placeholder' => null, 'span' => 6, 'required' => false, 'hint' => null])
 @php
     $id = 'f-'.str_replace(['[', ']', '.'], '-', $name);
-    $key = str_replace(['[', ']'], ['.', ''], $name);
+    // "amenities[]": one choice sent as a list; its old input and errors are under "amenities".
+    $key = rtrim(str_replace(['[', ']'], ['.', ''], $name), '.');
     $current = old($key, $value instanceof \BackedEnum ? $value->value : $value);
+    if (is_array($current)) {
+        $current = collect($current)->first(fn ($v) => filled($v));
+    }
 @endphp
 <div class="field span-{{ $span }}">
     @if ($label)<label for="{{ $id }}">{{ $label }}@if ($required)<span class="req">*</span>@endif</label>@endif

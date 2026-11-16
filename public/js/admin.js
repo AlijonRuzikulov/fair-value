@@ -1066,25 +1066,6 @@
 
   /* ---------- Real estate page of the classic look --------------------- */
 
-  // Multiple choice shown as tags; a click outside closes the list.
-  $$('[data-multi]').forEach(function (multi) {
-    var tags = $('[data-multi-tags]', multi);
-    var placeholder = $('[data-multi-placeholder]', multi);
-    function sync() {
-      tags.innerHTML = '';
-      $$('input[type="checkbox"]', multi).forEach(function (box) {
-        if (!box.checked) return;
-        var tag = document.createElement('span');
-        tag.className = 'multi-tag';
-        tag.textContent = box.dataset.label;
-        tags.appendChild(tag);
-      });
-      placeholder.hidden = tags.children.length > 0;
-    }
-    multi.addEventListener('change', sync);
-    document.addEventListener('click', function (e) { if (multi.open && !multi.contains(e.target)) multi.open = false; });
-  });
-
   // The document boxes of the portal: the chosen files are named in the box and saved with the page; files can be dropped on it.
   $$('[data-portal-drop]').forEach(function (zone) {
     var input = $('[data-portal-drop-input]', zone);

@@ -41,7 +41,8 @@
             <p class="field-hint" id="cadastre-note" hidden>{{ __('There is no direct connection to the cadastre system. Upload the cadastral extract under "Documents": the data is read from it.') }}</p>
         </div>
 
-        <x-multi-select name="amenities" :label="__('Special amenities')" :options="RealEstateReport::choicesOf('amenities', $rv['amenities'] ?? [])" :value="$rv['amenities'] ?? []" span="12" required placeholder="" />
+        {{-- One choice, as on the portal (kept as a list of one in the report data). --}}
+        <x-select name="amenities[]" :label="__('Special amenities')" :options="RealEstateReport::choicesOf('amenities', $rv['amenities'] ?? [])" :value="$rv['amenities'] ?? []" span="12" required placeholder="" />
         <x-select name="architecture" :label="__('Architectural style (facade)')" :options="$choices('architecture')" :value="$rv['architecture']" span="12" required />
     </div>
 

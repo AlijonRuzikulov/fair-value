@@ -180,7 +180,7 @@ class PortalPageTest extends TestCase
             'kind' => 'nonresidential', 'property_type' => 'Bino', 'owner_id' => (string) $owner->id,
             'persons' => [['client_id' => (string) $bank->id, 'role' => 'pledgee']],
             'approaches' => ['', 'cost', 'comparative'], 'purpose' => 'collateral', 'name' => 'Savdo binosi',
-            'cadastral_number' => '10:09:01:02:03:0101', 'amenities' => ['', "Asosiy yo'l yoqasida joylashgan", 'Markaziy bozor hududida'],
+            'cadastral_number' => '10:09:01:02:03:0101', 'amenities' => ['', 'Markaziy bozor hududida'],
             'architecture' => 'Xaytek', 'function' => 'Noturar joy (savdo)', 'repair' => 'Yaxshi', 'completion' => '85.5',
             'light' => '1', 'service_fee' => '2 000 000', 'paid_amount' => '500 000', 'identification' => 'Obyekt hujjatlarga mos keladi.',
             'total_area' => '120,5', 'value_kind' => 'market', ...$this->mainData(),
@@ -191,7 +191,7 @@ class PortalPageTest extends TestCase
 
         $this->assertSame(ValuationStatus::New, $object->status);
         $this->assertSame(['cost', 'comparative'], $object->approaches);
-        $this->assertSame(["Asosiy yo'l yoqasida joylashgan", 'Markaziy bozor hududida'], $object->report['amenities']);
+        $this->assertSame(['Markaziy bozor hududida'], $object->report['amenities']);
         $this->assertSame(['owner' => $owner->id, 'pledgee' => $bank->id], $object->clients->mapWithKeys(fn ($c) => [$c->pivot->role => $c->id])->all());
         $this->assertSame('Bino', $object->report['property_type']);
         $this->assertSame('Xaytek', $object->report['architecture']);
@@ -203,6 +203,13 @@ class PortalPageTest extends TestCase
         // What the portal asks for is required on this page.
         $this->post('/admin/real-estates', [...$form, 'owner_id' => '', 'approaches' => [''], 'amenities' => [''], 'cadastral_number' => '', 'land_area' => '', 'wall_material' => '', 'region_id' => ''])
             ->assertSessionHasErrors(['owner_id', 'approaches', 'amenities', 'cadastral_number', 'land_area', 'wall_material', 'region_id']);
+        // Only one of the special amenities is chosen, in a plain list as on the portal.
+        $this->flushSession();
+        $this->actingAs($this->user)->get('/admin/real-estates/'.$object->id)->assertOk()
+            ->assertSee('<select id="f-amenities--" name="amenities[]" required', false)
+            ->assertSee('<option value="Markaziy bozor hududida" selected>', false);
+        $this->post('/admin/real-estates', [...$form, 'name' => 'Ikkinchi', 'amenities' => ['', "Asosiy yo'l yoqasida joylashgan", 'Markaziy bozor hududida']])
+            ->assertSessionHasErrors('amenities');
     }
 
     public function test_the_owner_and_the_other_persons_are_changed_on_the_page(): void

@@ -243,7 +243,7 @@ body.theme-classic.accent-orange {
 
 /* --- Forms: small grey uppercase labels, plain inputs ------------------ */
 
-.theme-classic .field label:not(.check, .check-inline, .multi-option),
+.theme-classic .field label:not(.check, .check-inline),
 .theme-classic .field legend { font-size: 12px; font-weight: 400; letter-spacing: 0; color: #9a9a9a; }
 .theme-classic .req { color: var(--c-red); }
 .theme-classic .input { height: 40px; border: 1px solid #e3e3e3; border-radius: 4px; color: #565656; }
@@ -438,45 +438,6 @@ body.theme-classic.accent-orange {
 .theme-classic .link-sm { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--accent-strong); }
 .theme-classic .portal-map-title { margin-bottom: 8px; font-size: 12px; text-transform: uppercase; color: #9a9a9a; }
 .theme-classic .portal-map .map-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
-
-/* Multiple choice as tags (approaches, amenities). */
-.theme-classic .multi-field { min-width: 0; margin: 0; padding: 0; border: 0; }
-.theme-classic .multi { position: relative; }
-.theme-classic .multi-box {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
-  height: auto;
-  min-height: 40px;
-  padding: 5px 34px 5px 8px;
-  cursor: pointer;
-  list-style: none;
-  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center;
-}
-.theme-classic .multi-box::-webkit-details-marker { display: none; }
-.theme-classic .multi-tags { display: contents; }
-.theme-classic .multi-tag { padding: 3px 8px; border-radius: 3px; background: var(--accent-soft); color: var(--accent-ink); font-size: 13px; }
-.theme-classic .multi-placeholder { padding-left: 4px; color: #b3b3b3; }
-.theme-classic .multi-menu {
-  position: absolute;
-  z-index: 15;
-  top: calc(100% - 1px);
-  left: 0;
-  right: 0;
-  max-height: 280px;
-  overflow: auto;
-  padding: 0;
-  border: 1px solid #ccc;
-  border-radius: 0 0 4px 4px;
-  background: #fff;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, .08);
-}
-/* The list as the portal's: plain lines, the one under the pointer blue, the chosen ones grey (no boxes). */
-.theme-classic .multi-option { position: relative; display: block; padding: 6px 12px; font-size: 14px; line-height: 1.4; text-transform: none; color: #444; cursor: pointer; user-select: none; }
-.theme-classic .multi-option input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-.theme-classic .multi-option:has(input:checked) { background: #e4e4e4; }
-.theme-classic .multi-option:hover, .theme-classic .multi-option:has(input:focus-visible) { background: #5897fb; color: #fff; }
 
 /* The four steps: done green, the current one orange, the rest grey. */
 .theme-classic .portal-steps { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: min(100%, 720px); margin: 0 auto; padding: 0; list-style: none; counter-reset: none; }

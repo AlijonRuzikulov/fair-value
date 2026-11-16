@@ -148,7 +148,7 @@ class RealEstateController extends ValuationController
             'condition' => ['nullable', 'string', 'max:255'],
             'features' => ['nullable', 'array'],
             'features.*' => [Rule::enum(RealEstateFeature::class)],
-            'amenities' => ['nullable', 'array'],
+            'amenities' => ['nullable', 'array', 'max:1'],
             'amenities.*' => ['string', 'max:150'],
             // The owner chosen on the page of the classic look; the other persons come in "persons".
             'owner_id' => ['sometimes', 'required', 'integer', Tenant::exists('clients')],
@@ -404,7 +404,7 @@ class RealEstateController extends ValuationController
             'owner_id' => ['nullable', 'integer', Tenant::exists('clients')],
             'function' => $required(['string', 'max:150']),
             'architecture' => $required(['string', 'max:150']),
-            'amenities' => ['required', 'array', 'min:1'],
+            'amenities' => ['required', 'array', 'min:1', 'max:1'],
             'amenities.*' => ['string', 'max:150'],
             'repair' => $required(['string', 'max:150']),
             'completion' => $required(['numeric', 'min:0', 'max:100']),

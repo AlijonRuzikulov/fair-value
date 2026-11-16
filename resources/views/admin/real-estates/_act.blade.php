@@ -69,8 +69,7 @@
                 @endif
                 <x-select name="function" :label="__('Purpose of use')" :options="$choices('function', RealEstateReport::OPTIONS[$residential ? 'function_residential' : 'function_nonresidential'])" :value="$rv['function']" placeholder="" span="12" required />
                 <x-select name="architecture" :label="__('Architectural style (facade)')" :options="$choices('architecture')" :value="$rv['architecture']" placeholder="" span="12" required />
-                <input type="hidden" name="amenities[]" value="">
-                <x-checkboxes name="amenities" :label="__('Special amenities').' *'" :options="RealEstateReport::choicesOf('amenities', $rv['amenities'] ?? [])" :value="$rv['amenities'] ?? []" class="check-list-compact" />
+                <x-select name="amenities[]" :label="__('Special amenities')" :options="RealEstateReport::choicesOf('amenities', $rv['amenities'] ?? [])" :value="$rv['amenities'] ?? []" placeholder="" span="12" required />
                 <x-select name="repair" :label="__('Repair condition')" :options="$choices('repair')" :value="$rv['repair']" placeholder="" span="12" required />
                 <x-field name="completion" type="number" :label="__('Construction completed (%)')" :value="number_format((float) $rv['completion'], 2, '.', '')" span="12" required min="0" max="100" step="0.01" />
                 <x-select name="ownership_form" :label="__('Form of ownership')" :options="$choices('ownership_form')" :value="$rv['ownership_form'] ?? null" placeholder="" span="12" required />
