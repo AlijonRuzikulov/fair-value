@@ -5,6 +5,10 @@
 {
     "name": "fair-value",
     "compatibility_date": "2026-11-01",
+    // The address https://fair-value.<account>.workers.dev and the preview addresses are
+    // turned on by every deploy (without these lines Cloudflare may leave them off).
+    "workers_dev": true,
+    "preview_urls": true,
     "assets": {
         "directory": "./cloudflare",
         "not_found_handling": "single-page-application"
