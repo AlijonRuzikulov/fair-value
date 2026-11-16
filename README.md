@@ -209,6 +209,20 @@ Yangilash: `git pull && bash deploy.sh` (sayt bir necha soniya “texnik ishlar�
 `SESSION_SECURE_COOKIE=true` ni o‘zi qo‘yadi. Sayt faqat `APP_URL` dagi domen (va uning `www.`)
 orqali ochiladi.
 
+### Bir buyruq bilan: bo‘sh Ubuntu server (masalan, bepul Oracle Cloud)
+
+Ubuntu 22.04/24.04 serverda (80 va 443 portlar ochiq bo‘lsin):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/AlijonRuzikulov/fair-value/claude/amazing-bohr-4qrtrr/server/install.sh | sudo bash
+```
+
+`server/install.sh` PHP 8.3, Composer, Caddy (https sertifikatini o‘zi oladi), tizimni
+`/var/www/fair-value` ga, cron’ni o‘rnatadi va oxirida link hamda administrator parolini chiqaradi.
+Domensiz manzil: `https://<IP, nuqtalar o‘rniga chiziqcha>.sslip.io`; domen bo‘lsa —
+`... | sudo DOMAIN=fairvalue.uz bash`. Yangilash: shu buyruqni qayta ishga tushirish (ma’lumotlar saqlanadi).
+Oracle va boshqa chet el serverlari — faqat sinov ma’lumotlari uchun (yuqoridagi qonunga qarang).
+
 ### VPS (Ubuntu, nginx, PHP-FPM)
 
 Yuqoridagi buyruqlar `/var/www/fair-value` da, keyin `chown -R www-data:www-data storage bootstrap/cache`.
