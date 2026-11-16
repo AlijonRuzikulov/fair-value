@@ -172,6 +172,46 @@
     });
   });
 
+  // The landmarks of the chosen district (from OpenStreetMap, kept on the server) fill the list
+  // of the landmark box; those with a place on the map are remembered for the map below.
+  $$('[data-landmarks-url]').forEach(function (input) {
+    var form = input.form || document;
+    var district = $('[data-district-select]', form);
+    var list = input.getAttribute('list') ? document.getElementById(input.getAttribute('list')) : null;
+    if (!district || !list) return;
+    var status = document.createElement('p');
+    status.className = 'field-hint landmark-status';
+    (input.closest('.input-wrap') || input).after(status);
+    input.landmarks = {};
+    var asked = 0;
+    var load = function () {
+      if (!district.value) return;
+      var mine = ++asked;
+      status.textContent = input.dataset.loading || '';
+      fetch(input.dataset.landmarksUrl + '?district_id=' + encodeURIComponent(district.value), { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+          if (mine !== asked) return;
+          var items = Array.isArray(data.items) ? data.items : [];
+          list.innerHTML = '';
+          input.landmarks = {};
+          items.forEach(function (item) {
+            var option = document.createElement('option');
+            option.value = item.name;
+            option.label = item.kind;
+            list.appendChild(option);
+            if (item.lat !== null && item.lng !== null) input.landmarks[item.name.toLowerCase()] = item;
+          });
+          status.textContent = items.length
+            ? (input.dataset.count || '').replace(':count', items.length)
+            : (data.failed ? input.dataset.failed : input.dataset.none) || '';
+        })
+        .catch(function () { if (mine === asked) status.textContent = input.dataset.failed || ''; });
+    };
+    district.addEventListener('change', load);
+    if (district.value) load();
+  });
+
   /* ---------- Combobox (client search) -------------------------------- */
 
   function debounce(fn, ms) {
@@ -789,6 +829,12 @@
           (landmark.closest('.input-wrap') || landmark).after(note);
         }
         note.textContent = '';
+        var known = landmark.landmarks && landmark.landmarks[text.toLowerCase()];
+        if (known) {
+          if (!marker) placeAndWrite(L.latLng(known.lat, known.lng));
+          note.textContent = (landmark.dataset.found || '').replace(':place', known.name + ' (' + known.kind + ')');
+          return;
+        }
         searchAll(queries, function (places) {
           if (!places.length) {
             note.textContent = landmark.dataset.notFound || '';

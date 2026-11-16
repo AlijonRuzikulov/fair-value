@@ -199,6 +199,10 @@ return [
         'attribution' => env('MAP_ATTRIBUTION', '© OpenStreetMap'),
         // Address search (Nominatim API).
         'search' => env('MAP_SEARCH', 'https://nominatim.openstreetmap.org/search'),
+        // Landmarks of a district (Overpass API), tried in this order.
+        'overpass' => array_values(array_filter(array_map('trim', explode(',', (string) env(
+            'MAP_OVERPASS', 'https://overpass-api.de/api/interpreter,https://overpass.kumi.systems/api/interpreter'
+        ))))),
         'center' => [41.3111, 69.2797],
     ],
 

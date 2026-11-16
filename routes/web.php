@@ -148,6 +148,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
     Route::post('attachments/{attachment}/rotate', [Admin\AttachmentController::class, 'rotate'])->middleware('throttle:60,1')->name('attachments.rotate');
 
     Route::get('districts', Admin\DistrictLookupController::class)->name('districts');
+    Route::get('landmarks', Admin\LandmarkController::class)->middleware('throttle:30,1')->name('landmarks');
     Route::get('history', Admin\HistoryController::class)->middleware('throttle:60,1')->name('history');
 
     Route::get('profile', [Admin\ProfileController::class, 'edit'])->name('profile.edit');

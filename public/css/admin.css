@@ -1614,3 +1614,7 @@ summary.btn::-webkit-details-marker { display: none; }
     .act-grid { grid-template-columns: 1fr; }
     .act-fields { max-height: none; }
 }
+
+/* A box with a list of suggestions (the landmark): one arrow, the page's; the browser's own one stays clickable but unseen. */
+input.input-select[list]::-webkit-calendar-picker-indicator { opacity: 0; cursor: pointer; }
+.landmark-status, .landmark-found { margin-top: 4px; }
