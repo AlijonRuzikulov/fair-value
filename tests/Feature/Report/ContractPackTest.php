@@ -115,7 +115,10 @@ class ContractPackTest extends TestCase
         $page->assertSee('SO‘ROVNOMASI', false)->assertSee('Kadastr hujjati')->assertSee('Jurayev Shokirjon Ganijonovich, +998941221274')
             ->assertSee('class="write-in"', false)->assertSee('O‘zboshimcha qurilish yoki qayta rejalashtirish', false)->assertDontSee('SHARTNOMA');
 
-        $this->get('/admin/real-estates/'.$this->flat->id.'/report/edit')->assertOk()->assertSee('name="survey[use]"', false);
+        // On the form: one row per question, and one button for the answers that are usually "none".
+        $this->get('/admin/real-estates/'.$this->flat->id.'/report/edit')->assertOk()->assertSee('name="survey[use]"', false)
+            ->assertSee('class="qa-row"', false)
+            ->assertSee('data-fill-empty=\'["survey[encumbrances]","survey[disputes]","survey[alterations]","survey[debts]"]\'', false);
         $this->put('/admin/real-estates/'.$this->flat->id.'/report', [
             'script' => 'latn', 'report_date' => '2026-10-20',
             'survey' => ['use' => 'Ijaraga berilgan', 'lease' => 'Oyiga 4 000 000 so‘m, 2027 yilgacha', 'contact' => 'Jurayev Shokirjon Ganijonovich, +998941221274', 'disputes' => ' '],

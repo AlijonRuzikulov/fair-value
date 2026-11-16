@@ -13,10 +13,10 @@
         'function' => __('Functional purpose'), 'ownership_form' => __('Form of ownership'), 'rights' => __('Rights being valued'),
         'rights_basis' => __('Document establishing the right'), 'land_rights' => __('Rights to the land plot'),
         'encumbrances' => __('Encumbrances and restrictions'), 'ecology' => __('Environmental risks'),
-        'development' => __('Development plans (construction, reconstruction, repair)'),
-        'land_category' => __('Permitted use of the land'), 'geology' => __('Engineering and geological description'),
-        'hydrogeology' => __('Hydrogeological description'), 'topography' => __('Topographic description'),
-        'land_improvements' => __('Landscaping elements of the plot'), 'land_hbu' => __('Land use option the value corresponds to'),
+        'development' => __('Development plans'),
+        'land_category' => __('Permitted use'), 'geology' => __('Engineering geology'),
+        'hydrogeology' => __('Hydrogeology'), 'topography' => __('Topography'),
+        'land_improvements' => __('Improvements of the plot'), 'land_hbu' => __('Use the value corresponds to'),
         'building_volume' => __('Building volume, m³'), 'completion' => __('Construction completed, %'), 'foundation' => __('Foundation'),
         'walls' => __('Walls'), 'roof_cover' => __('Roof covering'), 'roof_slab' => __('Roof slab'), 'floor_type' => __('Floor covering'),
         'windows_doors' => __('Windows and doors'), 'repair' => __('Repair condition'), 'architecture' => __('Architectural style'),
@@ -136,28 +136,42 @@
                 {{-- ============ 2. Object and rights ============ --}}
                 <x-card :title="'2 · '.$stepInfo['object'][0]" :icon="$stepInfo['object'][2]" id="step-object" class="prep-step" data-step="object">
                     <x-slot:actions>@include('admin.real-estates._step-badge', ['ok' => $steps['object']])</x-slot:actions>
-                    <div class="form-grid">
-                        @foreach (['function', 'ownership_form', 'rights', 'rights_basis', 'land_rights', 'encumbrances', 'ecology', 'development'] as $name)
-                            @include('admin.real-estates._report-field', $field($name, 'text', $values[$name] ?? null, in_array($name, ['rights_basis', 'development'], true) ? 8 : 4))
+                    <div class="form-grid prep-grid">
+                        @foreach (['function' => 4, 'ownership_form' => 4, 'rights' => 4, 'land_rights' => 4, 'encumbrances' => 4, 'rights_basis' => 4, 'ecology' => 4, 'development' => 8] as $name => $span)
+                            @include('admin.real-estates._report-field', $field($name, 'text', $values[$name] ?? null, $span))
                         @endforeach
                     </div>
                     <details class="prep-more">
                         <summary>{{ __('Land plot') }}</summary>
-                        <div class="form-grid">
+                        <div class="form-grid prep-grid">
                             @foreach (['land_category', 'geology', 'hydrogeology', 'topography', 'land_improvements', 'land_hbu'] as $name)
                                 @include('admin.real-estates._report-field', $field($name, 'text', $values[$name] ?? null, 4))
                             @endforeach
                         </div>
                     </details>
-                    @php $surveyAnswers = [...\App\Reports\Survey::defaults($item), ...(array) ($values['survey'] ?? [])]; @endphp
+                    @php
+                        $surveyKeys = \App\Reports\Survey::keys($item);
+                        $surveyAnswers = [...\App\Reports\Survey::defaults($item), ...(array) ($values['survey'] ?? [])];
+                        // Questions usually answered "none": filled in at once where still empty.
+                        $surveyNone = array_values(array_intersect($surveyKeys, array_keys(array_filter(\App\Reports\Survey::OPTIONS, fn ($options) => in_array('Mavjud emas', $options, true)))));
+                    @endphp
                     <details class="prep-more" id="survey" @if (! empty($values['survey'])) open @endif>
                         <summary>{{ __('Customer questionnaire') }}</summary>
-                        <p class="field-hint" style="margin-bottom: 10px">{{ __('What the customer states about the object. It is printed with the contract for the customer to sign (an empty answer is left to be written by hand) and listed in the report.') }}</p>
-                        <div class="form-grid">
-                            @foreach (\App\Reports\Survey::keys($item) as $key)
-                                <x-field :name="'survey['.$key.']'" :label="__(\App\Reports\Survey::QUESTIONS[$key][1])" :value="$surveyAnswers[$key] ?? null" :span="in_array($key, ['lease', 'documents', 'contact', 'defects'], true) ? 8 : 4" :list="isset(\App\Reports\Survey::OPTIONS[$key]) ? 'survey-'.$key : null" autocomplete="off" />
+                        <p class="field-hint">{{ __('What the customer states about the object: printed with the contract for the customer to sign (an empty answer is written by hand) and listed in the report.') }}</p>
+                        <div class="qa-list">
+                            @foreach ($surveyKeys as $key)
+                                <label class="qa-row" for="survey-{{ $key }}-input">
+                                    <span class="qa-question">{{ __(\App\Reports\Survey::QUESTIONS[$key][1]) }}</span>
+                                    <input class="input" id="survey-{{ $key }}-input" name="survey[{{ $key }}]" value="{{ old("survey.$key", $surveyAnswers[$key] ?? null) }}" maxlength="1000" autocomplete="off" @isset(\App\Reports\Survey::OPTIONS[$key]) list="survey-{{ $key }}" @endisset>
+                                    @error("survey.$key")<span class="field-error">{{ $message }}</span>@enderror
+                                </label>
                             @endforeach
                         </div>
+                        @if ($surveyNone !== [])
+                            <button type="button" class="btn btn-sm qa-none" data-fill-empty='@json(array_map(fn ($key) => "survey[$key]", $surveyNone))' data-fill-value="Mavjud emas">
+                                <x-icon name="check" :size="14" /> {{ __('“None” where pledge, disputes, alterations and debts are empty') }}
+                            </button>
+                        @endif
                         @foreach (\App\Reports\Survey::OPTIONS as $key => $options)
                             <datalist id="survey-{{ $key }}">@foreach ($options as $option)<option value="{{ $option }}">@endforeach</datalist>
                         @endforeach
@@ -168,13 +182,14 @@
                 <x-card :title="'3 · '.$stepInfo['inspection'][0]" :icon="$stepInfo['inspection'][2]" id="step-inspection" class="prep-step" data-step="inspection">
                     <x-slot:actions>@include('admin.real-estates._step-badge', ['ok' => $steps['inspection']])</x-slot:actions>
                     {{-- Data of the object that the page of the classic look does not show. --}}
-                    <div class="form-grid" style="margin-bottom: 14px">
-                        <x-field name="valuation_date" type="date" :label="__('Valuation date')" :value="$item->valuation_date" span="3" />
+                    @php $topSpan = $item->kind === \App\Enums\RealEstateKind::Residential ? 3 : 4; @endphp
+                    <div class="form-grid prep-grid" style="margin-bottom: 14px">
+                        <x-field name="valuation_date" type="date" :label="__('Valuation date')" :value="$item->valuation_date" :span="$topSpan" />
                         @if ($item->kind === \App\Enums\RealEstateKind::Residential)
-                            <x-field name="living_area" :label="__('Living area')" :value="$item->living_area" money :suffix="__('m²')" span="3" />
+                            <x-field name="living_area" :label="__('Living area')" :value="$item->living_area" money :suffix="__('m²')" :span="$topSpan" />
                         @endif
-                        <x-field name="rooms" type="number" :label="__('Rooms')" :value="$item->rooms" span="3" min="0" />
-                        <x-field name="condition" :label="__('Technical condition')" :value="$item->condition" span="3" list="conditions" />
+                        <x-field name="rooms" type="number" :label="__('Rooms')" :value="$item->rooms" :span="$topSpan" min="0" />
+                        <x-field name="condition" :label="__('Technical condition')" :value="$item->condition" :span="$topSpan" list="conditions" />
                         <datalist id="conditions"><option value="{{ __('Excellent') }}"><option value="{{ __('Good') }}"><option value="{{ __('Satisfactory') }}"><option value="{{ __('Needs repair') }}"></datalist>
                     </div>
                     <div class="preset-bar">
@@ -191,7 +206,7 @@
                             <p class="field-hint">{{ __('Fills the construction fields with typical values; correct what differs.') }}</p>
                         </div>
                     </div>
-                    <div class="form-grid">
+                    <div class="form-grid prep-grid">
                         @foreach (['foundation', 'walls', 'roof_slab', 'roof_cover', 'floor_type', 'windows_doors', 'repair', 'architecture', 'landscaping', 'surroundings'] as $name)
                             @include('admin.real-estates._report-field', $field($name, 'text', $values[$name] ?? null, 4))
                         @endforeach
@@ -202,10 +217,9 @@
                                 <input class="input" type="number" step="0.1" min="2" max="20" value="3" aria-label="{{ __('Ceiling height, m') }}" title="{{ __('Ceiling height, m') }}" data-volume-height>
                                 <button class="btn btn-icon" type="button" data-volume data-area="{{ (float) $item->total_area }}" title="{{ __('Area × ceiling height') }}" aria-label="{{ __('Area × ceiling height') }}"><x-icon name="calculator" :size="16" /></button>
                             </div>
-                            <p class="field-hint">{{ __('Area × ceiling height (m)') }}</p>
                         </div>
-                        @include('admin.real-estates._report-field', $field('completion', 'number', $values['completion'] ?? null, 2))
-                        @include('admin.real-estates._report-field', $field('convertibility', 'text', $values['convertibility'] ?? null, 6))
+                        @include('admin.real-estates._report-field', $field('completion', 'number', $values['completion'] ?? null, 4))
+                        @include('admin.real-estates._report-field', $field('convertibility', 'text', $values['convertibility'] ?? null, 12))
                     </div>
 
                     <h3 class="sub-title">{{ __('Utilities and amenities') }}</h3>
@@ -367,7 +381,7 @@
                 {{-- ============ 6. Report ============ --}}
                 <x-card :title="'6 · '.$stepInfo['report'][0]" :icon="$stepInfo['report'][2]" id="step-report" class="prep-step" data-step="report">
                     <x-slot:actions>@include('admin.real-estates._step-badge', ['ok' => $steps['report']])</x-slot:actions>
-                    <div class="form-grid">
+                    <div class="form-grid prep-grid">
                         <x-select name="script" :label="$labels['script']" :options="['latn' => 'O‘zbekcha (lotin)', 'cyrl' => 'Ўзбекча (кирилл)']" :value="$values['script']" span="4" />
                         <x-field name="report_date" type="date" :label="$labels['report_date']" :value="$values['report_date']" span="4" />
                         @foreach (['letter_number', 'value_type', 'currency_text', 'use_period', 'report_format', 'intended_users', 'deadline'] as $name)

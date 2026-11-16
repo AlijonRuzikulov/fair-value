@@ -1529,6 +1529,20 @@
     link.addEventListener('click', function (e) { e.preventDefault(); });
   });
 
+  // Puts one answer into the listed boxes that are still empty ("None" in the questionnaire).
+  $$('[data-fill-empty]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      var value = button.getAttribute('data-fill-value');
+      JSON.parse(button.getAttribute('data-fill-empty')).forEach(function (name) {
+        var input = document.querySelector('[name="' + name + '"]');
+        if (input && !input.value.trim()) {
+          input.value = value;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      });
+    });
+  });
+
   // Copies the address of a button for the browsers where dragging does not work.
   $$('[data-copy]').forEach(function (button) {
     button.addEventListener('click', function () {
