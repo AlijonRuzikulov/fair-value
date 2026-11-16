@@ -1488,47 +1488,6 @@
   // The act opened as a page: its pictures and buttons work as in the window.
   $$('.act-page [data-act-window]').forEach(function (form) { initAct(form, { close: function () {} }); });
 
-  /* ---------- Analogues from the appraiser's browser ------------------ */
-
-  // The object whose analogues were looked at last is offered first on the capture page.
-  var analogObject = $('[data-analog-object]');
-  if (analogObject) {
-    try { localStorage.setItem('fv.analogObject', analogObject.getAttribute('data-analog-object')); } catch (e) { /* storage off */ }
-  }
-
-  // The bookmark button opens the capture page with the listing packed after #.
-  var capture = $('[data-analog-capture]');
-  if (capture) {
-    var packed = window.location.hash.slice(1);
-    if (packed) {
-      try {
-        var data = JSON.parse(decodeURIComponent(escape(atob(packed))));
-        if (!data || !data.u) throw new Error('empty');
-        var set = function (name, value) { var input = capture.querySelector('[name="' + name + '"]'); if (input) input.value = value; };
-        set('url', data.u);
-        set('title', data.t || '');
-        set('text', data.x || '');
-        set('ld', JSON.stringify(data.l || []));
-        set('meta', JSON.stringify(data.m || {}));
-        $('[data-capture-title]', capture).textContent = (data.m && data.m['og:title']) || data.t || data.u;
-        $('[data-capture-url]', capture).textContent = data.u;
-        capture.hidden = false;
-        $('[data-capture-empty]').hidden = true;
-      } catch (e) {
-        $('[data-capture-broken]').hidden = false;
-      }
-    }
-    var select = capture.querySelector('select[name="object"]');
-    var last = null;
-    try { last = localStorage.getItem('fv.analogObject'); } catch (e) { /* storage off */ }
-    if (select && last && select.querySelector('option[value="' + last.replace(/\D/g, '') + '"]')) select.value = last;
-  }
-
-  // The bookmark button is dragged to the bookmarks bar, not followed here.
-  $$('[data-bookmarklet]').forEach(function (link) {
-    link.addEventListener('click', function (e) { e.preventDefault(); });
-  });
-
   // Puts one answer into the listed boxes that are still empty ("None" in the questionnaire).
   // (Delegated: the button may come in a window loaded later.)
   document.addEventListener('click', function (e) {
@@ -1541,24 +1500,6 @@
       if (input && !input.value.trim()) {
         input.value = value;
         input.dispatchEvent(new Event('input', { bubbles: true }));
-      }
-    });
-  });
-
-  // Copies the address of a button for the browsers where dragging does not work.
-  $$('[data-copy]').forEach(function (button) {
-    button.addEventListener('click', function () {
-      var text = button.getAttribute('data-copy');
-      var done = function () { button.classList.add('is-done'); setTimeout(function () { button.classList.remove('is-done'); }, 1500); };
-      if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(text).then(done);
-      } else {
-        var area = document.createElement('textarea');
-        area.value = text;
-        document.body.appendChild(area);
-        area.select();
-        try { document.execCommand('copy'); done(); } catch (e) { /* nothing to do */ }
-        area.remove();
       }
     });
   });

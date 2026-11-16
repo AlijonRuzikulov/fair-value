@@ -5,12 +5,9 @@ namespace Tests\Feature\Analogs;
 use App\Enums\ValuationStatus;
 use App\Models\Analog;
 use App\Models\CurrencyRate;
-use App\Models\Organization;
 use App\Models\RealEstate;
 use App\Models\User;
-use App\Reports\RealEstateReport;
 use App\Services\Analogs\ListingAi;
-use App\Support\ComparativeCalculator;
 use App\Support\Format;
 use Database\Seeders\RegionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -177,57 +174,6 @@ class AnalogsFlowTest extends TestCase
         $this->assertTrue($analogs[0]->fresh()->isUsable());
         // The comparative value is saved by itself once the approach is applied: 60 000 × 12 500 × 0.95.
         $this->assertEqualsWithDelta(712_500_000, (float) $this->flat->fresh()->value_comparative, 1000);
-    }
-
-    public function test_a_listing_sent_from_the_browser_is_read_without_the_server_opening_the_site(): void
-    {
-        $this->withoutAi();
-        Http::fake();
-        $this->flat->update(['approaches' => ['cost', 'comparative']]);
-        $url = 'https://www.olx.uz/d/obyavlenie/kv-ID9.html';
-        $ld = json_encode(['@type' => 'Product', 'name' => '2-xonali kvartira', 'offers' => ['price' => '50000', 'priceCurrency' => 'USD']]);
-        $send = fn (array $extra = []) => $this->post('/admin/analogs/capture', [
-            'object' => $this->flat->id, 'url' => $url, 'title' => '2-xonali kvartira — OLX',
-            'text' => "Umumiy maydon: 62 m²\nXonalar soni: 2\nQavat: 1\nUy qavatliligi: 9\nToshkent, Chilonzor tumani",
-            'ld' => json_encode([$ld]), 'meta' => json_encode(['og:title' => '2-xonali kvartira, Chilonzor', 'onload' => 'x']),
-            ...$extra,
-        ]);
-
-        // The button and the page it opens.
-        $this->actingAs($this->user)->withSession(['locale' => 'uz'])->get('/admin/real-estates/'.$this->flat->id)
-            ->assertSee('data-bookmarklet', false)->assertSee('javascript:(function()', false)->assertSee('data-analog-object="'.$this->flat->id.'"', false);
-        $this->get('/admin/analogs/capture')->assertOk()->assertSee('data-analog-capture', false)
-            ->assertSee('<option value="'.$this->flat->id.'"', false)->assertSee('Xatcho‘plar paneliga sudrang', false);
-
-        $send()->assertRedirect('/admin/real-estates/'.$this->flat->id.'#analogs')->assertSessionHas('status');
-        $analog = $this->flat->analogs()->sole();
-        $this->assertTrue($analog->isUsable());
-        $this->assertSame(['50000.00', 'USD', '62.00', 1, 9], [$analog->price, $analog->currency, $analog->area, $analog->floor, $analog->floors_total]);
-        $this->assertSame('2-xonali kvartira', $analog->title);
-        $this->assertSame([$url, 'www.olx.uz'], [$analog->url, $analog->source]);
-        // The comparative value follows by itself: about 50 000 $ × 12 500 per 62 m², brought to 60 m².
-        $flat = $this->flat->fresh();
-        $this->assertSame(ComparativeCalculator::calculate(60.0, $flat->analogs, RealEstateReport::comparativeOptions($flat))['value'], (float) $flat->value_comparative);
-        $this->assertEqualsWithDelta(605_000_000, (float) $flat->value_comparative, 2_000_000);
-        Http::assertNothingSent();
-
-        // The same listing sent again is read again, not added twice.
-        $send(['ld' => json_encode([str_replace('50000', '48000', $ld)])])->assertSessionHas('status');
-        $this->assertSame('48000.00', $this->flat->analogs()->sole()->price);
-
-        // A link that could not be opened is filled in by the button.
-        $failed = $this->flat->analogs()->create(['status' => Analog::FAILED, 'url' => 'https://uybor.uz/listings/77', 'note' => 'Code 403']);
-        $send(['url' => 'https://uybor.uz/listings/77'])->assertSessionHas('status');
-        $this->assertTrue($failed->fresh()->isUsable());
-        $this->assertSame(2, $this->flat->analogs()->count());
-
-        // Not an address of a website, or an object of another workspace: nothing is added.
-        $send(['url' => 'javascript:alert(1)'])->assertSessionHas('error');
-        $this->assertSame(2, $this->flat->analogs()->count());
-        $bank = Organization::create(['name' => 'Bank']);
-        $this->actingAs(User::factory()->create(['organization_id' => $bank->id]));
-        $send(['url' => 'https://uybor.uz/listings/78'])->assertNotFound();
-        $this->get('/admin/analogs/capture')->assertOk()->assertDontSee('<option value="'.$this->flat->id.'"', false);
     }
 
     public function test_a_page_that_was_not_read_counts_once_its_price_and_area_are_typed_in(): void

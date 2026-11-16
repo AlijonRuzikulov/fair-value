@@ -18,7 +18,9 @@
         @endif
     </header>
 
-    <fieldset class="act-body" @disabled(! $canEdit)>
+    {{-- The questions scroll between the fixed head and foot of the window. --}}
+    <div class="act-body survey-body">
+    <fieldset class="survey-fields" @disabled(! $canEdit)>
         <div class="qa-list">
             @foreach (Survey::keys($item) as $key)
                 <label class="qa-row" for="sv-{{ $key }}">
@@ -32,6 +34,7 @@
             <datalist id="sv-list-{{ $key }}">@foreach ($options as $option)<option value="{{ $option }}">@endforeach</datalist>
         @endforeach
     </fieldset>
+    </div>
 
     <footer class="act-foot">
         @if ($canEdit && $none !== [])

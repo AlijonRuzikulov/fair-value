@@ -4,11 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\RealEstateFeature;
 use App\Enums\ValuationApproach;
-use App\Enums\ValuationStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Activity;
 use App\Models\Analog;
-use App\Models\RealEstate;
 use App\Reports\RealEstateReport;
 use App\Services\Analogs\AnalogFinder;
 use App\Services\Analogs\AnalogPhoto;
@@ -23,7 +21,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
-use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
@@ -107,55 +104,6 @@ class AnalogController extends Controller
         }, $m[0]);
 
         return array_values(array_unique($links));
-    }
-
-    /**
-     * The page the bookmark button opens with the listing the appraiser is
-     * looking at (in the address after #, read by admin.js), to choose the
-     * object it is an analogue for. Without a listing it explains the button.
-     */
-    public function capture(Request $request): View
-    {
-        $objects = RealEstate::query()
-            ->where('status', '!=', ValuationStatus::Completed->value)
-            ->latest('updated_at')->limit(40)->get()
-            ->filter(fn (RealEstate $item) => Gate::allows('edit-valuation', $item));
-
-        return view('admin.analogs.capture', ['objects' => $objects]);
-    }
-
-    /** Saves the listing sent from the appraiser's browser as an analogue of the chosen object. */
-    public function captured(Request $request): RedirectResponse
-    {
-        $data = $request->validate([
-            'object' => ['required', 'integer'],
-            'url' => ['required', 'string', 'max:2000'],
-            'title' => ['nullable', 'string', 'max:500'],
-            'text' => ['nullable', 'string', 'max:60000'],
-            'ld' => ['nullable', 'string', 'max:100000'],
-            'meta' => ['nullable', 'string', 'max:20000'],
-        ]);
-        $object = $this->object('real-estates', (string) $data['object']);
-        if (! AnalogFinder::isWebsite($data['url'])) {
-            return $this->back('real-estates', $object)->with('error', __('The listing was not received. Open it in the browser and press the button again.'));
-        }
-        if ($object->analogs()->where('url', $data['url'])->doesntExist() && $object->analogs()->count() >= AnalogFinder::MAX_PER_OBJECT) {
-            return $this->back('real-estates', $object)->with('error', __('An object can have at most :count analogues.', ['count' => AnalogFinder::MAX_PER_OBJECT]));
-        }
-
-        $structured = array_values(array_filter((array) json_decode((string) ($data['ld'] ?? ''), true), 'is_string'));
-        $meta = array_filter((array) json_decode((string) ($data['meta'] ?? ''), true),
-            fn ($value, $key) => is_string($value) && is_string($key) && preg_match('/^(og:|product:|description$)/', $key), ARRAY_FILTER_USE_BOTH);
-
-        set_time_limit(120);
-        $analog = $this->finder->addCaptured($object, $data['url'], $data['title'] ?? null, (string) ($data['text'] ?? ''), array_slice($structured, 0, 10), $meta);
-        $this->finder->syncValue($object);
-        Activity::record('analogs', $object, ['mode' => 'browser', 'title' => $analog->title]);
-
-        return $this->back('real-estates', $object)->with(
-            $analog->isUsable() ? 'status' : 'error',
-            $analog->isUsable() ? __('The listing has been added from your browser.') : __('The price or the area was not found in the text — fill them in.')
-        );
     }
 
     /** Reads the page of one saved link (called by the page, one at a time). */

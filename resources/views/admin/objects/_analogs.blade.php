@@ -48,15 +48,6 @@
                 <p class="field-hint">{{ __('Links to listings or to a page of search results with your filters (:sites), one per line.', ['sites' => $sites]) }} {{ __('Links to other sites are added too: paste the text of the listing under them.') }}</p>
                 <button class="btn" type="submit"><x-icon name="plus" :size="16" /> {{ __('Add links') }}</button>
             </form>
-
-            @if ($item instanceof \App\Models\RealEstate)
-                <div class="analog-tool" data-analog-object="{{ $item->id }}">
-                    <p class="analog-tool-title"><x-icon name="bookmark-plus" :size="18" /> {{ __('From your browser') }}</p>
-                    <p class="field-hint">{{ __('Works with any site, even one that does not open for the server: put the button on the bookmarks bar once, then press it on a listing.') }}</p>
-                    <a class="btn btn-primary bookmarklet" href="{{ \App\Support\Bookmarklet::analog(route('admin.analogs.capture')) }}" draggable="true" data-bookmarklet title="{{ __('Drag to the bookmarks bar') }}"><x-icon name="bookmark-plus" :size="16" /> {{ __('+ Analogue') }}</a>
-                    <a class="field-hint" href="{{ route('admin.analogs.capture') }}">{{ __('How to set it up') }}</a>
-                </div>
-            @endif
         </div>
 
         <details class="analog-manual" @if ($errors->hasAny(['title', 'price', 'area', 'currency'])) open @endif>

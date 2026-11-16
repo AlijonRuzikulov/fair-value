@@ -95,8 +95,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
         Route::post('{type}/{id}/analogs', 'store')->whereIn('type', $types)->whereNumber('id')->middleware('throttle:20,1')->name('analogs.store');
         Route::put('{type}/{id}/analogs', 'update')->whereIn('type', $types)->whereNumber('id')->name('analogs.update');
         Route::post('{type}/{id}/analogs/apply', 'apply')->whereIn('type', $types)->whereNumber('id')->name('analogs.apply');
-        Route::get('analogs/capture', 'capture')->name('analogs.capture');
-        Route::post('analogs/capture', 'captured')->middleware('throttle:30,1')->name('analogs.captured');
         Route::post('analogs/{analog}/fill', 'fill')->middleware('throttle:60,1')->name('analogs.fill');
         Route::post('analogs/{analog}/text', 'pasted')->middleware('throttle:30,1')->name('analogs.text');
         Route::delete('analogs/{analog}', 'destroy')->name('analogs.destroy');
