@@ -10,12 +10,6 @@
     $result = ComparativeCalculator::calculate((float) $item->total_area, $analogs, $options);
     $pending = $analogs->filter->isPending();
     $canEdit = Gate::allows('edit-valuation', $item);
-    $adjustmentLabels = [
-        'rights' => __('Rights'), 'financing' => __('Financing'), 'bargain' => __('Bargaining'), 'market' => __('Market conditions'),
-        'location' => __('Location'), 'area' => __('Area'), 'floor' => __('Floor'), 'material' => __('Walls'),
-        'condition' => __('Condition'), 'amenities' => __('Amenities'), 'other' => __('Other'),
-    ];
-    $percent = fn ($value) => ($value > 0 ? '+' : '').Format::number($value, 2).' %';
     $sites = implode(', ', config('fairvalue.analogs.domains'));
     $number = fn ($value, $decimals = 0) => $value === null ? '' : Format::number($value, $decimals);
 @endphp
@@ -77,139 +71,11 @@
     @endif
 
     @if ($analogs->isEmpty())
-        <x-empty icon="scale" :title="__('No analogues yet')" :text="__('Similar offers are compared with this object: the price per m² is adjusted for bargaining, area, floor, location and condition, and averaged with weights.')" />
+        <x-empty icon="scale" :title="__('No analogues yet')" :text="__('Similar offers are compared with this object element by element; their adjusted prices per m² are averaged with weights.')" />
     @else
         <form method="post" action="{{ route('admin.analogs.update', [$analogType, $item->id]) }}" id="analogs-form">
             @csrf @method('put')
-            <div class="table-wrap">
-                <table class="table analog-list">
-                    <thead>
-                        <tr>
-                            <th title="{{ __('Used in the calculation') }}"><x-icon name="check" :size="14" /></th>
-                            <th>{{ __('Offer') }}</th>
-                            <th>{{ __('Price') }}</th>
-                            <th>{{ __('Area, m²') }}</th>
-                            <th>{{ __('Floor') }}</th>
-                            <th class="t-right">{{ __('Price per m²') }}</th>
-                            <th class="t-right">{{ __('Adjusted per m²') }}</th>
-                            <th class="t-right">{{ __('Weight') }}</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    @foreach ($analogs as $analog)
-                        @php $row = $result['rows'][$analog->id] ?? null; $name = "analogs[{$analog->id}]"; @endphp
-                        <tbody @class(['analog-row', 'is-off' => ! $row])>
-                            <tr>
-                                <td><input type="checkbox" name="{{ $name }}[included]" value="1" @checked($analog->included) @disabled(! $canEdit || $analog->isPending()) aria-label="{{ __('Used in the calculation') }}"></td>
-                                <td class="analog-offer">
-                                    <span class="analog-no">№{{ $loop->iteration }}</span>
-                                    @if ($analog->url)
-                                        <a href="{{ $analog->url }}" target="_blank" rel="noopener noreferrer nofollow">{{ $analog->title ?: $analog->host() }} <x-icon name="external-link" :size="12" /></a>
-                                    @else
-                                        <strong>{{ $analog->title }}</strong>
-                                    @endif
-                                    <span class="cell-sub">{{ collect([$analog->host(), $analog->rooms ? __(':n rooms', ['n' => $analog->rooms]) : null, $analog->location, $analog->listed_at?->format('d.m.Y')])->filter()->implode(' · ') }}</span>
-                                    @if ($analog->isPending())
-                                        <span class="badge badge-info">{{ __('Reading…') }}</span>
-                                    @elseif ($analog->status === Analog::FAILED)
-                                        <span class="badge badge-warning">{{ __('Not read') }}</span>
-                                    @endif
-                                    @if ($analog->note)<span class="analog-note">{{ $analog->note }}</span>@endif
-                                    @if ($canEdit && ! $analog->isPending() && $analog->url)
-                                        <details class="analog-paste" @if ($analog->status === Analog::FAILED) open @endif>
-                                            <summary>{{ __('Paste the text of the listing') }}</summary>
-                                            <p class="field-hint">{{ __('Open the listing in your browser, press Ctrl+A and Ctrl+C (on a phone: select all and copy) and paste it here — the price, area, floor and the rest are read from the text.') }}</p>
-                                            <textarea class="input" name="text" rows="4" form="analog-text-{{ $analog->id }}" maxlength="60000" required aria-label="{{ __('Paste the text of the listing') }}"></textarea>
-                                            <button class="btn btn-sm btn-primary" type="submit" form="analog-text-{{ $analog->id }}"><x-icon name="file-search" :size="14" /> {{ __('Read the text') }}</button>
-                                        </details>
-                                    @endif
-                                </td>
-                                @if ($analog->isPending())
-                                    <td colspan="6" class="faint">—</td>
-                                @else
-                                    <td>
-                                        <div class="analog-price">
-                                            <input class="input" name="{{ $name }}[price]" value="{{ $number($analog->price) }}" data-money inputmode="decimal" aria-label="{{ __('Price') }}" @disabled(! $canEdit)>
-                                            <select class="input" name="{{ $name }}[currency]" aria-label="{{ __('Currency') }}" @disabled(! $canEdit)>
-                                                <option value="UZS" @selected($analog->currency !== 'USD')>{{ __('sum') }}</option>
-                                                <option value="USD" @selected($analog->currency === 'USD')>USD</option>
-                                            </select>
-                                        </div>
-                                        @if ($analog->currency === 'USD' && $analog->price_uzs)<span class="cell-sub">≈ {{ Format::money($analog->price_uzs) }}</span>@endif
-                                    </td>
-                                    <td><input class="input w-80" name="{{ $name }}[area]" value="{{ $number($analog->area, 2) }}" data-money inputmode="decimal" aria-label="{{ __('Area, m²') }}" @disabled(! $canEdit)></td>
-                                    <td class="analog-floor">
-                                        <input class="input" name="{{ $name }}[floor]" value="{{ $analog->floor }}" inputmode="numeric" aria-label="{{ __('Floor') }}" @disabled(! $canEdit)>
-                                        <span>/</span>
-                                        <input class="input" name="{{ $name }}[floors_total]" value="{{ $analog->floors_total }}" inputmode="numeric" aria-label="{{ __('Floors') }}" @disabled(! $canEdit)>
-                                    </td>
-                                    <td class="t-right cell-num">{{ $analog->pricePerSquareMeter() ? Format::number($analog->pricePerSquareMeter()) : '—' }}</td>
-                                    <td class="t-right cell-num strong">{{ $row ? Format::number($row['adjusted_m2']) : '—' }}</td>
-                                    <td class="t-right cell-num">{{ $row ? Format::number($row['weight'] * 100, 1).' %' : '—' }}</td>
-                                @endif
-                                <td>
-                                    @if ($canEdit)
-                                        <button class="btn btn-sm btn-icon" type="submit" form="analog-delete-{{ $analog->id }}" title="{{ __('Delete') }}" aria-label="{{ __('Delete') }}"><x-icon name="trash-2" :size="15" /></button>
-                                    @endif
-                                </td>
-                            </tr>
-                            @unless ($analog->isPending())
-                                <tr class="analog-adj">
-                                    <td></td>
-                                    <td colspan="8"><div class="analog-adj-inner">
-                                        <span class="analog-adj-title">{{ __('Adjustments, %') }}:</span>
-                                        @foreach ($adjustmentLabels as $key => $label)
-                                            @if ($key === 'market' && ($analog->currency === 'USD' || $options['index'] !== null))
-                                                <span class="adj-field" title="{{ $options['index'] !== null ? __('Worked out from the price index for the months from the offer date to the valuation date (and from the dollar rates for a price in dollars).') : __('Worked out from the dollar rates on the offer date and on the valuation date.') }}">
-                                                    <span>{{ $label }}</span>
-                                                    <output class="adj-auto">{{ $row ? $percent($row['steps']['market']['percent']) : '—' }}</output>
-                                                </span>
-                                            @else
-                                                <label class="adj-field">
-                                                    <span>{{ $label }}</span>
-                                                    <input class="input adj-input" name="{{ $name }}[adjustments][{{ $key }}]" value="{{ rtrim(rtrim(number_format($analog->adjustment($key), 2, '.', ''), '0'), '.') }}" inputmode="decimal" @disabled(! $canEdit)>
-                                                </label>
-                                            @endif
-                                        @endforeach
-                                        @if ($row)<span class="adj-total" title="{{ __('Adjustments are applied one after another.') }}">= {{ $percent($row['total']) }}</span>@endif
-                                    </div>
-                                    <div class="analog-adj-inner analog-more">
-                                        <label class="adj-field"><span>{{ __('Offer date') }}</span><input class="input w-140" type="date" name="{{ $name }}[listed_at]" value="{{ $analog->listed_at?->format('Y-m-d') }}" max="{{ now()->format('Y-m-d') }}" @disabled(! $canEdit)></label>
-                                        <label class="adj-field"><span>{{ __('Condition') }}</span><input class="input w-140" name="{{ $name }}[condition]" value="{{ $analog->condition }}" list="analog-conditions" @disabled(! $canEdit)></label>
-                                        <label class="adj-field"><span>{{ __('Walls') }}</span><input class="input w-120" name="{{ $name }}[wall_material]" value="{{ $analog->wall_material }}" list="analog-walls" @disabled(! $canEdit)></label>
-                                        @if ($item instanceof \App\Models\RealEstate)
-                                            <span class="adj-field analog-comms" title="{{ __('Engineering communications of the analogue: each one the object has and the analogue lacks adds 1 % (Amenities).') }}">
-                                                <span>{{ __('Communications') }}</span>
-                                                <input type="hidden" name="{{ $name }}[communications_shown]" value="1">
-                                                <span class="analog-comm-list">
-                                                    @foreach (\App\Enums\RealEstateFeature::communications() as $comm)
-                                                        <label class="comm-chip"><input type="checkbox" name="{{ $name }}[communications][]" value="{{ $comm->value }}" @checked(in_array($comm->value, (array) $analog->communications, true)) @disabled(! $canEdit)><span>{{ $comm->label() }}</span></label>
-                                                    @endforeach
-                                                </span>
-                                            </span>
-                                        @endif
-                                        @if ($analog->currency === 'USD' && $analog->usd_rate)<span class="faint">USD {{ Format::number($analog->usd_rate, 2) }}</span>@endif
-                                        <span class="analog-photo">
-                                            @if ($analog->photo_path)
-                                                <a href="{{ route('admin.analogs.photo', $analog) }}" target="_blank"><img src="{{ route('admin.analogs.photo', $analog) }}" alt="{{ __('Photo') }}" loading="lazy"></a>
-                                                @if ($canEdit)<button class="btn btn-sm btn-icon" type="submit" form="analog-photo-delete-{{ $analog->id }}" title="{{ __('Delete photo') }}" aria-label="{{ __('Delete photo') }}"><x-icon name="x" :size="14" /></button>@endif
-                                            @endif
-                                            @if ($canEdit)
-                                                <label class="btn btn-sm"><x-icon name="image" :size="14" /> {{ $analog->photo_path ? __('Replace photo') : __('Add photo') }}
-                                                    <input type="file" name="photo" form="analog-photo-{{ $analog->id }}" accept="image/jpeg,image/png,image/webp" hidden data-submit-on-change>
-                                                </label>
-                                            @endif
-                                        </span>
-                                    </div></td>
-                                </tr>
-                            @endunless
-                        </tbody>
-                    @endforeach
-                </table>
-            </div>
-            <p class="field-hint" style="margin-top: 10px">{{ __('Adjustments are percentages applied to the price per m² of the analogue one after another, in the order of the elements of comparison (national standard No. 10): positive if the analogue is worse than the object, negative if it is better. Market conditions of a dollar price come from the exchange rates. The suggested values are a starting point — the appraiser checks every one.') }}</p>
-            <datalist id="analog-conditions"><option value="{{ __('Excellent') }}"><option value="{{ __('Good') }}"><option value="{{ __('Satisfactory') }}"><option value="{{ __('Needs repair') }}"></datalist>
-            <datalist id="analog-walls"><option value="{{ __('Brick') }}"><option value="{{ __('Panel') }}"><option value="{{ __('Monolith') }}"><option value="{{ __('Block') }}"></datalist>
+            @include('admin.objects._analog-grid')
             @if ($canEdit)
                 <div class="analog-actions">
                     <label class="adj-field analog-weighting"><span>{{ __('Weights of the analogues') }}</span>
@@ -222,7 +88,7 @@
                     <label class="adj-field analog-index" title="{{ __('Market conditions follow the prices from the offer date to the valuation date: (1 + index)^months. Empty — not used.') }}"><span>{{ __('Price index, % per month') }}</span>
                         <input class="input" name="market_index" value="{{ $options['index'] !== null ? rtrim(rtrim(number_format($options['index'], 2, '.', ''), '0'), '.') : '' }}" inputmode="decimal" placeholder="—">
                     </label>
-                    <button class="btn" type="submit"><x-icon name="refresh-cw" :size="16" /> {{ __('Save and recalculate') }}</button>
+                    <button class="btn btn-success" type="submit"><x-icon name="refresh-cw" :size="16" /> {{ __('Save and recalculate') }}</button>
                 </div>
             @endif
         </form>
@@ -235,21 +101,6 @@
                 <form method="post" action="{{ route('admin.analogs.photo.destroy', $analog) }}" id="analog-photo-delete-{{ $analog->id }}" hidden>@csrf @method('delete')</form>
             @endif
         @endforeach
-
-        <div class="analog-summary">
-            <div class="result-box"><span>{{ __('Analogues used') }}</span><strong>{{ $result['count'] }}</strong></div>
-            <div class="result-box"><span>{{ __('Weighted price per m²') }}</span><strong>{{ $result['price_m2'] ? Format::money(round($result['price_m2'])) : '—' }}</strong></div>
-            <div @class(['result-box', 'is-warning' => ($result['variation'] ?? 0) > 33])>
-                <span>{{ __('Spread of analogues') }}</span>
-                <strong>{{ $result['variation'] !== null ? Format::number($result['variation'], 1).' %' : '—' }}</strong>
-                @if (($result['variation'] ?? 0) > 33)<small>{{ __('Over 33 %: the offers are too different, check them.') }}</small>@endif
-            </div>
-            <div class="result-box is-main">
-                <span>{{ __('Value by the comparative approach') }}</span>
-                <strong>{{ $result['value'] !== null ? Format::money($result['value']) : '—' }}</strong>
-                @if ($result['value'] !== null)<small>{{ Format::money(round($result['price_m2'])) }} × {{ Format::number($item->total_area, 2) }} {{ __('m²') }}</small>@endif
-            </div>
-        </div>
 
         @if ($canEdit && $result['value'] !== null)
             <form method="post" action="{{ route('admin.analogs.apply', [$analogType, $item->id]) }}" class="analog-apply">

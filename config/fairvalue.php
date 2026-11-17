@@ -155,12 +155,10 @@ return [
         ))))),
         'max_links' => 10,
         'search_results' => 8,
-        'bargain' => -5.0,           // asking price → sale price
-        'first_floor' => -5.0,       // compared with a middle floor
-        'last_floor' => -3.0,
-        'area_elasticity' => 0.1,    // larger flats cost less per m²
-        'max_area_adjustment' => 10.0,
-        'max_condition_adjustment' => 30.0,
+        'bargain' => -5.0,           // asking price → sale price (0.95, as on the portal)
+        // Size coefficient by the total area, m² (up to, coefficient; null — any bigger): the adjustment for
+        // area is the difference of the object's and the analogue's. The portal's values seen so far.
+        'size_coefficients' => [[100, 0.31], [null, 0.26]],
         'communication_step' => 1.0, // % for each engineering communication the analogue lacks
         'outlier' => 0.35,           // further than ±35 % from the median → left out
     ],

@@ -1664,3 +1664,33 @@ input.input-select[list]::-webkit-calendar-picker-indicator { opacity: 0; cursor
 .recon-table td:first-child, .recon-table th:first-child { width: 46%; }
 .recon-group th, .theme-classic .recon-box .recon-group th { background: #e7f6fb; }
 .recon-total td { font-weight: 700; }
+
+/* The comparative approach as on the valuation portal: the object and the analogues in columns, the elements in rows. */
+.analog-grid-wrap { margin-top: 14px; border: 1px solid var(--line); }
+.analog-grid { font-size: 12px; }
+.analog-grid th, .analog-grid td, .theme-classic .analog-grid th, .theme-classic .analog-grid td { padding: 6px 8px; border: 1px solid var(--line); vertical-align: middle; }
+.analog-grid th, .theme-classic .analog-grid th { font-size: 12px; font-weight: 700; color: #333; text-transform: none; letter-spacing: 0; background: #f7f9fb; }
+.analog-grid td:first-child { min-width: 220px; max-width: 320px; }
+.analog-grid .g-sub { min-width: 140px; max-width: 240px; color: #666; }
+.analog-grid .g-subject { min-width: 140px; }
+.analog-grid .g-analog { min-width: 180px; vertical-align: top; }
+.analog-grid .g-analog.is-off { background: #f1f1f1; color: #888; }
+.analog-grid .g-no { display: block; font-weight: 700; }
+.analog-grid .g-title { display: block; font-weight: 400; }
+.analog-grid .g-tools { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-weight: 400; }
+.analog-grid .g-use { display: inline-flex; align-items: center; gap: 4px; margin-right: auto; }
+.analog-grid .g-photo img { display: block; max-width: 140px; max-height: 90px; margin-top: 6px; border-radius: 4px; object-fit: cover; }
+.analog-grid .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.analog-grid .input { height: 30px; padding: 0 6px; font-size: 12px; }
+.analog-grid .g-num { width: 100%; min-width: 80px; text-align: right; }
+.analog-grid .g-price { display: flex; gap: 4px; }
+.analog-grid .g-price select { flex: none; width: 66px; }
+.analog-grid .g-note { display: block; color: #888; }
+.analog-grid .g-link { max-width: 220px; overflow-wrap: anywhere; }
+.analog-grid .g-element-row td:first-child { font-weight: 600; }
+.analog-grid .g-adj td { background: #fafafa; }
+.analog-grid .g-after td { color: #1f5f8b; }
+.analog-grid .g-sum td { background: #f4fbfe; font-weight: 600; }
+.analog-grid .g-final td { font-weight: 600; }
+.analog-grid .g-total td { background: #e7f6fb; font-size: 13px; font-weight: 700; }
+.analog-grid .g-comms .comm-chip { margin: 0 4px 4px 0; }

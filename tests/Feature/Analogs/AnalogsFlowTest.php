@@ -7,7 +7,9 @@ use App\Models\Analog;
 use App\Models\CurrencyRate;
 use App\Models\RealEstate;
 use App\Models\User;
+use App\Reports\RealEstateReport;
 use App\Services\Analogs\ListingAi;
+use App\Support\ComparativeCalculator;
 use App\Support\Format;
 use Database\Seeders\RegionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -120,8 +122,8 @@ class AnalogsFlowTest extends TestCase
         $this->assertSame('625000000.00', $analog->price_uzs);
         $this->assertSame('62.00', $analog->area);
         $this->assertSame(1, $analog->floor);
-        $this->assertSame(-5.0, (float) $analog->adjustments['bargain']);
-        $this->assertSame(5.0, (float) $analog->adjustments['floor'], 'First floor against the 4th.');
+        $this->assertSame(-5.0, (float) $analog->adjustments['bargain'], 'An asking price, as on the portal (0.95).');
+        $this->assertNotNull($analog->usd_rate, 'The dollar rate of the offer\'s day is kept for the market conditions.');
         Http::assertSentCount(1);
     }
 
@@ -312,16 +314,16 @@ class AnalogsFlowTest extends TestCase
             'adjustments' => $values, 'included' => $included ? '1' : null,
         ];
         $this->put($this->url(), ['analogs' => [
-            $a->id => $adjust($a, ['bargain' => '-5', 'condition' => '10']),
+            $a->id => $adjust($a, ['bargain' => '-5', 'location' => '10']),
             $b->id => $adjust($b, ['bargain' => '-5']),
         ]])->assertRedirect();
-        $this->assertSame(10.0, (float) $a->fresh()->adjustments['condition']);
+        $this->assertSame(10.0, (float) $a->fresh()->adjustments['location']);
 
         $this->post($this->url('/apply'))->assertRedirect()->assertSessionHas('status');
 
         $flat = $this->flat->fresh();
         // A: 10 000 000 × 0.95 × 1.10 = 10 450 000; B: 10 833 333 × 0.95 = 10 291 667.
-        // One adjustment besides bargaining or none: equal weights.
+        // Two adjustments each (the bargain and the location, which always counts): equal weights.
         $expected = round((10_450_000 + 10_291_666.67) / 2 * 60, -3);
         $this->assertEqualsWithDelta($expected, (float) $flat->value_comparative, 1000);
         $this->assertContains('comparative', $flat->approaches);
@@ -341,18 +343,20 @@ class AnalogsFlowTest extends TestCase
 
         $analog->refresh();
         $this->assertSame(['electricity', 'gas', 'water', 'sewerage'], $analog->communications);
-        $this->assertSame(2.0, (float) $analog->adjustments['amenities'], 'Six against four communications: +2 %.');
         $this->assertSame('count10', $this->flat->fresh()->report['weighting']);
+        $amenities = function () {
+            $flat = $this->flat->fresh();
 
-        // Saving without marks leaves them unknown: no adjustment is added.
+            return array_map(fn ($row) => $row['steps']['amenities']['percent'],
+                ComparativeCalculator::calculate((float) $flat->total_area, $flat->analogs, RealEstateReport::comparativeOptions($flat))['rows']);
+        };
+        $this->assertSame([$analog->id => 2.0], $amenities(), 'Six against four communications: +2 %, worked out.');
+
+        // Saving without marks leaves them unknown: no adjustment.
         $other = $this->flat->analogs()->create(['status' => Analog::READY, 'title' => 'B', 'price' => 600_000_000, 'currency' => 'UZS', 'price_uzs' => 600_000_000, 'area' => 60, 'included' => true]);
-        $this->put($this->url(), ['analogs' => [$other->id => [...$row, 'adjustments' => ['amenities' => '0']]]]);
+        $this->put($this->url(), ['analogs' => [$other->id => $row]]);
         $this->assertNull($other->fresh()->communications);
-        $this->assertSame(0.0, (float) $other->fresh()->adjustments['amenities']);
-
-        // Unchanged communications keep the amenities adjustment the appraiser typed.
-        $this->put($this->url(), ['analogs' => [$analog->id => [...$row, 'adjustments' => ['amenities' => '3'], 'communications' => $analog->communications]]]);
-        $this->assertSame(3.0, (float) $analog->fresh()->adjustments['amenities']);
+        $this->assertSame(0.0, $amenities()[$other->id]);
 
         $this->get('/admin/real-estates/'.$this->flat->id.'/report?script=latn')->assertOk()
             ->assertSee('elektr energiya ta’minoti, gaz ta’minoti, suv ta’minoti, kanalizatsiya (4)', false)

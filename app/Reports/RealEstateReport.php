@@ -11,6 +11,7 @@ use App\Models\Attachment;
 use App\Models\Client;
 use App\Models\RealEstate;
 use App\Models\Setting;
+use App\Services\Analogs\AnalogFinder;
 use App\Services\CurrencyService;
 use App\Support\ComparativeCalculator;
 use App\Support\CostApproach;
@@ -393,6 +394,30 @@ final class RealEstateReport
             'weighting' => $report['weighting'] ?? 'count',
             'index' => isset($report['market_index']) && is_numeric($report['market_index']) ? (float) $report['market_index'] : null,
             'valuation_date' => $object->valuation_date ?? now(),
+            'subject' => self::comparativeSubject($object),
+        ];
+    }
+
+    /**
+     * What the object brings to the comparison: its size and land coefficients
+     * and the price of 1 m² of its land (typed on the grid), its land area,
+     * repair state, completion and engineering communications.
+     *
+     * @return array<string, mixed>
+     */
+    public static function comparativeSubject(RealEstate $object): array
+    {
+        $report = (array) $object->report;
+        $typed = (array) ($report['comparative'] ?? []);
+
+        return [
+            'size_coef' => $typed['size_coef'] ?? null,
+            'land_coef' => $typed['land_coef'] ?? null,
+            'land_price' => $typed['land_price'] ?? null,
+            'land_area' => $object->land_area !== null ? (float) $object->land_area : null,
+            'condition' => ($report['repair'] ?? null) ?: $object->condition,
+            'completion' => $report['completion'] ?? 100,
+            'communications' => AnalogFinder::communications($object),
         ];
     }
 
@@ -438,7 +463,8 @@ final class RealEstateReport
         $rates = collect(['USD', 'EUR', 'RUB'])->mapWithKeys(fn ($code) => [$code => $currency->rateOn($code, $valuationDate, false)]);
 
         // Comparative approach.
-        $options = ['usd_rate' => $rates['USD'], 'weighting' => $f['weighting'], 'index' => isset($f['market_index']) && is_numeric($f['market_index']) ? (float) $f['market_index'] : null, 'valuation_date' => $valuationDate];
+        $options = ['usd_rate' => $rates['USD'], 'weighting' => $f['weighting'], 'index' => isset($f['market_index']) && is_numeric($f['market_index']) ? (float) $f['market_index'] : null, 'valuation_date' => $valuationDate,
+            'subject' => self::comparativeSubject($object)];
         $analogs = $object->analogs->filter(fn (Analog $a) => $a->included && $a->isUsable())->values();
         $comparative = ComparativeCalculator::calculate((float) $object->total_area, $analogs, $options);
         $usable = $object->analogs->filter->isUsable();
@@ -537,8 +563,10 @@ final class RealEstateReport
     {
         $same = fn (string $value) => $analogs->mapWithKeys(fn (Analog $a) => [$a->id => $value])->all();
         $of = fn (callable $value) => $analogs->mapWithKeys(fn (Analog $a) => [$a->id => (string) ($value($a) ?? '—')])->all();
-        $floor = fn ($floor, $total) => $floor ? $floor.($total ? ' / '.$total : '') : '—';
         $date = fn ($d) => $d ? Carbon::parse($d)->format('d.m.Y') : '—';
+        $subject = $result['subject'] ?? ComparativeCalculator::subject((float) $object->total_area, self::comparativeSubject($object));
+        $coef = fn ($c) => $c !== null ? '; '.number_format((float) $c, 2, ',', ' ') : '';
+        $wear = fn ($text) => ($w = ComparativeCalculator::wear($text)) !== null ? ' ('.number_format($w, 0).' %)' : '';
         $rate = fn ($r) => $r ? number_format((float) $r, 2, ',', ' ') : '—';
 
         $rows = [
@@ -548,19 +576,23 @@ final class RealEstateReport
             ['title' => 'Yer uchastkasiga huquqlar', 'key' => null, 'subject' => $f['land_rights'], 'analogs' => $same($f['land_rights'])],
             ['title' => 'Moliyalashtirish shartlari', 'key' => 'financing', 'subject' => "Oldindan to'lov", 'analogs' => $same("Oldindan to'lov")],
             ['title' => "Haq to'lash shakli", 'key' => null, 'subject' => "Naqd yoki pul ko'chirish", 'analogs' => $same("Naqd yoki pul ko'chirish")],
-            ['title' => 'Sotuv shartlari (savdolashish)', 'key' => 'bargain', 'subject' => 'Bitim narxi', 'analogs' => $same('Taklif narxi')],
+            ['title' => 'Sotuv shartlari', 'key' => 'bargain', 'subject' => 'Bitim narxi', 'analogs' => $of(fn (Analog $a) => abs($a->adjustment('bargain')) < 0.0001 ? 'Yakunlangan bitim' : 'Taklif narx')],
             ['title' => 'Xariddan keyingi xarajatlar', 'key' => null, 'subject' => 'Mavjud emas', 'analogs' => $same('Mavjud emas')],
             ['title' => 'Bozor shartlari (sana, USD kursi)', 'key' => 'market',
                 'subject' => $date($object->valuation_date).' · '.$rate($usdRate),
-                'analogs' => $of(fn (Analog $a) => $date($a->listed_at ?? $a->created_at).($a->currency === 'USD' ? ' · '.$rate($a->usd_rate) : ''))],
+                'analogs' => $of(fn (Analog $a) => $date($a->listed_at ?? $a->created_at).($a->usd_rate ? ' · '.$rate($a->usd_rate) : ''))],
             ['title' => 'Joylashgan yeri', 'key' => 'location', 'subject' => $location, 'analogs' => $of(fn (Analog $a) => $a->location)],
-            ['title' => 'Umumiy maydoni, m²', 'key' => 'area', 'subject' => number_format((float) $object->total_area, 2, ',', ' '), 'analogs' => $of(fn (Analog $a) => number_format((float) $a->area, 2, ',', ' '))],
-            ['title' => 'Qavati / qavatlar soni', 'key' => 'floor', 'subject' => $floor($object->floor, $object->floors_total), 'analogs' => $of(fn (Analog $a) => $floor($a->floor, $a->floors_total))],
+            ['title' => 'Binoning katta-kichikligi (umumiy maydoni, m²; tuzatish koeffitsienti)', 'key' => 'area',
+                'subject' => number_format((float) $object->total_area, 2, ',', ' ').$coef($subject['size_coef']),
+                'analogs' => $of(fn (Analog $a) => number_format((float) $a->area, 2, ',', ' ').$coef($result['rows'][$a->id]['data']['size_coef'] ?? null))],
             ['title' => 'Qurilish materiallari (devorlar)', 'key' => 'material', 'subject' => (string) ($f['walls'] ?? '—'), 'analogs' => $of(fn (Analog $a) => $a->wall_material)],
-            ['title' => 'Arxitekturaviy uslub', 'key' => null, 'subject' => $f['architecture'], 'analogs' => $same($f['architecture'])],
-            ['title' => "Bino holati (ta'mir)", 'key' => 'condition', 'subject' => (string) ($f['repair'] ?? '—'), 'analogs' => $of(fn (Analog $a) => $a->condition)],
-            ['title' => 'Funksional foydaliligi', 'key' => null, 'subject' => $f['function'], 'analogs' => $same($f['function'])],
-            ['title' => 'Qurilish tugallanganligi', 'key' => null, 'subject' => $f['completion'].' %', 'analogs' => $same('100 %')],
+            ['title' => 'Arxitekturaviy uslub', 'key' => 'architecture', 'subject' => $f['architecture'], 'analogs' => $same($f['architecture'])],
+            ['title' => "Bino holati (ta'mir)", 'key' => 'condition', 'subject' => (string) ($f['repair'] ?? '—').$wear($f['repair'] ?? null), 'analogs' => $of(fn (Analog $a) => ($a->condition ?? '—').$wear($a->condition))],
+            ['title' => 'Funksional foydaliligi', 'key' => 'function', 'subject' => $f['function'], 'analogs' => $same($f['function'])],
+            ['title' => 'Yer uchastkasining hajmi (maydoni, m²; tuzatish koeffitsienti)', 'key' => 'land',
+                'subject' => ($object->land_area !== null ? number_format((float) $object->land_area, 2, ',', ' ') : '—').$coef($subject['land_coef']),
+                'analogs' => $of(fn (Analog $a) => (isset($a->adjustments['land_area']) ? number_format((float) $a->adjustments['land_area'], 2, ',', ' ') : '—').$coef($a->adjustments['land_coef'] ?? null))],
+            ['title' => 'Qurilish tugallanganligi', 'key' => 'completion', 'subject' => $f['completion'].' %', 'analogs' => $of(fn (Analog $a) => number_format((float) ($a->adjustments['completion'] ?? 100), 0, ',', ' ').' %')],
             ['title' => 'Obodonlashtirilganligi', 'key' => null, 'subject' => $f['landscaping'], 'analogs' => $same($f['landscaping'])],
             ['title' => 'Qulayliklari (muhandislik kommunikatsiyalari)', 'key' => 'amenities', 'subject' => $communications ? implode(', ', $communications).' ('.count($communications).')' : '—',
                 'analogs' => $of(fn (Analog $a) => $a->communications === null ? "Ma'lumot mavjud emas" : (($names = array_values(array_intersect_key(self::COMMUNICATIONS, array_flip($a->communications)))) ? implode(', ', $names).' ('.count($names).')' : 'Mavjud emas'))],
@@ -604,14 +636,17 @@ final class RealEstateReport
             'rights' => ['Beriladigan mulkiy huquqlar', "Baholash obyekti va analoglar bo'yicha beriladigan huquqlar bir xil ({$f['rights']}) bo'lganligi sababli tuzatish kiritilmadi.", 'Beriladigan mulkiy huquqlardagi farq uchun tuzatish kiritildi: '],
             'financing' => ['Moliyalashtirish shartlari', "Barcha analoglar bo'yicha to'lov oldindan, bozor shartlarida amalga oshirilishi nazarda tutilganligi sababli tuzatish kiritilmadi.", 'Moliyalashtirish shartlaridagi farq uchun tuzatish kiritildi: '],
             'bargain' => ['Sotuv shartlari', "Analoglar narxi taklif narxi bo'lganligi sababli sotuvchi va xaridor o'rtasidagi savdolashuvni hisobga olgan holda tuzatish kiritilmadi.", "Analoglar narxi taklif narxi bo'lib, bitim narxiga o'tish uchun savdolashuvga tuzatish kiritildi: "],
-            'market' => ['Bozor shartlari', "Analoglar baholash sanasiga yaqin sanada taklif qilinganligi va narxlar so'mda ko'rsatilganligi sababli tuzatish kiritilmadi.", $index !== null
+            'market' => ['Bozor shartlari', "Analoglar taklif sanasi va baholash sanasidagi valyuta kurslari bir xil bo'lganligi sababli tuzatish kiritilmadi.", $index !== null
                 ? "Taklif sanasidan baholash sanasigacha narxlarning o'zgarishi oyiga {$index} % narx indeksi bo'yicha ((1 + indeks)^oylar soni), dollardagi takliflar uchun esa valyuta kurslari (O'zbekiston Respublikasi Markaziy banki) farqi ham hisobga olinib tuzatish kiritildi: "
                 : "Taklif sanasi va baholash sanasidagi valyuta kurslari (O'zbekiston Respublikasi Markaziy banki) farqi hisobga olinib tuzatish kiritildi: "],
             'location' => ['Joylashgan yeri', "Analoglar baholash obyekti bilan bir hududda, o'xshash joylashuvda bo'lganligi sababli tuzatish kiritilmadi.", "Joylashuvdagi farqlar (manzil nufuzi, markaziy yo'lga yaqinligi, tuman markazigacha masofa) hisobga olinib tuzatish kiritildi: "],
-            'area' => ['Umumiy maydoni (katta-kichikligi)', "Analoglar maydoni baholash obyekti maydoniga yaqin bo'lganligi sababli tuzatish kiritilmadi.", "Maydoni katta obyektlarning 1 m² narxi past bo'lishi hisobga olinib, maydondagi farq uchun tuzatish kiritildi: "],
-            'floor' => ['Qavati', "Analoglar va baholash obyekti qavati o'xshash bo'lganligi sababli tuzatish kiritilmadi.", "Birinchi va oxirgi qavatlar narxi o'rta qavatlardan past bo'lishi hisobga olinib tuzatish kiritildi: "],
+            'area' => ['Binoning katta-kichikligi', "Analoglar va baholash obyektining katta-kichiklik koeffitsientlari bir xil bo'lganligi sababli tuzatish kiritilmadi.", "Umumiy maydoni bo'yicha katta-kichiklik koeffitsientlari farqi (obyekt koeffitsienti − analog koeffitsienti) bo'yicha tuzatish kiritildi: "],
             'material' => ['Qurilish materiallari', "Analoglar devor materiali baholash obyektiniki bilan o'xshash bo'lganligi sababli tuzatish kiritilmadi.", 'Devor materialidagi farq uchun tuzatish kiritildi: '],
-            'condition' => ["Bino holati (ta'mir)", "Analoglar ta'mir holati baholash obyektiniki bilan o'xshash bo'lganligi sababli tuzatish kiritilmadi.", "Ta'mir holatidagi farq KMK 2.01.16-97 bo'yicha eskirish darajalari asosida hisobga olindi ((100 − obyekt eskirishi) / (100 − analog eskirishi)): "],
+            'architecture' => ['Arxitekturaviy uslub', "Analoglar va baholash obyektining arxitekturaviy uslubi o'xshash bo'lganligi sababli tuzatish kiritilmadi.", 'Arxitekturaviy uslubdagi farq uchun tuzatish kiritildi: '],
+            'condition' => ["Bino holati (ta'mir)", "Analoglar ta'mir holati baholash obyektiniki bilan o'xshash bo'lganligi sababli tuzatish kiritilmadi.", "Ta'mir holatidagi farq eskirish darajalari asosida hisobga olindi (1 − (obyekt eskirishi − analog eskirishi)): "],
+            'function' => ['Funksional foydaliligi', "Analoglar va baholash obyektining funksional foydaliligi bir xil bo'lganligi sababli tuzatish kiritilmadi.", 'Funksional foydalilikdagi farq uchun tuzatish kiritildi: '],
+            'land' => ['Yer uchastkasining hajmi', "Yer uchastkalarining katta-kichiklik koeffitsientlari bir xil bo'lganligi sababli tuzatish kiritilmadi.", "Yer uchastkasi maydonining katta-kichiklik koeffitsientlari farqi bo'yicha 1 m² yer narxiga tuzatish kiritildi; yer uchastkasi baholash obyektinikidan katta bo'lgan analoglarning 1 m² narxidan tuzatilgan 1 m² yer narxi chegirildi: "],
+            'completion' => ['Qurilish tugallanganligi', "Analoglar va baholash obyektining qurilish tugallanganligi bir xil bo'lganligi sababli tuzatish kiritilmadi.", 'Qurilish tugallanganligidagi farq uchun tuzatish kiritildi: '],
             'amenities' => ['Qulayliklari', "Analoglar va baholash obyektida muhandislik kommunikatsiyalari bir xil bo'lganligi sababli tuzatish kiritilmadi.", 'Muhandislik kommunikatsiyalari soni bo‘yicha farq uchun (har bir kommunikatsiya — '.rtrim(rtrim(number_format((float) config('fairvalue.analogs.communication_step', 1.0), 2, ',', ''), '0'), ',').' %) tuzatish kiritildi: '],
             'other' => ['Boshqa farqlar', '', 'Boshqa farqlar uchun tuzatish kiritildi: '],
         ];
@@ -628,8 +663,8 @@ final class RealEstateReport
         $counts = $analogs->map(fn (Analog $a) => '№'.$no[$a->id].' — '.$result['rows'][$a->id]['count'])->implode('; ');
         $weights = $analogs->map(fn (Analog $a) => '№'.$no[$a->id].' — '.$number($result['rows'][$a->id]['weight'] * 100, 2).' %')->implode('; ');
         $out[] = ['title' => 'Vaznlar', 'text' => match ($result['weighting']) {
-            'count' => "Kiritilgan tuzatishlar soni (savdolashishdan tashqari): {$counts}. Vaznlar tuzatishlar soniga teskari proporsional aniqlandi — kamroq tuzatish kiritilgan analog baholash obyektiga ko'proq o'xshash: {$weights}.",
-            'count10' => "Kiritilgan tuzatishlar soni (savdolashishdan tashqari): {$counts}. Vaznlar tuzatishlar soniga teskari proporsional aniqlanib, butun o'n foizlarga yaxlitlandi (yig'indisi 100 %) — kamroq tuzatish kiritilgan analog baholash obyektiga ko'proq o'xshash: {$weights}.",
+            'count' => "Kiritilgan tuzatishlar soni (joylashuv har doim hisobga olinadi): {$counts}. Vaznlar tuzatishlar soniga teskari proporsional aniqlandi — kamroq tuzatish kiritilgan analog baholash obyektiga ko'proq o'xshash: {$weights}.",
+            'count10' => "Kiritilgan tuzatishlar soni (joylashuv har doim hisobga olinadi): {$counts}. Vaznlar tuzatishlar soniga teskari proporsional aniqlanib, butun o'n foizlarga yaxlitlandi (yig'indisi 100 %) — kamroq tuzatish kiritilgan analog baholash obyektiga ko'proq o'xshash: {$weights}.",
             default => "Vaznlar kiritilgan tuzatishlarning umumiy miqdoriga (mutlaq qiymatlar yig'indisiga) teskari proporsional aniqlandi — kichikroq tuzatish kiritilgan analog baholash obyektiga ko'proq o'xshash: {$weights}.",
         }];
 

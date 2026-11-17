@@ -303,8 +303,8 @@ class AnalogFinder
     {
         $currency = $listing['currency'] ?? 'UZS';
         $price = isset($listing['price']) ? (float) $listing['price'] : null;
-        // A dollar price is converted at the rate of the day the offer was made.
-        $rate = $currency === 'USD' ? ($this->currency->rateOn('USD', $listing['listed_at'] ?? null) ?? $this->currency->usd()) : null;
+        // The dollar rate of the day the offer was made: a dollar price is converted at it, and the market conditions compare it with today's.
+        $rate = $this->currency->rateOn('USD', $listing['listed_at'] ?? null) ?? $this->currency->usd();
         $image = isset($listing['image']) && AnalogPhoto::target((string) $listing['image']) ? mb_substr($listing['image'], 0, 1000) : null;
 
         $analog->fill([

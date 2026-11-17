@@ -156,37 +156,42 @@ class AnalogController extends Controller
             $listedAt = isset($row['listed_at']) && strtotime((string) $row['listed_at']) && strtotime((string) $row['listed_at']) <= time()
                 ? date('Y-m-d', strtotime((string) $row['listed_at'])) : null;
 
-            $adjustments = [];
-            foreach (ComparativeCalculator::ADJUSTMENTS as $key) {
-                $value = (float) NumberInput::normalize($row['adjustments'][$key] ?? 0);
-                $adjustments[$key] = max(-50, min(50, round($value, 2)));
+            // The percentages typed on the grid and the coefficients of the analogue (the rest is worked out).
+            $adjustments = array_intersect_key((array) $analog->adjustments, array_flip(['size_coef', 'land_area', 'land_coef', 'completion']));
+            // An analogue that was never read starts with the usual percentages (the bargain of an asking price).
+            $before = array_intersect_key((array) $analog->adjustments, array_flip(ComparativeCalculator::MANUAL)) ?: ComparativeCalculator::suggest([], $analog);
+            foreach (ComparativeCalculator::MANUAL as $key) {
+                $value = (float) NumberInput::normalize($row['adjustments'][$key] ?? ($before[$key] ?? 0));
+                $adjustments[$key] = max(-90, min(200, round($value, 4)));
+            }
+            foreach (['size_coef' => [0, 10], 'land_coef' => [0, 10], 'land_area' => [0, 100_000_000], 'completion' => [0, 100]] as $key => [$min, $max]) {
+                if (array_key_exists($key, $row)) {
+                    $value = NumberInput::normalize($row[$key]);
+                    $adjustments[$key] = is_numeric($value) ? max($min, min($max, (float) $value)) : null;
+                }
             }
 
             // Communications: unknown (null) until at least one is marked.
             $communications = isset($row['communications_shown'])
                 ? (array_values(array_intersect(array_column(RealEstateFeature::communications(), 'value'), (array) ($row['communications'] ?? []))) ?: null)
                 : $analog->communications;
-            if ($communications !== $analog->communications) {
-                $adjustments['amenities'] = ComparativeCalculator::amenities(AnalogFinder::communications($object), $communications);
-            }
 
             $analog->fill([
                 'communications' => $communications,
                 'price' => is_numeric($price) && (float) $price > 0 ? (float) $price : null,
                 'currency' => $code,
                 'area' => self::positive($row['area'] ?? null),
-                'floor' => self::integer($row['floor'] ?? null),
-                'floors_total' => self::integer($row['floors_total'] ?? null),
+                'floor' => array_key_exists('floor', $row) ? self::integer($row['floor']) : $analog->floor,
+                'floors_total' => array_key_exists('floors_total', $row) ? self::integer($row['floors_total']) : $analog->floors_total,
                 'listed_at' => $listedAt,
                 'condition' => self::text($row['condition'] ?? null),
                 'wall_material' => self::text($row['wall_material'] ?? null),
+                'location' => array_key_exists('location', $row) ? self::text($row['location']) : $analog->location,
                 'adjustments' => $adjustments,
                 'included' => (bool) ($row['included'] ?? false),
             ]);
-            // A dollar price is converted at the rate of the day the offer was made.
-            if ($code !== 'USD') {
-                $analog->usd_rate = null;
-            } elseif ($analog->isDirty(['listed_at', 'currency']) || ! $analog->usd_rate) {
+            // The dollar rate of the day the offer was made: a dollar price is converted at it, the market conditions compare it with today's.
+            if ($analog->isDirty(['listed_at', 'currency']) || ! $analog->usd_rate) {
                 $analog->usd_rate = $currency->rateOn('USD', $listedAt ?? $analog->created_at) ?? $currency->usd();
             }
             $rate = (float) $analog->usd_rate;
@@ -194,9 +199,6 @@ class AnalogController extends Controller
             // A page that was not read counts once its price and area are typed in.
             if ($analog->status === Analog::FAILED && (float) $analog->price_uzs > 0 && (float) $analog->area > 0) {
                 $analog->status = Analog::READY;
-                if (! array_filter($adjustments)) {
-                    $analog->adjustments = ComparativeCalculator::suggest(AnalogFinder::subject($object), $analog);
-                }
             }
             if ($analog->status === Analog::READY && $analog->isUsable() && $analog->isDirty(['price', 'area', 'currency', 'status'])) {
                 $analog->note = null;
@@ -204,6 +206,15 @@ class AnalogController extends Controller
             $analog->save();
         }
 
+        // What the object brings to the comparison: its coefficients and the price of 1 m² of its land.
+        if (is_array($request->input('comparative'))) {
+            $typed = [];
+            foreach (['size_coef' => 10, 'land_coef' => 10, 'land_price' => 9_999_999_999] as $key => $max) {
+                $value = NumberInput::normalize($request->input("comparative.$key"));
+                $typed[$key] = is_numeric($value) ? max(0, min($max, (float) $value)) : null;
+            }
+            $object->report = [...(array) $object->report, 'comparative' => $typed];
+        }
         if (in_array($request->input('weighting'), ComparativeCalculator::WEIGHTING, true)) {
             $object->report = [...(array) $object->report, 'weighting' => $request->input('weighting')];
         }

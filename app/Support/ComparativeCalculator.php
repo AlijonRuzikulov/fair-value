@@ -8,76 +8,70 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 /**
- * Comparative approach (national valuation standard No. 10, § 23–24):
- * the price per m² of every sale offer is brought to the object being valued
- * by adjustments applied one after another, in the order of the elements of
- * comparison, and the adjusted prices are averaged with weights.
+ * Comparative approach worked out as on the valuation portal the appraisers
+ * use: the price of every offer in dollars is brought to sum at the rate of
+ * its date, its price per m² is adjusted element after element, the adjusted
+ * prices are weighted by the inverse number of adjustments, and the value is
+ * the weighted price per m² × the total area plus the land: its price per m²
+ * × its area.
  */
 final class ComparativeCalculator
 {
     /**
-     * Adjustments the appraiser can set, in percent, in the order they are
-     * applied. "market" (market conditions) of an offer priced in dollars is
-     * worked out from the exchange rates on the offer and valuation dates;
-     * with a price index it also follows the prices from the offer date to
-     * the valuation date.
+     * The elements of comparison that change the price, in the order they are
+     * applied. Of these the appraiser types the percentages of rights,
+     * financing, bargain (sale conditions), location, material (walls),
+     * architecture, function and other; the rest are worked out: market (the
+     * dollar rate of the valuation date / that of the offer date, with a
+     * monthly price index if one is set), area (the difference of the size
+     * coefficients), condition (the difference of the wear by repair state),
+     * land, completion and amenities (one percent per engineering communication).
      */
-    public const ADJUSTMENTS = ['rights', 'financing', 'bargain', 'market', 'location', 'area', 'floor', 'material', 'condition', 'amenities', 'other'];
+    public const ADJUSTMENTS = ['rights', 'financing', 'bargain', 'market', 'location', 'area', 'material', 'architecture', 'condition', 'function', 'land', 'completion', 'amenities', 'other'];
+
+    /** Percentages typed by the appraiser (kept in the analogue's "adjustments"). */
+    public const MANUAL = ['rights', 'financing', 'bargain', 'location', 'material', 'architecture', 'function', 'other'];
 
     /**
      * Weighting of the adjusted prices: the fewer (or the smaller) adjustments,
-     * the larger the weight. "count10" is the weighting by the number of
-     * adjustments rounded to whole tens of percent (30 / 40 / 30 %).
+     * the larger the weight. "count" (by the number, as on the portal) is the
+     * usual one; "count10" rounds it to whole tens of percent.
      */
     public const WEIGHTING = ['count', 'count10', 'size'];
 
-    /** Physical wear in percent by repair state, used to compare the condition (KMK 2.01.16-97). */
+    /** Physical wear in percent by repair state, used to compare the condition (as on the portal: good 15, satisfactory 30). */
     private const WEAR = [
         'excellent' => 5.0, 'good' => 15.0, 'satisfactory' => 30.0, 'poor' => 40.0,
     ];
 
     /**
-     * Adjustments suggested for an analogue, in percent.
+     * Percentages an analogue starts with: the bargain of an asking price (an
+     * offer, not a closed deal), nothing else.
      *
-     * @param  array{area?: float|null, floor?: int|null, floors_total?: int|null, condition?: string|null}  $subject
      * @return array<string, float>
      */
     public static function suggest(array $subject, Analog $analog): array
     {
-        $config = config('fairvalue.analogs');
+        return [...array_fill_keys(self::MANUAL, 0.0), 'bargain' => (float) config('fairvalue.analogs.bargain')];
+    }
 
-        $area = 0.0;
-        $subjectArea = (float) ($subject['area'] ?? 0);
-        if ($subjectArea > 0 && (float) $analog->area > 0) {
-            // A bigger analogue is cheaper per m², so its price is raised.
-            $area = ((float) $analog->area / $subjectArea) ** (float) $config['area_elasticity'] - 1;
-            $max = (float) $config['max_area_adjustment'];
-            $area = max(-$max, min($max, round($area * 100, 1)));
+    /**
+     * The size coefficient of a building by its total area (the bigger, the
+     * smaller); the adjustment for area is the difference of the coefficients
+     * of the object and of the analogue.
+     */
+    public static function sizeCoefficient(?float $area): ?float
+    {
+        if (! $area || $area <= 0) {
+            return null;
+        }
+        foreach ((array) config('fairvalue.analogs.size_coefficients') as [$upTo, $coefficient]) {
+            if ($upTo === null || $area < $upTo) {
+                return (float) $coefficient;
+            }
         }
 
-        $floor = 0.0;
-        if (! empty($subject['floor'])) {
-            $floor = self::floorFactor($subject['floor'], $subject['floors_total'] ?? null)
-                - self::floorFactor($analog->floor, $analog->floors_total);
-        }
-
-        // A worn analogue is raised to the condition of the object: (100 − wear of the object) / (100 − wear of the analogue).
-        $condition = 0.0;
-        $subjectWear = self::wear($subject['condition'] ?? null);
-        $analogWear = self::wear($analog->condition);
-        if ($subjectWear !== null && $analogWear !== null) {
-            $max = (float) $config['max_condition_adjustment'];
-            $condition = max(-$max, min($max, round(((100 - $subjectWear) / (100 - $analogWear) - 1) * 100, 1)));
-        }
-
-        return [
-            ...array_fill_keys(self::ADJUSTMENTS, 0.0),
-            'bargain' => (float) $config['bargain'],
-            'area' => $area,
-            'floor' => round($floor, 1),
-            'condition' => $condition,
-            'amenities' => self::amenities($subject['communications'] ?? [], $analog->communications),
-        ];
+        return null;
     }
 
     /**
@@ -105,10 +99,10 @@ final class ComparativeCalculator
         }
 
         $patterns = [
-            'poor' => "/ta'mir\\s*talab|ремонт\\s*треб|требует\\s*ремонт|needs\\s*repair|qoniqarsiz|plox|плох|без\\s*ремонт|ta'mirsiz|qora\\s*suvoq|черн/u",
-            'excellent' => "/a'lo|отличн|excellent|evro|euro|евро|dizayn|дизайн|yangi\\s*ta'mir|свеж/u",
-            'satisfactory' => "/qoniqarli|o'rtacha|удовлетвор|средн|satisf|average|kosmetik|космет/u",
-            'good' => "/yaxshi|хорош|good|ta'mirlangan|с\\s*ремонт/u",
+            'poor' => "/avariya|аварий|ta'mir\\s*talab|ремонт\\s*треб|требует\\s*ремонт|needs\\s*repair|qoniqarsiz|plox|плох|без\\s*ремонт|ta'mirsiz|qora\\s*suvoq|черн|қониқарсиз/u",
+            'excellent' => "/juda\\s*yaxshi|жуда\\s*яхши|a'lo|отличн|excellent|evro|euro|евро|dizayn|дизайн|yangi\\s*ta'mir|свеж|аъло/u",
+            'satisfactory' => "/qoniqarli|o'rtacha|удовлетвор|средн|satisf|average|kosmetik|космет|қониқарли/u",
+            'good' => "/yaxshi|хорош|good|ta'mirlangan|с\\s*ремонт|яхши/u",
         ];
         foreach ($patterns as $level => $pattern) {
             if (preg_match($pattern, $text)) {
@@ -117,42 +111,6 @@ final class ComparativeCalculator
         }
 
         return null;
-    }
-
-    /** First and last floors sell cheaper than the middle ones. */
-    private static function floorFactor(?int $floor, ?int $floorsTotal): float
-    {
-        if (! $floor) {
-            return 0.0;
-        }
-        if ($floor === 1) {
-            return (float) config('fairvalue.analogs.first_floor');
-        }
-        if ($floorsTotal && $floorsTotal > 1 && $floor >= $floorsTotal) {
-            return (float) config('fairvalue.analogs.last_floor');
-        }
-
-        return 0.0;
-    }
-
-    /**
-     * The adjustment applied for an element, in percent. Market conditions:
-     * an offer in dollars × rate on the valuation date / rate on the offer
-     * date; with a monthly price index also × (1 + index)^months from the
-     * offer date to the valuation date (for offers in sum as well).
-     */
-    public static function adjustment(Analog $analog, string $key, ?float $usdRate = null, ?float $index = null, ?CarbonInterface $date = null): float
-    {
-        if ($key !== 'market' || ($analog->currency !== 'USD' && $index === null)) {
-            return $analog->adjustment($key);
-        }
-
-        $currency = $analog->currency === 'USD' && $usdRate > 0 && (float) $analog->usd_rate > 0 ? $usdRate / (float) $analog->usd_rate : 1.0;
-        $prices = $index !== null && $date !== null && $analog->listed_at !== null
-            ? (1 + $index / 100) ** self::months(Carbon::parse($analog->listed_at), $date)
-            : 1.0;
-
-        return round(($currency * $prices - 1) * 100, 2);
     }
 
     /** Months (with their part) from the offer to the valuation date; negative for an offer made later. */
@@ -183,9 +141,76 @@ final class ComparativeCalculator
     }
 
     /**
+     * The data of the object the worked-out adjustments compare with, with
+     * what is missing filled in.
+     *
+     * @param  array<string, mixed>  $subject
+     * @return array{area: ?float, size_coef: ?float, land_area: ?float, land_coef: ?float, land_price: float, wear: ?float, completion: ?float, communications: list<string>}
+     */
+    public static function subject(?float $area, array $subject): array
+    {
+        $number = fn ($v) => is_numeric($v) ? (float) $v : null;
+
+        return [
+            'area' => $area > 0 ? $area : null,
+            'size_coef' => $number($subject['size_coef'] ?? null) ?? self::sizeCoefficient($area),
+            'land_area' => $number($subject['land_area'] ?? null),
+            'land_coef' => $number($subject['land_coef'] ?? null),
+            'land_price' => max(0.0, (float) $number($subject['land_price'] ?? null)),
+            'wear' => self::wear($subject['condition'] ?? null),
+            'completion' => $number($subject['completion'] ?? null),
+            'communications' => array_values((array) ($subject['communications'] ?? [])),
+        ];
+    }
+
+    /**
+     * The worked-out data of an analogue: its size and land coefficients, land
+     * area, completion and the rate of its date (typed ones first).
+     *
+     * @return array{size_coef: ?float, land_area: ?float, land_coef: ?float, completion: ?float, wear: ?float, rate: ?float}
+     */
+    public static function analogData(Analog $analog): array
+    {
+        $number = fn ($v) => is_numeric($v) ? (float) $v : null;
+        $typed = (array) $analog->adjustments;
+
+        return [
+            'size_coef' => $number($typed['size_coef'] ?? null) ?? self::sizeCoefficient((float) $analog->area),
+            'land_area' => $number($typed['land_area'] ?? null),
+            'land_coef' => $number($typed['land_coef'] ?? null),
+            'completion' => $number($typed['completion'] ?? null),
+            'wear' => self::wear($analog->condition),
+            'rate' => (float) $analog->usd_rate > 0 ? (float) $analog->usd_rate : null,
+        ];
+    }
+
+    /**
+     * The adjustment of an element, in percent of the price per m² before it;
+     * for land, the coefficient difference in percent (its sum is taken off
+     * separately).
+     */
+    public static function adjustment(Analog $analog, string $key, array $subject, ?float $usdRate = null, ?float $index = null, ?CarbonInterface $date = null): float
+    {
+        $data = self::analogData($analog);
+
+        return match ($key) {
+            // The price of the offer's day in dollars, at today's rate (as on the portal), and the monthly price index.
+            'market' => round(((($usdRate > 0 && $data['rate']) ? $usdRate / $data['rate'] : 1.0)
+                * ($index !== null && $date !== null && $analog->listed_at !== null ? (1 + $index / 100) ** self::months(Carbon::parse($analog->listed_at), $date) : 1.0) - 1) * 100, 4),
+            'area' => $subject['size_coef'] !== null && $data['size_coef'] !== null ? round(($subject['size_coef'] - $data['size_coef']) * 100, 4) : 0.0,
+            // 1 − (wear of the object − wear of the analogue): a better analogue is brought down.
+            'condition' => $subject['wear'] !== null && $data['wear'] !== null ? round(-($subject['wear'] - $data['wear']), 4) : 0.0,
+            'land' => $subject['land_coef'] !== null && $data['land_coef'] !== null ? round(($subject['land_coef'] - $data['land_coef']) * 100, 4) : 0.0,
+            'completion' => $subject['completion'] !== null && $data['completion'] !== null ? round($subject['completion'] - $data['completion'], 4) : 0.0,
+            'amenities' => self::amenities($subject['communications'], $analog->communications),
+            default => $analog->adjustment($key),
+        };
+    }
+
+    /**
      * @param  Collection<int, Analog>  $analogs
-     * @param  array{usd_rate?: float|null, weighting?: string|null, index?: float|null, valuation_date?: CarbonInterface|string|null}  $options  usd_rate — dollar rate on the valuation date; index — monthly change of prices, %
-     * @return array{rows: array<int, array{price_m2: float, steps: array<string, array{percent: float, value: float}>, adjusted_m2: float, total: float, count: int, gross: float, weight: float}>, count: int, price_m2: ?float, value: ?float, min: ?float, max: ?float, variation: ?float, weighting: string}
+     * @param  array{usd_rate?: float|null, weighting?: string|null, index?: float|null, valuation_date?: CarbonInterface|string|null, subject?: array<string, mixed>}  $options  usd_rate — dollar rate on the valuation date; index — monthly change of prices, %; subject — the data of the object
+     * @return array{rows: array<int, array>, count: int, price_m2: ?float, building: ?float, land_price: float, land_area: ?float, land_value: float, value: ?float, min: ?float, max: ?float, variation: ?float, weighting: string, subject: array}
      */
     public static function calculate(?float $subjectArea, Collection $analogs, array $options = []): array
     {
@@ -193,29 +218,47 @@ final class ComparativeCalculator
         $usdRate = isset($options['usd_rate']) ? (float) $options['usd_rate'] : null;
         $index = isset($options['index']) && is_numeric($options['index']) ? (float) $options['index'] : null;
         $date = isset($options['valuation_date']) ? Carbon::parse($options['valuation_date']) : null;
+        $subject = self::subject($subjectArea, (array) ($options['subject'] ?? []));
+        $landPrice = $subject['land_price'];
 
         $rows = [];
         foreach ($analogs as $analog) {
             if (! $analog->included || ! $analog->isUsable()) {
                 continue;
             }
+            $data = self::analogData($analog);
             $priceM2 = $analog->pricePerSquareMeter();
             $value = $priceM2;
             $steps = [];
             $count = 0;
             $gross = 0.0;
+            $land = ['sum' => 0.0, 'after' => $landPrice, 'taken' => false];
             foreach (self::ADJUSTMENTS as $key) {
-                $percent = self::adjustment($analog, $key, $usdRate, $index, $date);
-                $value *= 1 + $percent / 100;
+                $percent = self::adjustment($analog, $key, $subject, $usdRate, $index, $date);
+                if ($key === 'land') {
+                    // The land price per m² brought to the analogue; taken off the price of an analogue with more land than the object.
+                    $land['sum'] = round($landPrice * $percent / 100, 2);
+                    $land['after'] = round($landPrice - $land['sum'], 2);
+                    if ($landPrice > 0 && $subject['land_area'] > 0 && $data['land_area'] > $subject['land_area']) {
+                        $value -= $land['after'];
+                        $land['taken'] = true;
+                    }
+                } else {
+                    $value *= 1 + $percent / 100;
+                }
                 $steps[$key] = ['percent' => $percent, 'value' => round($value, 2)];
                 $gross += abs($percent);
-                // Bargaining is the same for every offer, so it does not make one less comparable.
-                if ($key !== 'bargain' && abs($percent) >= 0.005) {
+                // As on the portal: every element that changes the price counts, and the location always.
+                if ($key === 'location' || abs($percent) >= 0.005) {
                     $count++;
                 }
             }
             $rows[$analog->id] = [
                 'price_m2' => $priceM2,
+                'usd' => $analog->currency === 'USD' ? (float) $analog->price : ($data['rate'] ? round((float) $analog->price_uzs / $data['rate'], 2) : null),
+                'rate' => $data['rate'],
+                'data' => $data,
+                'land' => $land,
                 'steps' => $steps,
                 'adjusted_m2' => round($value, 2),
                 'total' => round(($value / $priceM2 - 1) * 100, 2),
@@ -225,8 +268,11 @@ final class ComparativeCalculator
             ];
         }
 
+        $landArea = $subject['land_area'];
+        $landValue = $landPrice > 0 && $landArea > 0 ? round($landPrice * $landArea, 2) : 0.0;
         if ($rows === []) {
-            return ['rows' => [], 'count' => 0, 'price_m2' => null, 'value' => null, 'min' => null, 'max' => null, 'variation' => null, 'weighting' => $weighting];
+            return ['rows' => [], 'count' => 0, 'price_m2' => null, 'building' => null, 'land_price' => $landPrice, 'land_area' => $landArea, 'land_value' => $landValue,
+                'value' => null, 'min' => null, 'max' => null, 'variation' => null, 'weighting' => $weighting, 'subject' => $subject];
         }
 
         $weightSum = array_sum(array_column($rows, 'raw_weight'));
@@ -236,7 +282,8 @@ final class ComparativeCalculator
         }
         $priceM2 = 0.0;
         foreach ($rows as $id => $row) {
-            $rows[$id]['weight'] = round($weights[$id], 4);
+            $rows[$id]['weight'] = $weights[$id];
+            $rows[$id]['weighted'] = round($row['adjusted_m2'] * $weights[$id], 2);
             $priceM2 += $row['adjusted_m2'] * $weights[$id];
             unset($rows[$id]['raw_weight']);
         }
@@ -244,17 +291,23 @@ final class ComparativeCalculator
         $adjusted = array_column($rows, 'adjusted_m2');
         $mean = array_sum($adjusted) / count($adjusted);
         $variance = array_sum(array_map(fn ($v) => ($v - $mean) ** 2, $adjusted)) / count($adjusted);
+        $building = $subjectArea > 0 ? round($priceM2 * $subjectArea, 2) : null;
 
         return [
             'rows' => $rows,
             'count' => count($rows),
             'price_m2' => round($priceM2, 2),
-            'value' => $subjectArea > 0 ? round($priceM2 * $subjectArea, -3) : null,
+            'building' => $building,
+            'land_price' => $landPrice,
+            'land_area' => $landArea,
+            'land_value' => $landValue,
+            'value' => $building !== null ? round($building + $landValue, 2) : null,
             'min' => min($adjusted),
             'max' => max($adjusted),
             // Over 33 % the analogues are too different to be averaged.
             'variation' => $mean > 0 ? round(sqrt($variance) / $mean * 100, 1) : null,
             'weighting' => $weighting,
+            'subject' => $subject,
         ];
     }
 

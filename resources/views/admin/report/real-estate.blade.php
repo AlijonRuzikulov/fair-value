@@ -483,16 +483,22 @@
     <table class="adj">
         <tr class="result"><td>{{ $t('Baholash obyektining 1 m² uchun yakuniy qiymati') }}</td><td class="num">{{ $sum($comparative['price_m2']) }}</td></tr>
         <tr class="result"><td>{{ $t('Baholash obyektining umumiy maydoni') }}</td><td class="num">{{ $num($item->total_area) }} {{ $t('kv. m') }}</td></tr>
-        <tr class="result"><td>{{ $t('Qiyosiy yondashuv bo‘yicha qiymat (yaxlitlangan)') }}</td><td class="num">{{ $sum($comparative['value']) }}</td></tr>
+        <tr class="result"><td>{{ $t('Baholash obyektining yakuniy qiymati') }}</td><td class="num">{{ $sum($comparative['building']) }}</td></tr>
+        @if ($comparative['land_value'] > 0)
+            <tr class="result"><td>{{ $t('1 m² yer uchastkasining qiymati') }}</td><td class="num">{{ $sum($comparative['land_price']) }}</td></tr>
+            <tr class="result"><td>{{ $t('Yer uchastkasi umumiy maydoni') }}</td><td class="num">{{ $num($comparative['land_area']) }} {{ $t('kv. m') }}</td></tr>
+            <tr class="result"><td>{{ $t('Yer uchastkasi qiymati') }}</td><td class="num">{{ $sum($comparative['land_value']) }}</td></tr>
+        @endif
+        <tr class="result"><td>{{ $t('Qiyosiy yondashuv bo‘yicha qiymat') }}</td><td class="num">{{ $sum($comparative['value']) }}</td></tr>
     </table>
 
     <h3 class="sub">{{ $t('Kiritilgan tuzatishlarga sharh') }}</h3>
     <div class="comment">
-        <p>{{ $t("Tuzatishlar 10-son MBS 1-§ 23-bandida belgilangan taqqoslash elementlari bo'yicha ketma-ket kiritildi: har bir tuzatish oldingi tuzatishdan keyingi narxga qo'llanildi (narx × (1 + tuzatish / 100)). Analoglarning manbalari va tavsiflari ilovada keltirilgan.") }}</p>
+        <p>{{ $t("Tuzatishlar 10-son MBS 1-§ 23-bandida belgilangan taqqoslash elementlari bo'yicha ketma-ket kiritildi: har bir tuzatish oldingi tuzatishdan keyingi narxga qo'llanildi (narx × (1 + tuzatish / 100)); dollardagi narxlar taklif sanasidagi kurs bo'yicha so'mga o'tkazildi. Analoglarning manbalari va tavsiflari ilovada keltirilgan.") }}</p>
         @foreach ($commentary as $note)
             <p><b>{{ $t($note['title']) }}.</b> {{ $t($note['text']) }}</p>
         @endforeach
-        <p><b>{{ $t('Yakuniy qiymat') }}.</b> {{ $t("Baholash obyektining 1 m² uchun qiymati tuzatilgan narxlarning vaznli o'rtachasi sifatida aniqlandi va baholash obyektining umumiy maydoniga ko'paytirildi") }}: {{ $num($comparative['price_m2']) }} × {{ $num($item->total_area) }} = {{ $sum($comparative['value']) }}.</p>
+        <p><b>{{ $t('Yakuniy qiymat') }}.</b> {{ $t("Baholash obyektining 1 m² uchun qiymati tuzatilgan narxlarning vaznli o'rtachasi sifatida aniqlandi va baholash obyektining umumiy maydoniga ko'paytirildi") }}: {{ $num($comparative['price_m2']) }} × {{ $num($item->total_area) }} = {{ $sum($comparative['building']) }}@if ($comparative['land_value'] > 0); {{ $t("unga yer uchastkasi qiymati qo'shildi") }}: {{ $num($comparative['land_price']) }} × {{ $num($comparative['land_area']) }} = {{ $sum($comparative['land_value']) }}; {{ $t('jami') }} {{ $sum($comparative['value']) }}@endif.</p>
     </div>
 @elseif ($comparativeApplied)
     <p class="muted">{{ $t("Qiyosiy yondashuv bo'yicha hisob-kitob uchun analoglar kiritilmagan.") }}</p>
