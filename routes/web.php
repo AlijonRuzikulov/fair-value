@@ -21,10 +21,10 @@ Route::middleware('site')->group(function () {
     Route::get('/services/{slug}', [Site\ServiceController::class, 'show'])->name('services.show');
     Route::get('/about', [Site\PageController::class, 'about'])->name('about');
     Route::get('/contact', [Site\PageController::class, 'contact'])->name('contact');
-    Route::post('/request', [Site\LeadController::class, 'store'])->middleware('throttle:6,1')->name('lead.store');
+    Route::post('/request', [Site\LeadController::class, 'store'])->middleware('throttle:6,1,lead.store')->name('lead.store');
     Route::get('/sitemap.xml', [Site\PageController::class, 'sitemap'])->name('sitemap');
     // The check of a report by its QR code.
-    Route::get('/verify', [Site\VerifyController::class, 'show'])->middleware('throttle:30,1')->name('verify');
+    Route::get('/verify', [Site\VerifyController::class, 'show'])->middleware('throttle:30,1,verify')->name('verify');
     Route::get('/v/{code}', fn (string $code) => redirect()->route('verify', ['code' => $code]))->name('verify.short');
 });
 Route::get('/lang/{locale}', LocaleController::class)->name('locale');
@@ -55,7 +55,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
     // Clients
     Route::get('clients/search', [Admin\ClientController::class, 'search'])->name('clients.search');
     Route::get('clients/export', [Admin\ClientController::class, 'export'])->name('clients.export');
-    Route::post('clients/passport', [Admin\ClientController::class, 'passport'])->middleware('throttle:10,1')->name('clients.passport');
+    Route::post('clients/passport', [Admin\ClientController::class, 'passport'])->middleware('throttle:10,1,clients.passport')->name('clients.passport');
     Route::resource('clients', Admin\ClientController::class);
 
     // Valuation objects
@@ -70,13 +70,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
         Route::get("{$uri}/export", [$controller, 'export'])->name("{$uri}.export");
         Route::get("{$uri}/{id}/print", [$controller, 'print'])->whereNumber('id')->name("{$uri}.print");
         Route::get("{$uri}/{id}/contract", [$controller, 'contract'])->whereNumber('id')->name("{$uri}.contract");
-        Route::get("{$uri}/{id}/contract/pdf", [$controller, 'contractPdf'])->whereNumber('id')->middleware('throttle:20,1')->name("{$uri}.contract.pdf");
+        Route::get("{$uri}/{id}/contract/pdf", [$controller, 'contractPdf'])->whereNumber('id')->middleware('throttle:20,1,contract.pdf')->name("{$uri}.contract.pdf");
         Route::post("{$uri}/{id}/workflow", [$controller, 'workflow'])->whereNumber('id')->name("{$uri}.workflow");
         Route::resource($uri, $controller)->parameters([$uri => 'id']);
     }
 
     // A vehicle's fields from the photo of its registration certificate.
-    Route::post('vehicles/{id}/tech-passport', [Admin\VehicleController::class, 'techPassport'])->whereNumber('id')->middleware('throttle:10,1')->name('vehicles.tech-passport');
+    Route::post('vehicles/{id}/tech-passport', [Admin\VehicleController::class, 'techPassport'])->whereNumber('id')->middleware('throttle:10,1,vehicles.tech-passport')->name('vehicles.tech-passport');
 
     // Damage catalogues
     $catalogs = [
@@ -96,29 +96,29 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
     // Analogues of the comparative approach
     Route::controller(Admin\AnalogController::class)->group(function () {
         $types = array_keys(AnalogFinder::OBJECTS);
-        Route::post('{type}/{id}/analogs', 'store')->whereIn('type', $types)->whereNumber('id')->middleware('throttle:20,1')->name('analogs.store');
+        Route::post('{type}/{id}/analogs', 'store')->whereIn('type', $types)->whereNumber('id')->middleware('throttle:20,1,analogs.store')->name('analogs.store');
         Route::put('{type}/{id}/analogs', 'update')->whereIn('type', $types)->whereNumber('id')->name('analogs.update');
         Route::post('{type}/{id}/analogs/apply', 'apply')->whereIn('type', $types)->whereNumber('id')->name('analogs.apply');
-        Route::post('analogs/{analog}/fill', 'fill')->middleware('throttle:60,1')->name('analogs.fill');
-        Route::post('analogs/{analog}/text', 'pasted')->middleware('throttle:30,1')->name('analogs.text');
+        Route::post('analogs/{analog}/fill', 'fill')->middleware('throttle:60,1,analogs.fill')->name('analogs.fill');
+        Route::post('analogs/{analog}/text', 'pasted')->middleware('throttle:30,1,analogs.text')->name('analogs.text');
         Route::delete('analogs/{analog}', 'destroy')->name('analogs.destroy');
         Route::get('analogs/{analog}/photo', 'showPhoto')->name('analogs.photo');
-        Route::post('analogs/{analog}/photo', 'photo')->middleware('throttle:30,1')->name('analogs.photo.store');
+        Route::post('analogs/{analog}/photo', 'photo')->middleware('throttle:30,1,analogs.photo.store')->name('analogs.photo.store');
         Route::delete('analogs/{analog}/photo', 'deletePhoto')->name('analogs.photo.destroy');
     });
 
     // Full valuation report of real estate
     Route::controller(Admin\ValuationReportController::class)->group(function () {
         Route::get('real-estates/{id}/report', 'show')->whereNumber('id')->name('real-estates.report');
-        Route::get('real-estates/{id}/report/pdf', 'pdf')->whereNumber('id')->middleware('throttle:20,1')->name('real-estates.report.pdf');
+        Route::get('real-estates/{id}/report/pdf', 'pdf')->whereNumber('id')->middleware('throttle:20,1,real-estates.report.pdf')->name('real-estates.report.pdf');
         Route::get('real-estates/{id}/report/edit', 'edit')->whereNumber('id')->name('real-estates.report.edit');
         Route::put('real-estates/{id}/report', 'update')->whereNumber('id')->name('real-estates.report.update');
         Route::get('report-documents/{index}', 'document')->whereNumber('index')->name('report-documents.show');
     });
     // Map tiles, downloaded once and kept on this site
     Route::get('map/tiles/{z}/{x}/{y}.png', [Admin\MapTileController::class, 'show'])
-        ->whereNumber(['z', 'x', 'y'])->middleware('throttle:1200,1')->name('map.tile');
-    Route::get('map/search', [Admin\MapSearchController::class, 'search'])->middleware('throttle:30,1')->name('map.search');
+        ->whereNumber(['z', 'x', 'y'])->middleware('throttle:1200,1,map.tile')->name('map.tile');
+    Route::get('map/search', [Admin\MapSearchController::class, 'search'])->middleware('throttle:30,1,map.search')->name('map.search');
 
     // The main data saved on the object page
     Route::put('real-estates/{id}/main', [Admin\RealEstateController::class, 'main'])->whereNumber('id')->name('real-estates.main');
@@ -136,7 +136,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
         Route::put('real-estates/{id}/value', 'value')->whereNumber('id')->name('real-estates.value');
     });
     Route::controller(Admin\DocumentReadController::class)->group(function () {
-        Route::post('real-estates/{id}/documents/read', 'read')->whereNumber('id')->middleware('throttle:10,1')->name('real-estates.documents.read');
+        Route::post('real-estates/{id}/documents/read', 'read')->whereNumber('id')->middleware('throttle:10,1,real-estates.documents.read')->name('real-estates.documents.read');
         Route::get('real-estates/{id}/documents/review', 'review')->whereNumber('id')->name('real-estates.documents.review');
         Route::post('real-estates/{id}/documents/apply', 'apply')->whereNumber('id')->name('real-estates.documents.apply');
     });
@@ -151,14 +151,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
     Route::get('attachments/{attachment}', [Admin\AttachmentController::class, 'show'])->name('attachments.show');
     Route::delete('attachments/{attachment}', [Admin\AttachmentController::class, 'destroy'])->name('attachments.destroy');
     Route::patch('attachments/{attachment}', [Admin\AttachmentController::class, 'update'])->name('attachments.update');
-    Route::post('attachments/{attachment}/rotate', [Admin\AttachmentController::class, 'rotate'])->middleware('throttle:60,1')->name('attachments.rotate');
+    Route::post('attachments/{attachment}/rotate', [Admin\AttachmentController::class, 'rotate'])->middleware('throttle:60,1,attachments.rotate')->name('attachments.rotate');
 
     Route::get('districts', Admin\DistrictLookupController::class)->name('districts');
-    Route::get('landmarks', Admin\LandmarkController::class)->middleware('throttle:30,1')->name('landmarks');
-    Route::get('history', Admin\HistoryController::class)->middleware('throttle:60,1')->name('history');
+    Route::get('landmarks', Admin\LandmarkController::class)->middleware('throttle:30,1,landmarks')->name('landmarks');
+    Route::get('history', Admin\HistoryController::class)->middleware('throttle:60,1,history')->name('history');
 
     Route::get('profile', [Admin\ProfileController::class, 'edit'])->name('profile.edit');
-    Route::put('profile', [Admin\ProfileController::class, 'update'])->middleware('throttle:10,1')->name('profile.update');
+    Route::put('profile', [Admin\ProfileController::class, 'update'])->middleware('throttle:10,1,profile.update')->name('profile.update');
 
     // Administrators only
     Route::middleware('can:admin')->group(function () {
@@ -173,7 +173,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'auth.session', 'act
         Route::put('report-texts', [Admin\ReportTextController::class, 'update'])->name('report-texts.update');
         Route::get('activity', [Admin\ActivityController::class, 'index'])->name('activity.index');
         Route::get('activity/export', [Admin\ActivityController::class, 'export'])->name('activity.export');
-        Route::post('activity/verify', [Admin\ActivityController::class, 'verify'])->middleware('throttle:6,1')->name('activity.verify');
+        Route::post('activity/verify', [Admin\ActivityController::class, 'verify'])->middleware('throttle:6,1,activity.verify')->name('activity.verify');
         Route::get('system', [Admin\SystemController::class, 'index'])->name('system.index');
         Route::delete('system/sessions/{session}', [Admin\SystemController::class, 'endSession'])->name('system.sessions.destroy');
         Route::get('regions', [Admin\RegionController::class, 'index'])->name('regions.index');
