@@ -14,16 +14,20 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::get('/', [Site\HomeController::class, 'index'])->name('home');
-Route::get('/services', [Site\ServiceController::class, 'index'])->name('services');
-Route::get('/services/{slug}', [Site\ServiceController::class, 'show'])->name('services.show');
-Route::get('/about', [Site\PageController::class, 'about'])->name('about');
-Route::get('/contact', [Site\PageController::class, 'contact'])->name('contact');
+// The website can be switched off (Settings → "Public website"): the address then opens the work panel.
+Route::middleware('site')->group(function () {
+    Route::get('/', [Site\HomeController::class, 'index'])->name('home');
+    Route::get('/services', [Site\ServiceController::class, 'index'])->name('services');
+    Route::get('/services/{slug}', [Site\ServiceController::class, 'show'])->name('services.show');
+    Route::get('/about', [Site\PageController::class, 'about'])->name('about');
+    Route::get('/contact', [Site\PageController::class, 'contact'])->name('contact');
+    Route::post('/request', [Site\LeadController::class, 'store'])->middleware('throttle:6,1')->name('lead.store');
+    Route::get('/sitemap.xml', [Site\PageController::class, 'sitemap'])->name('sitemap');
+});
+// Always open: the check of a report (its QR code leads here) and the language switch.
 Route::get('/verify', [Site\VerifyController::class, 'show'])->middleware('throttle:30,1')->name('verify');
 Route::get('/v/{code}', fn (string $code) => redirect()->route('verify', ['code' => $code]))->name('verify.short');
-Route::post('/request', [Site\LeadController::class, 'store'])->middleware('throttle:6,1')->name('lead.store');
 Route::get('/lang/{locale}', LocaleController::class)->name('locale');
-Route::get('/sitemap.xml', [Site\PageController::class, 'sitemap'])->name('sitemap');
 
 /*
 |--------------------------------------------------------------------------

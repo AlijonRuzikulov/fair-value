@@ -64,9 +64,11 @@
             @endforeach
         </nav>
 
-        <a class="sidebar-site" href="{{ route('home') }}" target="_blank" rel="noopener">
-            <x-icon name="globe" :size="18" /> <span>{{ __('Open website') }}</span> <x-icon name="arrow-up-right" :size="14" />
-        </a>
+        @if (\App\Support\PublicSite::enabled())
+            <a class="sidebar-site" href="{{ route('home') }}" target="_blank" rel="noopener">
+                <x-icon name="globe" :size="18" /> <span>{{ __('Open website') }}</span> <x-icon name="arrow-up-right" :size="14" />
+            </a>
+        @endif
     </aside>
     <div class="sidebar-backdrop" data-sidebar-close></div>
 

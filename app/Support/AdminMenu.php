@@ -55,7 +55,7 @@ class AdminMenu
             ...($classic ? [] : [
                 ['key' => 'dashboard', 'label' => __('Dashboard'), 'icon' => 'layout-dashboard', 'color' => '#818cf8', 'url' => route('admin.dashboard')],
             ]),
-            ...(Gate::allows('main-workspace') ? [
+            ...(Gate::allows('main-workspace') && PublicSite::enabled() ? [
                 ['key' => 'leads', 'label' => __('Website requests'), 'icon' => 'inbox', 'color' => '#f472b6', 'url' => route('admin.leads.index'), 'badge' => $newLeads ?: null],
             ] : []),
         ];

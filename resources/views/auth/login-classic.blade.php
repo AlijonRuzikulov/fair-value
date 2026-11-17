@@ -43,7 +43,12 @@
     </form>
 
     <p class="simple-login-foot">
-        {{ $name }} · <a href="{{ route('contact') }}">{{ __('Get support') }}</a>
+        {{ $name }}
+        @if (\App\Support\PublicSite::enabled())
+            · <a href="{{ route('contact') }}">{{ __('Get support') }}</a>
+        @elseif ($supportPhone = \App\Models\Setting::get('phone'))
+            · <a href="{{ \App\Support\Format::telLink($supportPhone) }}">{{ __('Get support') }}: {{ $supportPhone }}</a>
+        @endif
     </p>
 </main>
 @if ($hint)

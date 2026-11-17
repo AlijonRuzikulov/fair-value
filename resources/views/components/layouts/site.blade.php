@@ -16,6 +16,9 @@
     ];
     $instagram = Setting::get('instagram');
     $telegram = Setting::get('telegram');
+    // Without the website only the report check is shown: no menu, no requests.
+    $site = \App\Support\PublicSite::enabled();
+    $homeUrl = $site ? route('home') : route('verify');
 @endphp
 <!DOCTYPE html>
 <html lang="{{ $locales[$locale]['html'] ?? $locale }}">
@@ -75,22 +78,26 @@
 
 <header class="header" data-header>
     <div class="container header-inner">
-        <a class="brand" href="{{ route('home') }}" aria-label="{{ $brand }}">
+        <a class="brand" href="{{ $homeUrl }}" aria-label="{{ $brand }}">
             <x-logo-mark :size="42" />
             <span>
                 <strong>{{ $brand }}</strong>
                 <small>{{ __('Valuation company') }}</small>
             </span>
         </a>
-        <nav class="nav" id="site-nav" aria-label="{{ __('Main menu') }}">
-            @foreach ($nav as $key => [$label, $url])
-                <a href="{{ $url }}" @class(['is-active' => $page === $key]) @if ($page === $key) aria-current="page" @endif>{{ $label }}</a>
-            @endforeach
-            <a class="btn btn-primary nav-cta" href="{{ route('home') }}#request">{{ __('Leave a request') }}</a>
-        </nav>
+        @if ($site)
+            <nav class="nav" id="site-nav" aria-label="{{ __('Main menu') }}">
+                @foreach ($nav as $key => [$label, $url])
+                    <a href="{{ $url }}" @class(['is-active' => $page === $key]) @if ($page === $key) aria-current="page" @endif>{{ $label }}</a>
+                @endforeach
+                <a class="btn btn-primary nav-cta" href="{{ route('home') }}#request">{{ __('Leave a request') }}</a>
+            </nav>
+        @endif
         <a class="header-phone" href="{{ Format::telLink($phone) }}"><x-icon name="phone" :size="18" /><span>{{ $phone }}</span></a>
-        <a class="btn btn-primary header-cta" href="{{ route('home') }}#request">{{ __('Leave a request') }}</a>
-        <button class="menu-btn" type="button" data-menu aria-controls="site-nav" aria-expanded="false" aria-label="{{ __('Menu') }}"><x-icon name="menu" :size="24" /></button>
+        @if ($site)
+            <a class="btn btn-primary header-cta" href="{{ route('home') }}#request">{{ __('Leave a request') }}</a>
+            <button class="menu-btn" type="button" data-menu aria-controls="site-nav" aria-expanded="false" aria-label="{{ __('Menu') }}"><x-icon name="menu" :size="24" /></button>
+        @endif
     </div>
 </header>
 
@@ -101,29 +108,31 @@
 <footer class="footer">
     <div class="container footer-grid">
         <div class="footer-about">
-            <a class="brand brand-light" href="{{ route('home') }}">
+            <a class="brand brand-light" href="{{ $homeUrl }}">
                 <x-logo-mark :size="42" />
                 <span><strong>{{ $brand }}</strong><small>{{ __('Valuation company') }}</small></span>
             </a>
             <p>{{ __('Independent valuation of all types of property, business plans, expert opinions and audit. We work all over Uzbekistan.') }}</p>
             @if (Setting::get('license'))<p class="footer-license"><x-icon name="shield-check" :size="16" /> {{ Setting::get('license') }}</p>@endif
         </div>
-        <div>
-            <h3>{{ __('Services') }}</h3>
-            <ul>
-                @foreach (\App\Support\Services::titles() as $slug => $label)
-                    <li><a href="{{ route('services.show', $slug) }}">{{ $label }}</a></li>
-                @endforeach
-            </ul>
-        </div>
-        <div>
-            <h3>{{ __('Company') }}</h3>
-            <ul>
-                @foreach ($nav as [$label, $url])
-                    <li><a href="{{ $url }}">{{ $label }}</a></li>
-                @endforeach
-            </ul>
-        </div>
+        @if ($site)
+            <div>
+                <h3>{{ __('Services') }}</h3>
+                <ul>
+                    @foreach (\App\Support\Services::titles() as $slug => $label)
+                        <li><a href="{{ route('services.show', $slug) }}">{{ $label }}</a></li>
+                    @endforeach
+                </ul>
+            </div>
+            <div>
+                <h3>{{ __('Company') }}</h3>
+                <ul>
+                    @foreach ($nav as [$label, $url])
+                        <li><a href="{{ $url }}">{{ $label }}</a></li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
         <div>
             <h3>{{ __('Contacts') }}</h3>
             <ul class="footer-contacts">

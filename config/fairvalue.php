@@ -118,6 +118,10 @@ return [
 
     'demo' => (bool) env('DEMO_MODE', false),
 
+    // The public website of the company (home, services, contacts, requests). Off: the address opens the
+    // work panel. Settings → "Public website" overrides this once it is set there.
+    'public_site' => (bool) env('PUBLIC_SITE', false),
+
     /*
     |--------------------------------------------------------------------------
     | A temporary link to this computer

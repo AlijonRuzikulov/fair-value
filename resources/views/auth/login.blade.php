@@ -58,7 +58,9 @@
             </form>
 
             <div class="auth-foot">
-                <a class="back-link" href="{{ route('home') }}"><x-icon name="arrow-left" :size="16" /> {{ __('Back to the website') }}</a>
+                @if (\App\Support\PublicSite::enabled())
+                    <a class="back-link" href="{{ route('home') }}"><x-icon name="arrow-left" :size="16" /> {{ __('Back to the website') }}</a>
+                @endif
                 <nav class="auth-langs" aria-label="{{ __('Language') }}">
                     @foreach ($locales as $code => $meta)
                         <a href="{{ route('locale', $code) }}" @class(['is-active' => $code === app()->getLocale()])>{{ $meta['short'] }}</a>
