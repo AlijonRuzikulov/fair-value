@@ -550,7 +550,12 @@ h1, h2, h3, h4, p { margin: 0; }
 .qa-question { font-size: 13px; line-height: 1.35; color: var(--ink-2); }
 .qa-row .input, .theme-classic .qa-row .input { height: 36px; }
 .qa-row .field-error { grid-column: 2; }
-@media (max-width: 640px) { .qa-row { grid-template-columns: 1fr; } .qa-row .field-error { grid-column: 1; } }
+@media (max-width: 640px) {
+  .qa-row { grid-template-columns: 1fr; }
+  .qa-row .field-error { grid-column: 1; }
+  /* The long label of the "None" button wraps instead of widening the page. */
+  .qa-none { height: auto; min-height: 36px; padding-top: 7px; padding-bottom: 7px; white-space: normal; text-align: left; }
+}
 
 /* --- Badges & chips ---------------------------------------------------- */
 
@@ -1489,6 +1494,8 @@ summary.btn::-webkit-details-marker { display: none; }
 .report-scores tfoot td { font-weight: 700; background: #f8fafc; }
 .final-pick { display: grid; grid-template-columns: minmax(0, 340px) 1fr; gap: 16px; align-items: end; margin-top: 16px; }
 .final-pick .field { margin: 0; }
+/* Its own two columns: a span of the form grid would add twelve columns and widen the page on phones. */
+.final-pick > .field { grid-column: auto; }
 .final-hint { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding-bottom: 6px; color: var(--muted); }
 .final-hint strong { color: var(--ink); }
 @media (max-width: 1100px) {

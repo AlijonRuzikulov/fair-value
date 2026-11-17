@@ -562,6 +562,9 @@ body.theme-classic.accent-orange {
   .theme-classic .total-area-row { flex-wrap: wrap; }
   .theme-classic .total-area-row .input { flex-basis: 100%; }
   .theme-classic .portal-body { padding: 14px; }
+  /* The long label of the mobile application button (Russian) wraps inside the screen. */
+  .theme-classic .mobile-pop { max-width: 100%; }
+  .theme-classic .mobile-pop > summary { height: auto; min-height: 40px; padding-top: 8px; padding-bottom: 8px; white-space: normal; text-align: left; }
 }
 
 /* Tick labels inside fields keep the portal's Title Case (the field labels above them are in capitals). */
