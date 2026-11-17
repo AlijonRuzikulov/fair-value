@@ -122,6 +122,7 @@
                 </x-card>
             @endif
 
+            @if (\App\Support\PublicSite::enabled())
             <x-card :title="__('Report verification')" icon="qr-code">
                 <div class="verify-box">
                     <div class="qr" data-qr="{{ $item->verifyUrl() }}" role="img" aria-label="QR"></div>
@@ -133,6 +134,7 @@
                     </div>
                 </div>
             </x-card>
+            @endif
 
             <x-card :title="__('Contract and report')" icon="file-check">
                 <dl class="details" style="grid-template-columns: 1fr">

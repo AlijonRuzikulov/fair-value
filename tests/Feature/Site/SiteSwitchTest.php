@@ -10,8 +10,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 /**
- * Without the public website the address opens the work panel; only the
- * check of reports (their QR code) stays open to everyone.
+ * Without the public website nothing is open but the sign-in page and the
+ * work panel: not even the check of reports, so reports and contracts carry
+ * no QR code.
  */
 class SiteSwitchTest extends TestCase
 {
@@ -23,26 +24,32 @@ class SiteSwitchTest extends TestCase
         config(['fairvalue.public_site' => false]);
     }
 
-    public function test_without_the_website_the_address_opens_the_sign_in_page(): void
+    public function test_without_the_website_every_address_leads_to_the_sign_in_page(): void
     {
-        $this->get('/')->assertRedirect(route('admin.dashboard'));
         $this->get('/admin')->assertRedirect(route('login'));
-        foreach (['/services', '/about', '/contact', '/sitemap.xml'] as $page) {
-            $this->get($page)->assertNotFound();
+        foreach (['/', '/services', '/services/real-estate', '/about', '/contact', '/sitemap.xml', '/verify', '/verify?code=FV-AAAA-BBBB', '/v/FV-AAAA-BBBB'] as $page) {
+            $this->get($page)->assertRedirect(route('admin.dashboard'));
         }
         $this->post('/request', ['name' => 'Ali', 'phone' => '+998901234567'])->assertNotFound();
         $this->withSession(['locale' => 'uz'])->get('/login')->assertOk()->assertDontSee(route('contact'));
     }
 
-    public function test_the_report_check_stays_open_without_the_menu_of_the_website(): void
+    public function test_reports_and_contracts_carry_no_qr_code_without_the_website(): void
     {
         $this->seed(RegionSeeder::class);
-        $report = RealEstate::factory()->create(['status' => 'completed', 'market_value' => 100]);
+        $report = RealEstate::factory()->create(['status' => 'completed', 'market_value' => 100, 'contract_number' => '5-26']);
+        $this->actingAs(User::factory()->admin()->create())->withSession(['locale' => 'uz']);
 
-        $this->get('/v/'.$report->verify_code)->assertRedirect();
-        $page = $this->withSession(['locale' => 'uz'])->get('/verify?code='.$report->verify_code)->assertOk();
-        $page->assertSee($report->verify_code)->assertDontSee(route('services'))->assertDontSee(route('home').'#request', false)
-            ->assertDontSee(route('about'));
+        $this->get('/admin/real-estates/'.$report->id.'/report?qr=1')->assertOk()->assertDontSee('data-qr', false)->assertDontSee('QR kodlar bilan');
+        $this->get('/admin/real-estates/'.$report->id.'/contract?qr=1')->assertOk()->assertDontSee('data-qr', false);
+        $this->get('/admin/real-estates/'.$report->id.'/print')->assertOk()->assertDontSee('data-qr', false);
+        $this->get('/admin/real-estates/'.$report->id)->assertOk()->assertDontSee('qr\' => 1', false)
+            ->assertDontSee(route('admin.real-estates.report.pdf', $report->id).'"', false);
+
+        // With the website the QR codes come back.
+        Setting::put(['public_site' => '1']);
+        $this->get('/admin/real-estates/'.$report->id.'/report')->assertSee('data-qr', false);
+        $this->get('/v/'.$report->verify_code)->assertRedirect(route('verify', ['code' => $report->verify_code]));
     }
 
     public function test_the_panel_has_no_link_to_the_website_and_it_is_switched_on_in_the_settings(): void

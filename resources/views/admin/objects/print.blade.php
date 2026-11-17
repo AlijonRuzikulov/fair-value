@@ -146,12 +146,14 @@
             <p>{{ __('Director') }}: <span class="line">&nbsp;</span> {{ Setting::get('director') }}</p>
             <p style="color:#6b7280">{{ __('Stamp') }}</p>
         </div>
-        <div class="qr-box">
-            <div class="qr" data-qr="{{ $item->verifyUrl() }}"></div>
-            <div>{{ __('Check authenticity') }}:</div>
-            <div class="code">{{ $item->verify_code }}</div>
-            <div>{{ parse_url(route('verify'), PHP_URL_HOST) }}/verify</div>
-        </div>
+        @if (\App\Support\PublicSite::enabled())
+            <div class="qr-box">
+                <div class="qr" data-qr="{{ $item->verifyUrl() }}"></div>
+                <div>{{ __('Check authenticity') }}:</div>
+                <div class="code">{{ $item->verify_code }}</div>
+                <div>{{ parse_url(route('verify'), PHP_URL_HOST) }}/verify</div>
+            </div>
+        @endif
     </div>
 
     <p class="note">{{ __('This certificate summarises the results of the valuation report and is not a substitute for it. The authenticity of the document can be checked by scanning the QR code or entering the code on our website.') }}</p>

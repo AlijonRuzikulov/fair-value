@@ -16,6 +16,7 @@ use App\Services\Documents\DocumentAi;
 use App\Services\Pdf\PdfPrinter;
 use App\Support\ComparativeCalculator;
 use App\Support\NumberInput;
+use App\Support\PublicSite;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -191,7 +192,8 @@ class ValuationReportController extends Controller
     {
         $item = RealEstate::findOrFail($id);
         $script = self::script($request);
-        $qr = ! $request->has('qr') || $request->boolean('qr');
+        // Without the public website a QR code would lead nowhere.
+        $qr = PublicSite::enabled() && (! $request->has('qr') || $request->boolean('qr'));
 
         $active = $script ?? RealEstateReport::values($item)['script'];
         $link = fn (array $changes) => route('admin.real-estates.report', [$item->id, ...self::query($script, $qr), ...$changes]);
@@ -202,8 +204,10 @@ class ValuationReportController extends Controller
             'scripts' => [
                 ['label' => 'Lotin', 'url' => $link(['script' => ReportScript::LATIN]), 'active' => $active === ReportScript::LATIN],
                 ['label' => 'Кирилл', 'url' => $link(['script' => ReportScript::CYRILLIC]), 'active' => $active === ReportScript::CYRILLIC],
-                ['label' => __('With QR codes'), 'url' => $link(['qr' => null]), 'active' => $qr],
-                ['label' => __('Without QR codes'), 'url' => $link(['qr' => 0]), 'active' => ! $qr],
+                ...(PublicSite::enabled() ? [
+                    ['label' => __('With QR codes'), 'url' => $link(['qr' => null]), 'active' => $qr],
+                    ['label' => __('Without QR codes'), 'url' => $link(['qr' => 0]), 'active' => ! $qr],
+                ] : []),
             ],
             'edit' => Gate::allows('edit-valuation', $item) ? ['label' => __('Report data'), 'url' => route('admin.real-estates.report.edit', $item->id)] : null,
             'back' => ['label' => __('Back'), 'url' => route('admin.real-estates.show', $item->id)],
@@ -241,7 +245,8 @@ class ValuationReportController extends Controller
     {
         $item = RealEstate::findOrFail($id);
         $script = self::script($request);
-        $qr = ! $request->has('qr') || $request->boolean('qr');
+        // Without the public website a QR code would lead nowhere.
+        $qr = PublicSite::enabled() && (! $request->has('qr') || $request->boolean('qr'));
 
         if ($printer->available()) {
             try {

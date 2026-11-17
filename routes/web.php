@@ -23,10 +23,10 @@ Route::middleware('site')->group(function () {
     Route::get('/contact', [Site\PageController::class, 'contact'])->name('contact');
     Route::post('/request', [Site\LeadController::class, 'store'])->middleware('throttle:6,1')->name('lead.store');
     Route::get('/sitemap.xml', [Site\PageController::class, 'sitemap'])->name('sitemap');
+    // The check of a report by its QR code.
+    Route::get('/verify', [Site\VerifyController::class, 'show'])->middleware('throttle:30,1')->name('verify');
+    Route::get('/v/{code}', fn (string $code) => redirect()->route('verify', ['code' => $code]))->name('verify.short');
 });
-// Always open: the check of a report (its QR code leads here) and the language switch.
-Route::get('/verify', [Site\VerifyController::class, 'show'])->middleware('throttle:30,1')->name('verify');
-Route::get('/v/{code}', fn (string $code) => redirect()->route('verify', ['code' => $code]))->name('verify.short');
 Route::get('/lang/{locale}', LocaleController::class)->name('locale');
 
 /*

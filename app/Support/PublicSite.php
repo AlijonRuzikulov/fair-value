@@ -6,10 +6,11 @@ use App\Models\Setting;
 
 /**
  * Whether the company's public website (home, services, about, contacts,
- * the request form) is shown. When it is not, the address opens the sign-in
- * page and the work panel; the report check (verify) stays open, as the QR
- * code of every report leads to it. Settings → "Public website", or
- * PUBLIC_SITE in .env until it is set there.
+ * the request form and the check of reports by their QR code) is shown.
+ * When it is not, nothing is open but the sign-in page and the work panel,
+ * and reports and contracts are printed without QR codes (they would lead
+ * nowhere). Settings → "Public website", or PUBLIC_SITE in .env until it is
+ * set there.
  */
 final class PublicSite
 {

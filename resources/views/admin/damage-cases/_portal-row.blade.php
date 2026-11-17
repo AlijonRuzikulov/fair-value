@@ -16,7 +16,7 @@
         @can('edit-valuation', $item)
             <a class="btn btn-sm btn-warning btn-icon" href="{{ $show }}" title="{{ __('Edit') }}" aria-label="{{ __('Edit') }}"><x-icon name="square-pen" :size="15" /></a>
         @endcan
-        @if ($item->status === \App\Enums\ValuationStatus::Completed)
+        @if ($item->status === \App\Enums\ValuationStatus::Completed && \App\Support\PublicSite::enabled())
             <a class="btn btn-sm btn-fill-danger btn-icon" href="{{ $item->verifyUrl() }}" target="_blank" data-share title="{{ __('Share') }}" aria-label="{{ __('Share') }}"><x-icon name="share-2" :size="15" /></a>
         @endif
     </td>

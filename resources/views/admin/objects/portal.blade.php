@@ -64,7 +64,9 @@
                 @if ($exists)
                     {{-- The papers of the valuation, as on the real estate page. --}}
                     <div class="portal-files pdf-buttons">
-                        <a class="btn" href="{{ route($module->routeName('contract.pdf'), [$item->id, 'qr' => 1]) }}" data-pdf><x-icon name="qr-code" :size="14" /> {{ __('Contract PDF with QR codes') }}</a>
+                        @if (\App\Support\PublicSite::enabled())
+                            <a class="btn" href="{{ route($module->routeName('contract.pdf'), [$item->id, 'qr' => 1]) }}" data-pdf><x-icon name="qr-code" :size="14" /> {{ __('Contract PDF with QR codes') }}</a>
+                        @endif
                         <a class="btn" href="{{ route($module->routeName('contract.pdf'), $item->id) }}" data-pdf><x-icon name="file-pen-line" :size="14" /> {{ __('Contract PDF') }}</a>
                         <a class="btn" href="{{ route($module->routeName('contract'), $item->id) }}" target="_blank"><x-icon name="file-text" :size="14" /> {{ __('Contract') }}</a>
                         <a class="btn" href="{{ route($module->routeName('print'), $item->id) }}" target="_blank"><x-icon name="printer" :size="14" /> {{ __('Certificate') }}</a>

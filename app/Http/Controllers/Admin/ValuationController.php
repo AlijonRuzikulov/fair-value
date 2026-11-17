@@ -29,6 +29,7 @@ use App\Support\CsvExport;
 use App\Support\DocumentNumber;
 use App\Support\Format;
 use App\Support\NumberInput;
+use App\Support\PublicSite;
 use App\Support\Tenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -368,8 +369,10 @@ abstract class ValuationController extends Controller
             'scripts' => [
                 ['label' => 'Lotin', 'url' => $link(['script' => ReportScript::LATIN]), 'active' => $script === ReportScript::LATIN],
                 ['label' => 'Кирилл', 'url' => $link(['script' => ReportScript::CYRILLIC]), 'active' => $script === ReportScript::CYRILLIC],
-                ['label' => __('With signature lines'), 'url' => $link(['qr' => null]), 'active' => ! $qr],
-                ['label' => __('With QR codes'), 'url' => $link(['qr' => 1]), 'active' => $qr],
+                ...(PublicSite::enabled() ? [
+                    ['label' => __('With signature lines'), 'url' => $link(['qr' => null]), 'active' => ! $qr],
+                    ['label' => __('With QR codes'), 'url' => $link(['qr' => 1]), 'active' => $qr],
+                ] : []),
             ],
             'back' => ['label' => __('Back'), 'url' => route($this->routeName('show'), $item->id)],
         ];
@@ -416,7 +419,8 @@ abstract class ValuationController extends Controller
             : ($item instanceof RealEstate ? RealEstateReport::values($item)['script'] : (Setting::get('report_script') === ReportScript::CYRILLIC ? ReportScript::CYRILLIC : ReportScript::LATIN));
         $only = in_array($request->query('doc'), ContractPack::DOCUMENTS, true) ? [$request->query('doc')] : ContractPack::DOCUMENTS;
 
-        return [$script, $request->boolean('qr'), $only];
+        // Without the public website a QR code would lead nowhere: signature lines instead.
+        return [$script, PublicSite::enabled() && $request->boolean('qr'), $only];
     }
 
     /** @param  list<string>  $only */

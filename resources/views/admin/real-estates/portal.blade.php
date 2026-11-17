@@ -153,9 +153,14 @@
             <div class="portal-card-body portal-card-end">
                 @if ($exists)
                     <div class="portal-files pdf-buttons">
-                        <a class="btn" href="{{ route('admin.real-estates.report.pdf', $item->id) }}" data-pdf><x-icon name="qr-code" :size="14" /> {{ __('Report PDF with QR code') }}</a>
+                        {{-- QR codes lead to the public check of reports, so only with the website. --}}
+                        @if (\App\Support\PublicSite::enabled())
+                            <a class="btn" href="{{ route('admin.real-estates.report.pdf', $item->id) }}" data-pdf><x-icon name="qr-code" :size="14" /> {{ __('Report PDF with QR code') }}</a>
+                        @endif
                         <a class="btn" href="{{ route('admin.real-estates.report.pdf', [$item->id, 'qr' => 0]) }}" data-pdf><x-icon name="file-text" :size="14" /> {{ __('Report PDF') }}</a>
-                        <a class="btn" href="{{ route($module->routeName('contract.pdf'), [$item->id, 'qr' => 1]) }}" data-pdf><x-icon name="qr-code" :size="14" /> {{ __('Contract PDF with QR codes') }}</a>
+                        @if (\App\Support\PublicSite::enabled())
+                            <a class="btn" href="{{ route($module->routeName('contract.pdf'), [$item->id, 'qr' => 1]) }}" data-pdf><x-icon name="qr-code" :size="14" /> {{ __('Contract PDF with QR codes') }}</a>
+                        @endif
                         <a class="btn" href="{{ route($module->routeName('contract.pdf'), $item->id) }}" data-pdf><x-icon name="file-pen-line" :size="14" /> {{ __('Contract PDF') }}</a>
                         <a class="btn" href="{{ route('admin.real-estates.report', $item->id) }}" target="_blank"><x-icon name="scroll-text" :size="14" /> {{ __('Valuation report') }}</a>
                         <a class="btn" href="{{ route($module->routeName('print'), $item->id) }}" target="_blank"><x-icon name="printer" :size="14" /> {{ __('Certificate') }}</a>
@@ -213,7 +218,10 @@
                 @if ($exists)
                     {{-- The portal signs with E-IMZO; here the report is confirmed by its QR code and verification code. --}}
                     <p class="portal-notice"><x-icon name="triangle-alert" :size="16" /> <strong>{{ __('E-IMZO is not connected!') }}</strong>
-                        {{ __('The report is confirmed by its QR code and verification code on the public page.') }} <span class="code">{{ $item->verify_code }}</span></p>
+                        @if (\App\Support\PublicSite::enabled())
+                            {{ __('The report is confirmed by its QR code and verification code on the public page.') }} <span class="code">{{ $item->verify_code }}</span>
+                        @endif
+                    </p>
                 @endif
             </div>
         </section>
