@@ -106,28 +106,78 @@
                         @if (! $exists)
                             <p class="muted">{{ __('The approaches are calculated after the object is saved.') }}</p>
                         @else
-                            @if ($applied === [])
-                                <p class="muted">{{ __('Approaches are not specified') }}</p>
-                            @else
+                            {{-- As on the valuation portal: the scores of the approaches by the four factors, then their values, coefficients and the final amount. --}}
+                            @php
+                                $byApproach = $reconciliation['scores'] ?? [];
+                                $first = [ValuationApproach::Cost, ValuationApproach::Comparative, ValuationApproach::Income];
+                                $second = [ValuationApproach::Cost, ValuationApproach::Income, ValuationApproach::Comparative];
+                                $short = ['cost' => __('Cost approach (Kxar)'), 'comparative' => __('Comparative approach (Kqiyos)'), 'income' => __('Income approach (Kdar)')];
+                            @endphp
+                            <div class="recon-box">
+                                <h3 class="recon-title">{{ $item->name }}</h3>
                                 <div class="table-wrap">
-                                    <table class="table table-compact portal-table">
-                                        <thead><tr><th>{{ __('Approach') }}</th><th class="num">{{ __('Value by the approach') }}</th><th class="num">{{ __('Weight') }}</th></tr></thead>
+                                    <table class="table portal-table recon-table">
+                                        <thead>
+                                            <tr>
+                                                <th>{{ __('In finding the shares the appraiser is to analyse the following main factors') }}</th>
+                                                @foreach ($first as $approach)<th class="c">{{ $short[$approach->value] }}</th>@endforeach
+                                            </tr>
+                                        </thead>
                                         <tbody>
-                                            @foreach ($applied as $approach)
-                                                @php $value = $item->{$approach->column()}; @endphp
+                                            @foreach (RealEstateReport::RECONCILIATION_FACTORS as $i => $factor)
                                                 <tr>
-                                                    <td>{{ $approach->label() }}</td>
-                                                    <td class="num">{{ $value !== null ? Format::money($value) : '—' }}</td>
-                                                    <td class="num">{{ Format::number($reconciliation['weights'][$approach->value] * 100, 1) }} %</td>
+                                                    <td>{{ __($factor) }}</td>
+                                                    @foreach ($first as $approach)<td class="c">{{ Format::number($byApproach[$approach->value][$i] ?? 0, 2) }}</td>@endforeach
                                                 </tr>
                                             @endforeach
+                                            <tr>
+                                                <td>{{ __('Total of the comparative measures') }}</td>
+                                                @foreach ($first as $approach)<td class="c">{{ Format::number(array_sum($byApproach[$approach->value] ?? []), 2) }}</td>@endforeach
+                                            </tr>
+                                            <tr>
+                                                <td>{{ __('Total of the comparative measures (arithmetic mean)') }}</td>
+                                                @foreach ($first as $approach)<td class="c">{{ Format::number(array_sum($byApproach[$approach->value] ?? []) / max(1, count(RealEstateReport::RECONCILIATION_FACTORS)), 4) }}</td>@endforeach
+                                            </tr>
                                         </tbody>
-                                        <tfoot>
-                                            <tr><td>{{ __('Reconciled value') }}</td><td class="num">{{ $reconciliation['reconciled'] > 0 ? Format::money(round($reconciliation['reconciled'], -3)) : '—' }}</td><td class="num">100 %</td></tr>
-                                        </tfoot>
                                     </table>
                                 </div>
-                            @endif
+                                <div class="table-wrap">
+                                    <table class="table portal-table recon-table">
+                                        <thead>
+                                            <tr class="recon-group"><th></th><th class="c" colspan="3">{{ __('Buildings and structures') }}</th></tr>
+                                            <tr>
+                                                <th>{{ __('Approaches') }}</th>
+                                                @foreach ($second as $approach)<th class="c">{{ $approach->label() }}</th>@endforeach
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>{{ __('Value found') }}</td>
+                                                @foreach ($second as $approach)
+                                                    @php $value = in_array($approach, $applied, true) ? $item->{$approach->column()} : null; @endphp
+                                                    <td class="c">{{ $value !== null ? Format::number($value, 2) : __('Not applied') }}</td>
+                                                @endforeach
+                                            </tr>
+                                            <tr>
+                                                <td>{{ __('Coefficients of the comparative measures') }}</td>
+                                                @foreach ($second as $approach)<td class="c">{{ Format::number($reconciliation['weights'][$approach->value] ?? 0, 5) }}</td>@endforeach
+                                            </tr>
+                                            <tr>
+                                                <td>{{ __('Measure values') }}</td>
+                                                @foreach ($second as $approach)<td class="c">{{ Format::number(($reconciliation['weights'][$approach->value] ?? 0) * (float) $item->{$approach->column()}, 2) }}</td>@endforeach
+                                            </tr>
+                                            <tr>
+                                                <td>{{ __('Formula of the final amount:') }}</td>
+                                                <td class="c" colspan="3">{{ __('Kyak = Kxar * C1 + Kdar * C2 + Kqiyos * C3') }}</td>
+                                            </tr>
+                                            <tr class="recon-total">
+                                                <td>{{ __('Final amount of the object of valuation:') }}</td>
+                                                <td class="c" colspan="3">{{ $reconciliation['reconciled'] > 0 ? Format::number($reconciliation['reconciled'], 2) : '—' }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                             <form method="post" action="{{ route('admin.real-estates.value', $item->id) }}" class="portal-value">
                                 @csrf @method('put')
                                 <fieldset class="form-grid" @disabled(! $canEdit)>
@@ -136,7 +186,7 @@
                                     <div class="field span-8 portal-value-actions">
                                         @if ($canEdit)
                                             <button class="btn btn-success" type="submit"><x-icon name="check" :size="16" /> {{ __('Save') }}</button>
-                                            @if ($reconciliation['reconciled'] > 0)
+                                            @if ($reconciliation['reconciled'] > 0 && ! empty(((array) $item->report)['final_typed']))
                                                 <button class="btn btn-info" type="submit" name="reconciled" value="1"><x-icon name="calculator" :size="16" /> {{ __('Use the reconciled value') }}</button>
                                             @endif
                                             <a class="btn" href="{{ route('admin.real-estates.report.edit', $item->id) }}#step-approaches"><x-icon name="sliders-horizontal" :size="16" /> {{ __('Scores of the approaches') }}</a>

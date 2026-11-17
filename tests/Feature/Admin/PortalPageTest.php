@@ -10,6 +10,7 @@ use App\Models\Region;
 use App\Models\Setting;
 use App\Models\User;
 use App\Reports\RealEstateReport;
+use App\Support\Format;
 use Database\Seeders\RegionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -158,18 +159,42 @@ class PortalPageTest extends TestCase
         $this->put('/admin/real-estates/'.$this->flat->id.'/approaches/other/applied', ['applied' => '1'])->assertNotFound();
     }
 
-    public function test_the_final_value_is_typed_or_taken_from_the_reconciliation(): void
+    public function test_the_final_value_follows_the_reconciliation_unless_typed(): void
     {
-        $this->actingAs($this->user)->put('/admin/real-estates/'.$this->flat->id.'/value', ['market_value' => '555 000 000'])
-            ->assertRedirect('/admin/real-estates/'.$this->flat->id.'#reconciliation');
-        $this->assertSame('555000000.00', $this->flat->fresh()->market_value);
-
-        // Equal scores: half of each value.
-        $this->put('/admin/real-estates/'.$this->flat->id.'/value', ['reconciled' => '1'])->assertRedirect();
+        // As on the valuation portal the final value comes out by itself: equal scores, half of each value.
         $this->assertSame('550000000.00', $this->flat->fresh()->market_value);
 
-        $this->withSession(['locale' => 'uz'])->get('/admin/real-estates/'.$this->flat->id)->assertOk()
-            ->assertSee('50,0 %')->assertSee('Muvofiqlashtirilgan qiymatni olish');
+        $this->actingAs($this->user)->withSession(['locale' => 'uz'])->get('/admin/real-estates/'.$this->flat->id)->assertOk()
+            ->assertSeeInOrder(['Ulushlarni aniqlashda baholovchi quyidagi asosiy omillarni tahlil qilishi lozim', 'Xarajat yondashuv (Kxar)',
+                'Qiyosiy yondashuv (Kqiyos)', 'Daromad yondashuvi (Kdar)', 'Tahlil va hisoblashlarga asos bo‘lgan axborotning ishonchliligi va yetarliligini',
+                'Jami solishtirma o‘lchovlar yig‘indisi', 'Jami solishtirma o‘lchovlar (o‘rtacha arifmetigi)'])
+            ->assertSeeInOrder(['Bino va inshoatlar', 'Aniqlangan qiymat', 'Qo‘llanilmagan', Format::number(500_000_000, 2), Format::number(600_000_000, 2),
+                'Solishtirma o‘lchovlar koeffitsientlari', '0,50000', 'O‘lchov qiymatlari', Format::number(250_000_000, 2), Format::number(300_000_000, 2),
+                'Kyak = Kxar * C1 + Kdar * C2 + Kqiyos * C3', 'Baholash obyektining yakuniy miqdori:', Format::number(550_000_000, 2)])
+            ->assertDontSee('Muvofiqlashtirilgan qiymatni olish');
+
+        // A value typed by hand is kept while the approaches change…
+        $this->put('/admin/real-estates/'.$this->flat->id.'/value', ['market_value' => '555 000 000'])
+            ->assertRedirect('/admin/real-estates/'.$this->flat->id.'#reconciliation');
+        $this->put('/admin/real-estates/'.$this->flat->id.'/approaches/income/applied', ['applied' => '0'])->assertRedirect();
+        $this->assertSame('555000000.00', $this->flat->fresh()->market_value);
+        $this->get('/admin/real-estates/'.$this->flat->id)->assertSee('Muvofiqlashtirilgan qiymatni olish');
+
+        // …until the reconciled value is taken again; then it follows them once more.
+        $this->put('/admin/real-estates/'.$this->flat->id.'/value', ['reconciled' => '1'])->assertRedirect();
+        $this->assertSame('600000000.00', $this->flat->fresh()->market_value);
+        // Applied again, the income approach is worked out anew from its data: the half of each value again.
+        $this->put('/admin/real-estates/'.$this->flat->id.'/approaches/income/applied', ['applied' => '1'])->assertRedirect();
+        $flat = $this->flat->fresh();
+        $expected = round(((float) $flat->value_comparative + (float) $flat->value_income) / 2, -3);
+        $this->assertEqualsWithDelta($expected, (float) $flat->market_value, 0.001);
+        $this->assertArrayNotHasKey('final_typed', $flat->report);
+
+        // An empty field gives the value back to the reconciliation too.
+        $this->put('/admin/real-estates/'.$this->flat->id.'/value', ['market_value' => '1 000'])->assertRedirect();
+        $this->assertSame('1000.00', $this->flat->fresh()->market_value);
+        $this->put('/admin/real-estates/'.$this->flat->id.'/value', ['market_value' => ''])->assertRedirect();
+        $this->assertEqualsWithDelta($expected, (float) $this->flat->fresh()->market_value, 0.001);
     }
 
     public function test_a_new_object_is_added_with_the_fields_of_the_portal(): void

@@ -88,7 +88,9 @@ class ApprovalTest extends TestCase
 
     public function test_a_report_without_a_value_is_not_submitted_and_operators_do_not_submit(): void
     {
-        $this->flat->update(['market_value' => null]);
+        // No approach has a value, so the reconciliation gives none either.
+        $this->flat->update(['market_value' => null, 'value_cost' => null, 'value_comparative' => null, 'value_income' => null]);
+        $this->assertNull($this->flat->fresh()->market_value);
         $this->step($this->appraiser, 'submitted')->assertSessionHas('error');
         $this->step(User::factory()->operator()->create(), 'submitted')->assertForbidden();
         $this->assertSame(ValuationStatus::InProgress, $this->flat->fresh()->status);

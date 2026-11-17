@@ -1651,3 +1651,16 @@ summary.btn::-webkit-details-marker { display: none; }
 /* A box with a list of suggestions (the landmark): one arrow, the page's; the browser's own one stays clickable but unseen. */
 input.input-select[list]::-webkit-calendar-picker-indicator { opacity: 0; cursor: pointer; }
 .landmark-status, .landmark-found { margin-top: 4px; }
+
+/* Reconciliation of the approaches as on the valuation portal: a framed box with two bordered tables. */
+.recon-box { border: 1px solid var(--line); border-radius: 4px; background: #fff; }
+.recon-box > .table-wrap { width: auto; }
+.recon-title { margin: 0; padding: 14px 16px; border-bottom: 1px solid var(--line); font-size: 18px; font-weight: 400; color: #444; }
+.recon-box .table-wrap { margin: 14px 16px; border: 1px solid var(--line); border-radius: 0; }
+.recon-table { font-size: 12px; }
+.recon-table th, .recon-table td { padding: 10px 12px; border: 1px solid var(--line); vertical-align: middle; }
+.recon-table th, .theme-classic .recon-box .recon-table th { font-size: 12px; font-weight: 700; color: #333; text-transform: none; letter-spacing: 0; background: #fff; }
+.recon-table .c { text-align: center; }
+.recon-table td:first-child, .recon-table th:first-child { width: 46%; }
+.recon-group th, .theme-classic .recon-box .recon-group th { background: #e7f6fb; }
+.recon-total td { font-weight: 700; }

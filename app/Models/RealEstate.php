@@ -26,6 +26,38 @@ class RealEstate extends Model
         ...self::VALUATION_FIELDS,
     ];
 
+    /**
+     * The final market value follows the reconciliation of the approaches, as
+     * on the valuation portal: it changes with the values of the approaches and
+     * the scores. A value typed by the appraiser that differs from it is kept
+     * ("final_typed" in the report) until the field is cleared or the reconciled
+     * value is taken again.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (RealEstate $object) {
+            $report = (array) $object->report;
+            $reconciled = RealEstateReport::reconciledValue($object);
+            $value = $object->market_value !== null ? (float) $object->market_value : null;
+            $manual = $object->isDirty('market_value')
+                // Typed now: kept when it differs; an empty field or the reconciled value gives it back to the reconciliation.
+                ? $value !== null && ($reconciled === null || abs($value - $reconciled) >= 0.005)
+                : ! empty($report['final_typed']) && $value !== null;
+
+            if ($manual !== ! empty($report['final_typed'])) {
+                if ($manual) {
+                    $report['final_typed'] = true;
+                } else {
+                    unset($report['final_typed']);
+                }
+                $object->report = $report;
+            }
+            if (! $manual) {
+                $object->market_value = $reconciled;
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return [

@@ -167,6 +167,14 @@ final class RealEstateReport
         'Hisoblanayotgan qiymat turiga muvofiqligi',
     ];
 
+    /** The same four factors as the valuation portal words them in its reconciliation table. */
+    public const RECONCILIATION_FACTORS = [
+        'Reliability and sufficiency of the information the analysis and calculations rest on',
+        'Ability of the approach to take into account the structure of the price-forming factors of the object',
+        'Ability of the approach to reflect the motivation of the usual buyers and sellers of similar objects',
+        'Agreement of the approach with the type of value being determined',
+    ];
+
     private const PURPOSES = [
         'collateral' => "garovga qo'yish uchun", 'sale' => 'oldi-sotdi uchun', 'notary' => 'notarial harakatlar uchun',
         'court' => 'sud uchun', 'insurance' => "sug'urtalash uchun", 'charter_capital' => 'ustav kapitaliga kiritish uchun',
@@ -257,8 +265,7 @@ final class RealEstateReport
             'hbu_conclusion' => 'Obyektning eng samarali foydalanilishi iqtisodiy nuqtai nazardan joriy faoliyat turi hisoblanadi.',
 
             'weighting' => 'count',
-            'scores' => collect(self::CRITERIA)->keys()->mapWithKeys(fn ($i) => [$i => collect(ValuationApproach::cases())
-                ->mapWithKeys(fn ($a) => [$a->value => in_array($a->value, $applied, true) ? 1 : 0])->all()])->all(),
+            'scores' => self::defaultScores($applied),
             'attachments' => [],
             'company_documents' => true,
             'include_macro' => true,
@@ -273,6 +280,33 @@ final class RealEstateReport
      *
      * @return array{scores: array<string, list<float>>, weights: array<string, float>, reconciled: float}
      */
+    /**
+     * Scores of the reconciliation before the appraiser changes them: one for
+     * every criterion of an applied approach, none for the others.
+     *
+     * @param  list<string>  $applied  values of the applied approaches
+     * @return array<int, array<string, int>>
+     */
+    public static function defaultScores(array $applied): array
+    {
+        return collect(self::CRITERIA)->keys()->mapWithKeys(fn ($i) => [$i => collect(ValuationApproach::cases())
+            ->mapWithKeys(fn ($a) => [$a->value => in_array($a->value, $applied, true) ? 1 : 0])->all()])->all();
+    }
+
+    /**
+     * The final value the reconciliation gives (rounded to thousands), or null
+     * while no applied approach has a value. Read from the object as it is,
+     * before it is saved, so it can be kept in step on saving.
+     */
+    public static function reconciledValue(RealEstate $object): ?float
+    {
+        $scores = ((array) $object->report)['scores']
+            ?? self::defaultScores(array_map(fn (ValuationApproach $a) => $a->value, $object->approachList()));
+        $reconciled = self::reconciliation($object, (array) $scores)['reconciled'];
+
+        return $reconciled > 0 ? round($reconciled, -3) : null;
+    }
+
     public static function reconciliation(RealEstate $object, ?array $scores = null): array
     {
         $scores ??= self::values($object)['scores'];
