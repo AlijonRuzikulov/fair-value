@@ -129,20 +129,42 @@ class ApproachController extends Controller
             ->with('status', $data['applied'] ? __('The approach is applied.') : __('The approach is refused.'));
     }
 
-    /** The final value of the reconciliation: typed, or the reconciled one rounded to thousands. */
+    /**
+     * The reconciliation: the scores of the approaches typed in its table and the
+     * final value, typed or the reconciled one rounded to thousands.
+     */
     public function value(Request $request, string $id): RedirectResponse
     {
         $item = $this->object($id);
+        if (is_array($request->input('scores'))) {
+            $request->validate(['scores.*.*' => ['nullable', 'integer', 'min:0', 'max:10']], [], ['scores.*.*' => __('Score')]);
+            $applied = array_map(fn (ValuationApproach $a) => $a->value, $item->approachList());
+            $scores = RealEstateReport::values($item)['scores'];
+            foreach (array_keys(RealEstateReport::CRITERIA) as $i) {
+                foreach ($applied as $approach) {
+                    if ($request->has("scores.$i.$approach")) {
+                        $scores[$i][$approach] = (int) $request->input("scores.$i.$approach");
+                    }
+                }
+            }
+            $report = (array) $item->report;
+            if ($scores == RealEstateReport::defaultScores($applied)) {
+                unset($report['scores']);
+            } else {
+                $report['scores'] = $scores;
+            }
+            $item->report = $report;
+        }
         if ($request->boolean('reconciled')) {
             $reconciled = RealEstateReport::reconciliation($item)['reconciled'];
             if ($reconciled <= 0) {
                 return back()->with('error', __('Enter the values of the applied approaches first.'));
             }
-            $item->update(['market_value' => round($reconciled, -3)]);
+            $item->fill(['market_value' => round($reconciled, -3)])->save();
         } else {
             $request->merge(['market_value' => NumberInput::normalize($request->input('market_value'))]);
             $data = $request->validate(['market_value' => ['nullable', 'numeric', 'min:0', 'max:9999999999999999']], [], ['market_value' => __('Market value')]);
-            $item->update(['market_value' => $data['market_value']]);
+            $item->fill(['market_value' => $data['market_value']])->save();
         }
 
         return redirect()->to(route('admin.real-estates.show', $item->id).'#reconciliation')->with('status', __('Changes saved.'));

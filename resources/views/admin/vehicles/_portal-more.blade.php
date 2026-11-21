@@ -1,6 +1,6 @@
 {{-- What the portal asks for in its other windows, once the vehicle is saved: its data and its value. --}}
 @if ($item->exists)
-    <details class="portal-fold" id="object-data" data-remember @if (blank($item->brand) || session()->hasOldInput()) open @endif>
+    <details class="portal-fold" id="object-data" @if (blank($item->brand) || session()->hasOldInput()) open @endif>
         <summary>{{ __('Data of the vehicle') }}</summary>
         <fieldset class="portal-fields" @disabled(! $canEdit)>
             <div class="form-grid">

@@ -1,6 +1,6 @@
 {{-- What the portal asks for in its other windows, once the object is saved: the data of the property and its value. --}}
 @if ($item->exists)
-    <details class="portal-fold" id="object-data" data-remember>
+    <details class="portal-fold" id="object-data">
         <summary>{{ __('Data of the property') }}</summary>
         <fieldset class="portal-fields" @disabled(! $canEdit)>
             <div class="form-grid">

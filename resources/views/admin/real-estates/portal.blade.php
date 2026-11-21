@@ -68,7 +68,7 @@
             </form>
 
             <div class="portal-card-body portal-folds">
-                <details class="portal-fold" id="documents-section" data-remember>
+                <details class="portal-fold" id="documents-section">
                     <summary>{{ __('Documents submitted for the valuation of the real estate') }}</summary>
                     <div class="portal-body portal-cards-flat">
                         @if ($exists)
@@ -97,7 +97,7 @@
                     </details>
                 @endforeach
 
-                <details class="portal-fold" id="reconciliation" data-remember>
+                <details class="portal-fold" id="reconciliation">
                     <summary>
                         {{ __('Reconciliation step') }}
                         @if ($item->market_value !== null)<span class="portal-sum">{{ Format::money($item->market_value) }}</span>@endif
@@ -127,7 +127,16 @@
                                             @foreach (RealEstateReport::RECONCILIATION_FACTORS as $i => $factor)
                                                 <tr>
                                                     <td>{{ __($factor) }}</td>
-                                                    @foreach ($first as $approach)<td class="c">{{ Format::number($byApproach[$approach->value][$i] ?? 0, 2) }}</td>@endforeach
+                                                    @foreach ($first as $approach)
+                                                        <td class="c">
+                                                            @if ($canEdit && in_array($approach, $applied, true))
+                                                                {{-- The score of the approach by this factor, 0–10 (saved with the final value below). --}}
+                                                                <input class="input recon-score" form="reconciliation-form" name="scores[{{ $i }}][{{ $approach->value }}]" value="{{ old("scores.$i.{$approach->value}", (int) ($reportValues['scores'][$i][$approach->value] ?? 0)) }}" type="number" min="0" max="10" step="1" inputmode="numeric" aria-label="{{ __($factor) }} — {{ $approach->label() }}">
+                                                            @else
+                                                                {{ Format::number($byApproach[$approach->value][$i] ?? 0, 2) }}
+                                                            @endif
+                                                        </td>
+                                                    @endforeach
                                                 </tr>
                                             @endforeach
                                             <tr>
@@ -154,8 +163,8 @@
                                             <tr>
                                                 <td>{{ __('Value found') }}</td>
                                                 @foreach ($second as $approach)
-                                                    @php $value = in_array($approach, $applied, true) ? $item->{$approach->column()} : null; @endphp
-                                                    <td class="c">{{ $value !== null ? Format::number($value, 2) : __('Not applied') }}</td>
+                                                    @php $isApplied = in_array($approach, $applied, true); $value = $isApplied ? $item->{$approach->column()} : null; @endphp
+                                                    <td @class(['c', 'recon-missing' => $isApplied && $value === null])>{{ $value !== null ? Format::number($value, 2) : ($isApplied ? __('Not calculated yet') : __('Not applied')) }}</td>
                                                 @endforeach
                                             </tr>
                                             <tr>
@@ -178,7 +187,7 @@
                                     </table>
                                 </div>
                             </div>
-                            <form method="post" action="{{ route('admin.real-estates.value', $item->id) }}" class="portal-value">
+                            <form method="post" action="{{ route('admin.real-estates.value', $item->id) }}" class="portal-value" id="reconciliation-form">
                                 @csrf @method('put')
                                 <fieldset class="form-grid" @disabled(! $canEdit)>
                                     <x-field name="market_value" :label="__('Market value (final)')" :value="$item->market_value" money :suffix="__('sum')" span="4"
@@ -221,7 +230,7 @@
                 @endif
 
                 {{-- The buildings of the cost approach. --}}
-                <details class="portal-fold" id="approach-cost" data-remember @if ($exists && in_array(ValuationApproach::Cost, $applied, true)) open @endif>
+                <details class="portal-fold" id="approach-cost">
                     <summary>
                         {{ __('Enter the buildings to be valued') }}
                         @if ($exists && ! in_array(ValuationApproach::Cost, $applied, true))<span class="portal-refused">{{ __('Cost approach') }} ({{ __('refused') }})</span>

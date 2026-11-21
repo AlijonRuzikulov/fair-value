@@ -1694,3 +1694,5 @@ input.input-select[list]::-webkit-calendar-picker-indicator { opacity: 0; cursor
 .analog-grid .g-final td { font-weight: 600; }
 .analog-grid .g-total td { background: #e7f6fb; font-size: 13px; font-weight: 700; }
 .analog-grid .g-comms .comm-chip { margin: 0 4px 4px 0; }
+.recon-table .recon-score, .theme-classic .recon-box .recon-score { width: 64px; height: 30px; padding: 0 6px; text-align: center; }
+.recon-table .recon-missing { color: #b45309; font-weight: 600; }

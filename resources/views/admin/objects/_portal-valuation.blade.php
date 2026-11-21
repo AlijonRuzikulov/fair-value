@@ -1,6 +1,6 @@
 {{-- The value of the object: the approaches applied with their values and the final market value. --}}
 @php $applied = array_map('strval', array_filter((array) old('approaches', $item->approaches ?? []), 'filled')); @endphp
-<details class="portal-fold" id="valuation" data-remember @if ($item->market_value !== null) open @endif>
+<details class="portal-fold" id="valuation" @if ($item->market_value !== null) open @endif>
     <summary>
         {{ __('Valuation') }}
         @if ($item->market_value !== null)<span class="portal-sum">{{ \App\Support\Format::money($item->market_value) }}</span>@endif

@@ -1039,14 +1039,40 @@
 
   /* ---------- Folded sections and the type of value ------------------- */
 
+  // The folds of an object page (main data, documents, approaches, reconciliation) are open one at a time,
+  // as on the valuation portal: opening one closes the one that was open.
+  function openAlone(details) {
+    for (var el = details; el; el = el.parentElement) {
+      if (el.tagName !== 'DETAILS') continue;
+      if (el.classList.contains('portal-fold')) {
+        $$('details.portal-fold[open]').forEach(function (other) {
+          if (other !== el && !other.contains(el) && !el.contains(other)) other.open = false;
+        });
+      }
+      el.open = true;
+    }
+  }
+  $$('details.portal-fold > summary').forEach(function (summary) {
+    summary.addEventListener('click', function (e) {
+      var fold = summary.parentElement;
+      if (fold.open) return; // being closed
+      e.preventDefault();
+      openAlone(fold);
+    });
+  });
+  // A required field left empty in a closed fold: its fold opens, so the browser can point at it.
+  document.addEventListener('invalid', function (e) {
+    var closed = e.target.closest && e.target.closest('details:not([open])');
+    if (closed) openAlone(closed);
+  }, true);
+
   // A link to a part of a folded section (#survey, #approach-cost) unfolds it.
   function unfold() {
     var id = decodeURIComponent(location.hash.slice(1));
     var target = id && document.getElementById(id);
-    for (var el = target; el; el = el.parentElement) {
-      if (el.tagName === 'DETAILS') el.open = true;
-    }
-    if (target) target.scrollIntoView();
+    if (!target) return;
+    openAlone(target.tagName === 'DETAILS' ? target : target.parentElement && target.parentElement.closest('details'));
+    target.scrollIntoView();
   }
   window.addEventListener('hashchange', unfold);
   if (location.hash) unfold();
@@ -1305,8 +1331,8 @@
     });
   });
 
-  // The folding sections stay as the person left them (in this browser only).
-  $$('details[data-remember][id]').forEach(function (section) {
+  // The folding sections stay as the person left them (in this browser only); not the folds open one at a time.
+  $$('details[data-remember][id]:not(.portal-fold)').forEach(function (section) {
     var key = 'fv-open:' + location.pathname + '#' + section.id;
     try {
       var saved = localStorage.getItem(key);

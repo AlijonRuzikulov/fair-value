@@ -197,6 +197,37 @@ class PortalPageTest extends TestCase
         $this->assertEqualsWithDelta($expected, (float) $this->flat->fresh()->market_value, 0.001);
     }
 
+    public function test_the_scores_are_typed_in_the_reconciliation_table(): void
+    {
+        $this->actingAs($this->user)->withSession(['locale' => 'uz'])->get('/admin/real-estates/'.$this->flat->id)->assertOk()
+            ->assertSee('name="scores[0][comparative]"', false)->assertSee('name="scores[3][income]"', false)
+            ->assertDontSee('name="scores[0][cost]"', false)->assertSee('form="reconciliation-form"', false);
+
+        // The income approach scored 0 by every factor: the comparative value is the whole.
+        $scores = array_fill(0, 4, ['comparative' => '1', 'income' => '0']);
+        $this->put('/admin/real-estates/'.$this->flat->id.'/value', ['scores' => $scores, 'market_value' => '550 000 000'])
+            ->assertRedirect('/admin/real-estates/'.$this->flat->id.'#reconciliation');
+        $flat = $this->flat->fresh();
+        $this->assertSame(0, $flat->report['scores'][2]['income']);
+        $this->assertSame('600000000.00', $flat->market_value, 'The value left as it was follows the new shares.');
+
+        $this->put('/admin/real-estates/'.$this->flat->id.'/value', ['scores' => [['comparative' => '11']]])->assertSessionHasErrors('scores.0.comparative');
+
+        // Back to the scores the approaches start with: nothing kept, half of each value again.
+        $this->put('/admin/real-estates/'.$this->flat->id.'/value', ['scores' => array_fill(0, 4, ['comparative' => '1', 'income' => '1']), 'market_value' => '600 000 000']);
+        $flat = $this->flat->fresh();
+        $this->assertArrayNotHasKey('scores', $flat->report);
+        $this->assertSame('550000000.00', $flat->market_value);
+    }
+
+    public function test_an_applied_approach_without_a_value_is_not_calculated_yet(): void
+    {
+        $this->flat->update(['value_comparative' => null]);
+
+        $this->actingAs($this->user)->withSession(['locale' => 'uz'])->get('/admin/real-estates/'.$this->flat->id)->assertOk()
+            ->assertSeeInOrder(['Aniqlangan qiymat', 'Qo‘llanilmagan', Format::number(500_000_000, 2), 'Hisoblanmagan']);
+    }
+
     public function test_a_new_object_is_added_with_the_fields_of_the_portal(): void
     {
         $owner = Client::factory()->create();
