@@ -128,6 +128,11 @@ $DOMAIN {
     }
     php_fastcgi unix//run/php/php8.3-fpm.sock
     file_server
+    # The versions of PHP and of the web server are not told to visitors.
+    header {
+        -X-Powered-By
+        -Server
+    }
 }
 CADDY
 cat > /etc/php/8.3/fpm/conf.d/99-fair-value.ini <<'INI'
