@@ -105,7 +105,7 @@
                 @foreach ($analogs as $analog)<td><input class="input g-num" name="analogs[{{ $analog->id }}][land_area]" value="{{ $typed($analog->adjustments['land_area'] ?? null, 2) }}" inputmode="decimal" aria-label="{{ __('Total land area') }}" @disabled($disabled)></td>@endforeach
             </tr>
             <tr>
-                <td>{{ __('Total area') }}</td><td></td><td class="num">{{ $n2($item->total_area) }}</td>
+                <td>{{ __('Total area') }}</td><td></td><td class="num">{{ $n2($item->comparedArea()) }}</td>
                 @foreach ($analogs as $analog)<td><input class="input g-num" name="analogs[{{ $analog->id }}][area]" value="{{ $typed($analog->area, 2) }}" inputmode="decimal" aria-label="{{ __('Total area') }}" @disabled($disabled || $analog->isPending())></td>@endforeach
             </tr>
             <tr class="g-price-row">
@@ -166,7 +166,7 @@
             </tr>
             <tr>
                 <td></td><td class="g-sub">{{ __('Adjustment coefficient') }}</td>
-                <td><input class="input g-num" name="comparative[size_coef]" value="{{ $typed($typedSubject['size_coef'] ?? null) }}" placeholder="{{ $typed(ComparativeCalculator::sizeCoefficient((float) $item->total_area)) }}" inputmode="decimal" aria-label="{{ __('Adjustment coefficient') }}" @disabled($disabled)></td>
+                <td><input class="input g-num" name="comparative[size_coef]" value="{{ $typed($typedSubject['size_coef'] ?? null) }}" placeholder="{{ $typed(ComparativeCalculator::sizeCoefficient($item->comparedArea())) }}" inputmode="decimal" aria-label="{{ __('Adjustment coefficient') }}" @disabled($disabled)></td>
                 @foreach ($analogs as $analog)<td><input class="input g-num" name="analogs[{{ $analog->id }}][size_coef]" value="{{ $typed($analog->adjustments['size_coef'] ?? null) }}" placeholder="{{ $typed(ComparativeCalculator::sizeCoefficient((float) $analog->area)) }}" inputmode="decimal" aria-label="{{ __('Adjustment coefficient') }}" @disabled($disabled)></td>@endforeach
             </tr>
             <tr class="g-adj"><td>{{ __('Adjustment for the size') }}</td><td></td><td></td>@foreach ($analogs as $analog)<td class="num">{{ ($r = $row($analog)) ? Format::number($r['steps']['area']['percent'] / 100, 2) : '—' }}</td>@endforeach</tr>
@@ -274,7 +274,7 @@
             <tr class="g-sum"><td>{{ __('Price after the adjustments with the shares taken into account') }}</td><td></td><td></td>@foreach ($analogs as $analog)<td class="num">{{ ($r = $row($analog)) ? $n2($r['weighted']) : '—' }}</td>@endforeach</tr>
             <tr class="g-final"><td colspan="2">{{ __('Final value of 1 m² of the object of valuation') }}</td><td colspan="{{ $span - 2 }}" class="num">{{ $result['price_m2'] !== null ? $n2($result['price_m2']).' '.__('sum') : '—' }}</td></tr>
             <tr class="g-final"><td colspan="2">{{ __('Value of 1 m² of the land plot') }}</td><td colspan="{{ $span - 2 }}" class="num">{{ $subject['land_price'] > 0 ? $n2($subject['land_price']) : '—' }}</td></tr>
-            <tr class="g-final"><td colspan="2">{{ __('Total area of the object of valuation, m²') }}</td><td colspan="{{ $span - 2 }}" class="num">{{ $n2($item->total_area) }}</td></tr>
+            <tr class="g-final"><td colspan="2">{{ __('Total area of the object of valuation, m²') }}</td><td colspan="{{ $span - 2 }}" class="num">{{ $n2($item->comparedArea()) }}</td></tr>
             <tr class="g-final"><td colspan="2">{{ __('Final value of the object of valuation') }}</td><td colspan="{{ $span - 2 }}" class="num">{{ $result['building'] !== null ? $n2($result['building']).' '.__('sum') : '—' }}</td></tr>
             <tr class="g-final"><td colspan="2">{{ __('Total area of the land plot, m²') }}</td><td colspan="{{ $span - 2 }}" class="num">{{ $n2($item->land_area) }}</td></tr>
             <tr class="g-final"><td colspan="2">{{ __('Value of the land plot') }}</td><td colspan="{{ $span - 2 }}" class="num">{{ $n2($result['land_value']) }}</td></tr>

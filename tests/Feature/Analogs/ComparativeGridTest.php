@@ -57,4 +57,23 @@ class ComparativeGridTest extends TestCase
             ->assertSee('name="comparative[land_price]"', false)
             ->assertSee('placeholder="0.26"', false);
     }
+
+    public function test_without_the_total_area_the_useful_area_is_taken(): void
+    {
+        $this->seed(RegionSeeder::class);
+        CurrencyRate::create(['code' => 'USD', 'nominal' => 1, 'rate' => 12500, 'diff' => 0, 'rate_date' => now()->toDateString()]);
+        $this->actingAs(User::factory()->create());
+        // Only the useful area is required on the add page.
+        $flat = RealEstate::factory()->residential()->create(['total_area' => null, 'useful_area' => 50, 'status' => ValuationStatus::InProgress, 'approaches' => ['comparative'],
+            'value_cost' => null, 'value_income' => null, 'value_comparative' => null, 'market_value' => null]);
+        $flat->analogs()->create(['status' => Analog::READY, 'title' => 'Kvartira', 'price' => 500_000_000, 'currency' => 'UZS', 'price_uzs' => 500_000_000,
+            'area' => 50, 'included' => true, 'adjustments' => ['bargain' => 0]]);
+
+        $this->put('/admin/real-estates/'.$flat->id.'/analogs', ['analogs' => []])->assertRedirect();
+
+        // 10 000 000 per m² × 50 m² of useful area; the reconciliation gives it as the market value.
+        $flat->refresh();
+        $this->assertEqualsWithDelta(500_000_000, (float) $flat->value_comparative, 0.01);
+        $this->assertSame('500000000.00', $flat->market_value);
+    }
 }

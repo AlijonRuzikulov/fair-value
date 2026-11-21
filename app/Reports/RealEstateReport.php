@@ -466,7 +466,7 @@ final class RealEstateReport
         $options = ['usd_rate' => $rates['USD'], 'weighting' => $f['weighting'], 'index' => isset($f['market_index']) && is_numeric($f['market_index']) ? (float) $f['market_index'] : null, 'valuation_date' => $valuationDate,
             'subject' => self::comparativeSubject($object)];
         $analogs = $object->analogs->filter(fn (Analog $a) => $a->included && $a->isUsable())->values();
-        $comparative = ComparativeCalculator::calculate((float) $object->total_area, $analogs, $options);
+        $comparative = ComparativeCalculator::calculate($object->comparedArea(), $analogs, $options);
         $usable = $object->analogs->filter->isUsable();
 
         // Reconciliation of the approaches.
@@ -564,7 +564,7 @@ final class RealEstateReport
         $same = fn (string $value) => $analogs->mapWithKeys(fn (Analog $a) => [$a->id => $value])->all();
         $of = fn (callable $value) => $analogs->mapWithKeys(fn (Analog $a) => [$a->id => (string) ($value($a) ?? '—')])->all();
         $date = fn ($d) => $d ? Carbon::parse($d)->format('d.m.Y') : '—';
-        $subject = $result['subject'] ?? ComparativeCalculator::subject((float) $object->total_area, self::comparativeSubject($object));
+        $subject = $result['subject'] ?? ComparativeCalculator::subject($object->comparedArea(), self::comparativeSubject($object));
         $coef = fn ($c) => $c !== null ? '; '.number_format((float) $c, 2, ',', ' ') : '';
         $wear = fn ($text) => ($w = ComparativeCalculator::wear($text)) !== null ? ' ('.number_format($w, 0).' %)' : '';
         $rate = fn ($r) => $r ? number_format((float) $r, 2, ',', ' ') : '—';
@@ -583,7 +583,7 @@ final class RealEstateReport
                 'analogs' => $of(fn (Analog $a) => $date($a->listed_at ?? $a->created_at).($a->usd_rate ? ' · '.$rate($a->usd_rate) : ''))],
             ['title' => 'Joylashgan yeri', 'key' => 'location', 'subject' => $location, 'analogs' => $of(fn (Analog $a) => $a->location)],
             ['title' => 'Binoning katta-kichikligi (umumiy maydoni, m²; tuzatish koeffitsienti)', 'key' => 'area',
-                'subject' => number_format((float) $object->total_area, 2, ',', ' ').$coef($subject['size_coef']),
+                'subject' => number_format((float) $object->comparedArea(), 2, ',', ' ').$coef($subject['size_coef']),
                 'analogs' => $of(fn (Analog $a) => number_format((float) $a->area, 2, ',', ' ').$coef($result['rows'][$a->id]['data']['size_coef'] ?? null))],
             ['title' => 'Qurilish materiallari (devorlar)', 'key' => 'material', 'subject' => (string) ($f['walls'] ?? '—'), 'analogs' => $of(fn (Analog $a) => $a->wall_material)],
             ['title' => 'Arxitekturaviy uslub', 'key' => 'architecture', 'subject' => $f['architecture'], 'analogs' => $same($f['architecture'])],

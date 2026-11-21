@@ -228,6 +228,21 @@ class PortalPageTest extends TestCase
             ->assertSeeInOrder(['Aniqlangan qiymat', 'Qo‘llanilmagan', Format::number(500_000_000, 2), 'Hisoblanmagan']);
     }
 
+    public function test_an_approach_applied_after_the_scores_were_saved_counts(): void
+    {
+        // Scores saved while only the comparative approach was applied: none for the income approach.
+        $this->flat->update(['approaches' => ['comparative'], 'value_income' => null,
+            'report' => [...$this->flat->report, 'scores' => array_fill(0, 4, ['cost' => 0, 'comparative' => 2, 'income' => 0])]]);
+        $this->assertSame('600000000.00', $this->flat->fresh()->market_value);
+
+        $this->actingAs($this->user)->put('/admin/real-estates/'.$this->flat->id.'/approaches/income/applied', ['applied' => '1'])->assertRedirect();
+        $flat = $this->flat->fresh();
+        $this->assertSame(1, $flat->report['scores'][0]['income']);
+        $this->assertSame(2, $flat->report['scores'][0]['comparative'], 'The scores typed before stay.');
+        // Shares 2 : 1 of the comparative and income values.
+        $this->assertEqualsWithDelta(round((600_000_000 * 2 + (float) $flat->value_income) / 3, -3), (float) $flat->market_value, 0.001);
+    }
+
     public function test_a_new_object_is_added_with_the_fields_of_the_portal(): void
     {
         $owner = Client::factory()->create();

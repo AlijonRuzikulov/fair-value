@@ -48,7 +48,7 @@ class ValuationReportController extends Controller
             'images' => RealEstateReport::attachmentRoles($item, $values),
             'scans' => $item->attachments->filter(fn ($a) => $a->isImage() || $a->mime === 'application/pdf')->sortBy('id')->values(),
             'companyDocuments' => RealEstateReport::companyDocuments(),
-            'comparative' => ComparativeCalculator::calculate((float) $item->total_area, $item->analogs, RealEstateReport::comparativeOptions($item)),
+            'comparative' => ComparativeCalculator::calculate($item->comparedArea(), $item->analogs, RealEstateReport::comparativeOptions($item)),
             'aiAvailable' => $ai->available(),
         ]);
     }

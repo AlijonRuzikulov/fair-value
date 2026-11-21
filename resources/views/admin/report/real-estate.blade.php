@@ -75,7 +75,7 @@
 {{-- ============================== Cover (full page) ============================== --}}
 @php
     $coverPhoto = $photos->first();
-    $perM2 = $final !== null && $item->total_area > 0 ? $final / (float) $item->total_area : null;
+    $perM2 = $final !== null && $item->comparedArea() ? $final / $item->comparedArea() : null;
     $usdValue = $final !== null && ($rates['USD'] ?? 0) > 0 ? $final / $rates['USD'] : null;
     $words = $finalWords ? mb_strtoupper(mb_substr($finalWords, 0, 1)).mb_substr($finalWords, 1).' so‘m' : null;
     $valueOf = fn (string $pattern) => str_replace(':type', mb_strtolower($t($f['value_type'])), $t($pattern));
@@ -437,7 +437,7 @@
                     @foreach ($chunk as $analog)<td class="num">{{ $num($analog->price_uzs, 0) }}</td>@endforeach</tr>
                 <tr><td></td><td class="what">{{ $t('Manba') }}</td><td></td>
                     @foreach ($chunk as $analog)<td>@if ($analog->url)<a href="{{ $analog->url }}">{{ $analog->host() }}</a>@else{{ $t('Boshqa') }}@endif</td>@endforeach</tr>
-                <tr><td></td><td class="what">{{ $t('Umumiy maydoni, m²') }}</td><td class="num">{{ $num($item->total_area) }}</td>
+                <tr><td></td><td class="what">{{ $t('Umumiy maydoni, m²') }}</td><td class="num">{{ $num($item->comparedArea()) }}</td>
                     @foreach ($chunk as $analog)<td class="num">{{ $num($analog->area) }}</td>@endforeach</tr>
                 <tr class="total"><td></td><td class="what">{{ $t("1 m² narxi, so'm") }}</td><td></td>
                     @foreach ($chunk as $analog)<td class="num">{{ $num($comparative['rows'][$analog->id]['price_m2']) }}</td>@endforeach</tr>
@@ -482,7 +482,7 @@
     @endforeach
     <table class="adj">
         <tr class="result"><td>{{ $t('Baholash obyektining 1 m² uchun yakuniy qiymati') }}</td><td class="num">{{ $sum($comparative['price_m2']) }}</td></tr>
-        <tr class="result"><td>{{ $t('Baholash obyektining umumiy maydoni') }}</td><td class="num">{{ $num($item->total_area) }} {{ $t('kv. m') }}</td></tr>
+        <tr class="result"><td>{{ $t('Baholash obyektining umumiy maydoni') }}</td><td class="num">{{ $num($item->comparedArea()) }} {{ $t('kv. m') }}</td></tr>
         <tr class="result"><td>{{ $t('Baholash obyektining yakuniy qiymati') }}</td><td class="num">{{ $sum($comparative['building']) }}</td></tr>
         @if ($comparative['land_value'] > 0)
             <tr class="result"><td>{{ $t('1 m² yer uchastkasining qiymati') }}</td><td class="num">{{ $sum($comparative['land_price']) }}</td></tr>
@@ -498,7 +498,7 @@
         @foreach ($commentary as $note)
             <p><b>{{ $t($note['title']) }}.</b> {{ $t($note['text']) }}</p>
         @endforeach
-        <p><b>{{ $t('Yakuniy qiymat') }}.</b> {{ $t("Baholash obyektining 1 m² uchun qiymati tuzatilgan narxlarning vaznli o'rtachasi sifatida aniqlandi va baholash obyektining umumiy maydoniga ko'paytirildi") }}: {{ $num($comparative['price_m2']) }} × {{ $num($item->total_area) }} = {{ $sum($comparative['building']) }}@if ($comparative['land_value'] > 0); {{ $t("unga yer uchastkasi qiymati qo'shildi") }}: {{ $num($comparative['land_price']) }} × {{ $num($comparative['land_area']) }} = {{ $sum($comparative['land_value']) }}; {{ $t('jami') }} {{ $sum($comparative['value']) }}@endif.</p>
+        <p><b>{{ $t('Yakuniy qiymat') }}.</b> {{ $t("Baholash obyektining 1 m² uchun qiymati tuzatilgan narxlarning vaznli o'rtachasi sifatida aniqlandi va baholash obyektining umumiy maydoniga ko'paytirildi") }}: {{ $num($comparative['price_m2']) }} × {{ $num($item->comparedArea()) }} = {{ $sum($comparative['building']) }}@if ($comparative['land_value'] > 0); {{ $t("unga yer uchastkasi qiymati qo'shildi") }}: {{ $num($comparative['land_price']) }} × {{ $num($comparative['land_area']) }} = {{ $sum($comparative['land_value']) }}; {{ $t('jami') }} {{ $sum($comparative['value']) }}@endif.</p>
     </div>
 @elseif ($comparativeApplied)
     <p class="muted">{{ $t("Qiyosiy yondashuv bo'yicha hisob-kitob uchun analoglar kiritilmagan.") }}</p>

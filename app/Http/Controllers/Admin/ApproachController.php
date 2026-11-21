@@ -105,7 +105,7 @@ class ApproachController extends Controller
             $item->{$case->column()} = match ($case) {
                 ValuationApproach::Cost => isset($report['cost']) ? CostApproach::calculate($report['cost'], (int) ($item->valuation_date ?? now())->format('Y'))['value'] : null,
                 ValuationApproach::Income => isset($report['income']) ? IncomeApproach::calculate($report['income'])['value'] : null,
-                ValuationApproach::Comparative => ComparativeCalculator::calculate((float) $item->total_area, $item->analogs, RealEstateReport::comparativeOptions($item))['value'],
+                ValuationApproach::Comparative => ComparativeCalculator::calculate($item->comparedArea(), $item->analogs, RealEstateReport::comparativeOptions($item))['value'],
             };
         } else {
             $applied = array_diff($applied, [$case->value]);

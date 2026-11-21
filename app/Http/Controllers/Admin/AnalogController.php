@@ -267,7 +267,7 @@ class AnalogController extends Controller
     public function apply(string $type, string $id): RedirectResponse
     {
         $object = $this->object($type, $id);
-        $result = ComparativeCalculator::calculate((float) $object->total_area, $object->analogs, RealEstateReport::comparativeOptions($object, download: true));
+        $result = ComparativeCalculator::calculate($object->comparedArea(), $object->analogs, RealEstateReport::comparativeOptions($object, download: true));
 
         if ($result['value'] === null) {
             return $this->back($type, $object)->with('error', __('Add at least one analogue with a price and an area.'));

@@ -37,6 +37,22 @@ class RealEstate extends Model
     {
         static::saving(function (RealEstate $object) {
             $report = (array) $object->report;
+            // Scores saved while an approach was not applied give it none: once applied, it starts with one by every factor.
+            if ($object->isDirty('approaches') && is_array($report['scores'] ?? null)) {
+                $added = array_diff((array) $object->approaches, (array) $object->getOriginal('approaches'));
+                $scores = $report['scores'];
+                foreach ($added as $approach) {
+                    if (array_sum(array_map(fn ($row) => (float) ($row[$approach] ?? 0), $scores)) == 0) {
+                        foreach (array_keys($scores) as $i) {
+                            $scores[$i][$approach] = 1;
+                        }
+                    }
+                }
+                if ($scores !== $report['scores']) {
+                    $report['scores'] = $scores;
+                    $object->report = $report;
+                }
+            }
             $reconciled = RealEstateReport::reconciledValue($object);
             $value = $object->market_value !== null ? (float) $object->market_value : null;
             $manual = $object->isDirty('market_value')
@@ -56,6 +72,22 @@ class RealEstate extends Model
                 $object->market_value = $reconciled;
             }
         });
+    }
+
+    /**
+     * The area the comparative approach multiplies the price per m² by: the
+     * total area, or the useful (then living) area while the total is empty
+     * (only the useful area is required on the add page).
+     */
+    public function comparedArea(): ?float
+    {
+        foreach ([$this->total_area, $this->useful_area, $this->living_area] as $area) {
+            if ((float) $area > 0) {
+                return (float) $area;
+            }
+        }
+
+        return null;
     }
 
     protected function casts(): array

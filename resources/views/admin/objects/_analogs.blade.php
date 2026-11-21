@@ -7,7 +7,7 @@
 
     $analogs = $item->analogs;
     $options = RealEstateReport::comparativeOptions($item);
-    $result = ComparativeCalculator::calculate((float) $item->total_area, $analogs, $options);
+    $result = ComparativeCalculator::calculate($item->comparedArea(), $analogs, $options);
     $pending = $analogs->filter->isPending();
     $canEdit = Gate::allows('edit-valuation', $item);
     $sites = implode(', ', config('fairvalue.analogs.domains'));

@@ -120,7 +120,7 @@ class AnalogFinder
         }
 
         $analogs = $object->analogs()->get();
-        $result = ComparativeCalculator::calculate((float) $object->total_area, $analogs, RealEstateReport::comparativeOptions($object));
+        $result = ComparativeCalculator::calculate($object->comparedArea(), $analogs, RealEstateReport::comparativeOptions($object));
         // No analogues left: no value. One that is still being read leaves the saved value as it is.
         $value = $result['value'] ?? ($analogs->isEmpty() ? null : $object->value_comparative);
         $saved = $object->value_comparative;
@@ -366,7 +366,7 @@ class AnalogFinder
         return [
             'type' => method_exists($object, 'typeLabel') ? $object->typeLabel() : null,
             'title' => $object->name ?? null,
-            'area' => $object->total_area !== null ? (float) $object->total_area : null,
+            'area' => method_exists($object, 'comparedArea') ? $object->comparedArea() : ($object->total_area !== null ? (float) $object->total_area : null),
             'rooms' => $object->rooms ?? null,
             'floor' => $object->floor ?? null,
             'floors_total' => $object->floors_total ?? null,
